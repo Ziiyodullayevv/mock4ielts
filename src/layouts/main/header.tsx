@@ -3,11 +3,13 @@
 import Link from 'next/link';
 import { cn } from '@/src/lib/utils';
 import { Logo } from '@/src/components/logo';
+import { usePathname } from 'next/navigation';
 import { Button } from '@/src/components/ui/button';
 import { useRef, useState, useEffect } from 'react';
 import { HEADER_ITEMS } from '@/src/layouts/nav-config-main';
 
 export function MainHeader() {
+  const pathname = usePathname();
   const [openItemId, setOpenItemId] = useState<string | null>(null);
   const [hasScrollBackdrop, setHasScrollBackdrop] = useState(false);
   const [panelOffset, setPanelOffset] = useState(80);
@@ -16,6 +18,10 @@ export function MainHeader() {
 
   const openedItem = HEADER_ITEMS.find((item) => item.id === openItemId);
   const hasPanel = Boolean(openedItem?.panelItems?.length);
+  const shouldShowHeaderBackdrop = pathname !== '/' || hasScrollBackdrop;
+
+  const isItemActive = (item: (typeof HEADER_ITEMS)[number]) =>
+    item.matchPaths?.some((path) => pathname.startsWith(path)) ?? pathname === item.href;
 
   useEffect(() => {
     const updateScrollBackdrop = () => {
@@ -69,7 +75,7 @@ export function MainHeader() {
         <div
           className={cn(
             'mx-auto flex items-center justify-between bg-[linear-gradient(180deg,rgba(0,0,0,0.64)0%,rgba(0,0,0,0)100%)] bg-black/0 px-5 py-4 text-white/88 transition-[background-color,backdrop-filter] duration-500 ease-out',
-            hasScrollBackdrop && 'bg-black/60 backdrop-blur-[30px]'
+            shouldShowHeaderBackdrop && 'bg-black/60 backdrop-blur-[30px]'
           )}
         >
           <div className="flex items-center gap-6">
@@ -78,6 +84,7 @@ export function MainHeader() {
             <nav className="hidden items-center gap-8 lg:flex">
               {HEADER_ITEMS.map((item) => {
                 const isOpen = item.id === openItemId;
+                const isActive = isItemActive(item);
                 const canOpen = Boolean(item.panelItems?.length);
 
                 return (
@@ -98,8 +105,8 @@ export function MainHeader() {
                     }}
                     className={cn(
                       'whitespace-nowrap text-shadow-sm px-3 rounded-full hover:backdrop-blur-[20px] py-2 font-normal leading-5.5 text-white/74 transition-all duration-200',
-                      isOpen && 'bg-white/22 text-white',
-                      !isOpen && 'hover:bg-white/12 hover:text-white'
+                      (isOpen || isActive) && 'bg-white/22 text-white',
+                      !isOpen && !isActive && 'hover:bg-white/12 hover:text-white'
                     )}
                   >
                     {item.label}
@@ -130,12 +137,16 @@ export function MainHeader() {
             <div style={{ paddingLeft: `${panelOffset}px` }}>
               <ul className="space-y-8">
                 {openedItem.panelItems.map((panelItem) => (
-                  <li key={panelItem}>
+                  <li key={panelItem.href}>
                     <Link
-                      href="#"
-                      className="inline-block px-3 text-sm font-medium tracking-[-0.01em] text-white/70 transition-colors hover:text-white"
+                      href={panelItem.href}
+                      onClick={() => setOpenItemId(null)}
+                      className={cn(
+                        'inline-block px-3 text-sm font-medium tracking-[-0.01em] transition-colors',
+                        pathname === panelItem.href ? 'text-white' : 'text-white/70 hover:text-white'
+                      )}
                     >
-                      {panelItem}
+                      {panelItem.label}
                     </Link>
                   </li>
                 ))}
