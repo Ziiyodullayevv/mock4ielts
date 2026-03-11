@@ -1,3 +1,5 @@
+import { QuestionBankShell } from '../question-bank-shell';
+
 export function QuestionBankView() {
-  return <div>QuestionBankView</div>;
+  return <QuestionBankShell />;
 }
