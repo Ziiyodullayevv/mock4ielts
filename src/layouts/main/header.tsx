@@ -117,9 +117,10 @@ export function MainHeader() {
                       );
                     }}
                     className={cn(
-                      'whitespace-nowrap text-shadow-sm px-3 rounded-full hover:backdrop-blur-[20px] py-2 font-normal leading-5.5 text-white/74 transition-all duration-200',
-                      isActive && 'text-link-active',
-                      !isActive && 'hover:bg-white/12 hover:text-white'
+                      'whitespace-nowrap rounded-full px-3 py-2 font-normal leading-5.5 text-shadow-sm transition-all duration-200 hover:backdrop-blur-[20px]',
+                      isActive
+                        ? 'text-link-active'
+                        : 'text-white/74 hover:text-white'
                     )}
                   >
                     {item.label}

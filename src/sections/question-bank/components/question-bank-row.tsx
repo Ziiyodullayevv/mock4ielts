@@ -39,12 +39,23 @@ function QuestionBankRowLock({
     const displayBand = bandScore ?? 6.0;
 
     return (
-      <span className="flex items-center justify-center gap-1" aria-hidden="true">
-        <Award className="size-4 text-[#ffc31a]" strokeWidth={2.1} />
-        <span className="text-sm font-semibold leading-none whitespace-nowrap text-white">
-          {displayBand.toFixed(1)}
-        </span>
-      </span>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <span className="flex items-center justify-center gap-1">
+            <Award className="size-4 text-[#ffc31a]" strokeWidth={2.1} />
+            <span className="text-sm font-semibold leading-none whitespace-nowrap text-white">
+              {displayBand.toFixed(1)}
+            </span>
+          </span>
+        </TooltipTrigger>
+        <TooltipContent
+          side="top"
+          sideOffset={3}
+          className="border border-white/8 bg-white/8 text-white shadow-sm backdrop-blur-2xl"
+        >
+          <p>Band score: {displayBand.toFixed(1)}</p>
+        </TooltipContent>
+      </Tooltip>
     );
   }
 
@@ -77,11 +88,7 @@ export function QuestionBankRow({ index, item }: QuestionBankRowProps) {
   const hasCardBackground = index % 2 === 0;
   const attemptLabel = getAttemptLabel(item.attemptCount);
   const attemptCount = Math.max(0, item.attemptCount ?? 0);
-  const statusTooltipLabel = item.isCompleted
-    ? 'Completed'
-    : attemptCount > 0
-      ? 'In progress'
-      : 'Not started';
+  const statusTooltipLabel = item.isCompleted ? 'Completed' : 'Not completed';
   const attemptTooltipLabel = `${ATTEMPT_TOOLTIP_FORMATTER.format(attemptCount)} ${
     attemptCount === 1 ? 'attempt' : 'attempts'
   }`;
