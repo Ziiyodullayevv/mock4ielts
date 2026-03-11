@@ -1,3 +1,5 @@
+import { SplashScreen } from '@/src/components/loading-screen';
+
 export default function Loading() {
-  return <div>Loading...</div>;
+  return <SplashScreen />;
 }
