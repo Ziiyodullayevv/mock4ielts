@@ -9,6 +9,7 @@ export const paths = {
   practice: {
     listening: {
       root: `${ROOTS.PRACTICE}/listening`,
+      details: (id: string) => `${ROOTS.PRACTICE}/listening/${id}`,
     },
     reading: {
       root: `${ROOTS.PRACTICE}/reading`,

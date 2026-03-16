@@ -13,6 +13,7 @@
     "clsx": "^2.1.1",
     "ldrs": "^1.1.9",
     "lucide-react": "^0.576.0",
+    "mathjs": "^14.9.1",
     "minimal-shared": "^1.1.5",
     "motion": "^12.34.5",
     "next": "16.1.6",
