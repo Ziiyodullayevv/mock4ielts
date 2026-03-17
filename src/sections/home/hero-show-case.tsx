@@ -1,11 +1,11 @@
+import { heroShowCaseSections } from './data';
 import { FeatureCardsSection } from './components/feature-cards';
 import { ReferenceVideoSection } from './components/video-carusel';
-import { heroShowCaseSections, referenceVideoSectionContent } from './data';
 
 export function HeroShowCase() {
   return (
     <>
-      {heroShowCaseSections.map(({ cards, description, title }) => (
+      {heroShowCaseSections.map(({ cards, description, slides, title }) => (
         <section key={title} className="my-50 px-4 text-white sm:px-6 lg:px-10">
           <div className="mx-auto w-full">
             <div className="mx-auto max-w-230">
@@ -20,7 +20,7 @@ export function HeroShowCase() {
                 </p>
               </div>
 
-              <ReferenceVideoSection {...referenceVideoSectionContent} />
+              <ReferenceVideoSection slides={slides} />
             </div>
 
             <div className="max-w-[1200px] mx-auto">
