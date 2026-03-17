@@ -61,6 +61,7 @@ export type ListeningReadingSectionContent = {
   title: string;
   description: string;
   cards: ListeningReadingCardItem[];
+  slides: ReferenceVideoSlide[];
 };
 
 export type GalleryImage = {

@@ -1,85 +1,110 @@
-import type { ReferenceVideoSectionContent, ListeningReadingSectionContent } from '../types';
+import type { ReferenceVideoSlide, ListeningReadingSectionContent } from '../types';
 
 import { Mic, PenTool, BookOpen, Headphones } from 'lucide-react';
 
-export const referenceVideoSectionContent: ReferenceVideoSectionContent = {
-  slides: [
-    {
-      id: 'reference-slide-1',
-      poster: '/assets/hero/posters/hero-2.webp',
-      previewVideo: '/assets/hero/videos/hero-2.mp4',
-      previewVideoAlt: 'Anime style reference composition in a cafe',
-      references: [
-        {
-          alt: 'Character reference one',
-          id: 'reference-slide-1-char-1',
-          image: '/assets/hero/posters/hero-2.webp',
-        },
-        {
-          alt: 'Object reference',
-          id: 'reference-slide-1-object',
-          image: '/assets/hero/posters/hero-1.webp',
-        },
-        {
-          alt: 'Character reference two',
-          id: 'reference-slide-1-char-2',
-          image: '/assets/hero/posters/hero-3.webp',
-        },
-      ],
-    },
-    {
-      id: 'reference-slide-2',
-      poster: '/assets/hero/posters/hero-1.webp',
-      previewVideo: '/assets/hero/videos/hero-1.mp4',
-      previewVideoAlt: 'Desert scene generated from character and style references',
-      references: [
-        {
-          alt: 'Desert reference',
-          id: 'reference-slide-2-desert',
-          image: '/assets/hero/posters/hero-1.webp',
-        },
-        {
-          alt: 'Robotics reference',
-          id: 'reference-slide-2-robot',
-          image: '/assets/hero/posters/hero-4.webp',
-        },
-        {
-          alt: 'Lighting reference',
-          id: 'reference-slide-2-light',
-          image: '/assets/hero/posters/hero-5.webp',
-        },
-      ],
-    },
-    {
-      id: 'reference-slide-3',
-      poster: '/assets/hero/posters/hero-3.webp',
-      previewVideo: '/assets/hero/videos/hero-3.mp4',
-      previewVideoAlt: 'Mechanical city visual assembled with references',
-      references: [
-        {
-          alt: 'City reference',
-          id: 'reference-slide-3-city',
-          image: '/assets/hero/posters/hero-3.webp',
-        },
-        {
-          alt: 'Character style reference',
-          id: 'reference-slide-3-character',
-          image: '/assets/hero/posters/hero-2.webp',
-        },
-        {
-          alt: 'Mood reference',
-          id: 'reference-slide-3-mood',
-          image: '/assets/hero/posters/hero-6.png',
-        },
-      ],
-    },
-  ],
-};
+const listeningReadingSlides: ReferenceVideoSlide[] = [
+  {
+    id: 'reference-slide-1',
+    poster: '/assets/home/carusel/posters/listening-1.png',
+    previewVideo: '/assets/home/carusel/videos/listening-1.mp4',
+    previewVideoAlt: 'IELTS listening practice carousel preview',
+    references: [
+      {
+        alt: 'Listening poster',
+        id: 'reference-slide-1-char-1',
+        image: '/assets/home/carusel/posters/listening-1.png',
+      },
+      {
+        alt: 'Reading poster',
+        id: 'reference-slide-1-object',
+        image: '/assets/home/carusel/posters/reading-1.png',
+      },
+      {
+        alt: 'Writing poster',
+        id: 'reference-slide-1-char-2',
+        image: '/assets/home/carusel/posters/writing-1.png',
+      },
+    ],
+  },
+  {
+    id: 'reference-slide-2',
+    poster: '/assets/home/carusel/posters/reading-1.png',
+    previewVideo: '/assets/home/carusel/videos/reading-1.mp4',
+    previewVideoAlt: 'IELTS reading practice carousel preview',
+    references: [
+      {
+        alt: 'Reading poster',
+        id: 'reference-slide-2-desert',
+        image: '/assets/home/carusel/posters/reading-1.png',
+      },
+      {
+        alt: 'Speaking poster',
+        id: 'reference-slide-2-robot',
+        image: '/assets/home/carusel/posters/speaking-1.png',
+      },
+      {
+        alt: 'Listening poster',
+        id: 'reference-slide-2-light',
+        image: '/assets/home/carusel/posters/listening-1.png',
+      },
+    ],
+  },
+];
+
+const writingSpeakingSlides: ReferenceVideoSlide[] = [
+  {
+    id: 'reference-slide-3',
+    poster: '/assets/home/carusel/posters/writing-1.png',
+    previewVideo: '/assets/home/carusel/videos/writing-1.mp4',
+    previewVideoAlt: 'IELTS writing practice carousel preview',
+    references: [
+      {
+        alt: 'Writing poster',
+        id: 'reference-slide-3-city',
+        image: '/assets/home/carusel/posters/writing-1.png',
+      },
+      {
+        alt: 'Listening poster',
+        id: 'reference-slide-3-character',
+        image: '/assets/home/carusel/posters/listening-1.png',
+      },
+      {
+        alt: 'Speaking poster',
+        id: 'reference-slide-3-mood',
+        image: '/assets/home/carusel/posters/speaking-1.png',
+      },
+    ],
+  },
+  {
+    id: 'reference-slide-4',
+    poster: '/assets/home/carusel/posters/speaking-1.png',
+    previewVideo: '/assets/home/carusel/videos/speaking-1.mp4',
+    previewVideoAlt: 'IELTS speaking practice carousel preview',
+    references: [
+      {
+        alt: 'Speaking poster',
+        id: 'reference-slide-4-speaking',
+        image: '/assets/home/carusel/posters/speaking-1.png',
+      },
+      {
+        alt: 'Reading poster',
+        id: 'reference-slide-4-reading',
+        image: '/assets/home/carusel/posters/reading-1.png',
+      },
+      {
+        alt: 'Writing poster',
+        id: 'reference-slide-4-writing',
+        image: '/assets/home/carusel/posters/writing-1.png',
+      },
+    ],
+  },
+];
 
 export const listeningReadingSection: ListeningReadingSectionContent = {
   title: 'Listening & Reading',
   description:
     'Strengthen your IELTS listening and reading skills with real exam-style questions and timed practice.',
+  slides: listeningReadingSlides,
   cards: [
     {
       title: 'Listening',
@@ -108,6 +133,7 @@ export const writingSpeakingSection: ListeningReadingSectionContent = {
   title: 'Writing & Speaking',
   description:
     'Improve your writing and speaking skills with realistic IELTS tasks and exam-style practice.',
+  slides: writingSpeakingSlides,
   cards: [
     {
       title: 'Writing',

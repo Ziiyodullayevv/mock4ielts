@@ -2,63 +2,63 @@ import type { GalleryImage } from '../types';
 
 export const galleryImages: GalleryImage[] = [
   {
-    src: 'https://image01.cf.vidu.studio/vidu/media-asset/banner2-475f6572.webp',
+    src: '/assets/home/gallery/image-1.avif',
     alt: 'why-vidu-1',
   },
   {
-    src: 'https://image01.cf.vidu.studio/vidu/media-asset/banner1-3b82d2a0.webp',
+    src: '/assets/home/gallery/image-2.webp',
     alt: 'why-vidu-2',
   },
   {
-    src: 'https://image01.cf.vidu.studio/vidu/media-asset/banner5-da9a12cd.webp',
+    src: '/assets/home/gallery/image-3.jpg',
     alt: 'why-vidu-3',
   },
   {
-    src: 'https://image01.cf.vidu.studio/vidu/media-asset/ability1-a069c598.webp',
+    src: '/assets/home/gallery/image-4.jpg',
     alt: 'why-vidu-4',
   },
   {
-    src: 'https://image01.cf.vidu.studio/vidu/media-asset/ability2-2b4b27f3.webp',
+    src: '/assets/home/gallery/image-5.jpg',
     alt: 'why-vidu-5',
   },
   {
-    src: 'https://image01.cf.vidu.studio/vidu/media-asset/ability3-205cb51b.webp',
+    src: '/assets/home/gallery/image-6.jpg',
     alt: 'why-vidu-6',
   },
   {
-    src: 'https://image01.cf.vidu.studio/vidu/media-asset/advantage1-b72397f4.webp',
+    src: '/assets/home/gallery/image-7.webp',
     alt: 'why-vidu-7',
   },
   {
-    src: 'https://image01.cf.vidu.studio/vidu/media-asset/advantage2-d513cd5c.webp',
+    src: '/assets/home/gallery/image-8.webp',
     alt: 'why-vidu-8',
   },
   {
-    src: 'https://image01.cf.vidu.studio/vidu/media-asset/advantage3-818b9c52.webp',
+    src: '/assets/home/gallery/image-9.jpg',
     alt: 'why-vidu-9',
   },
   {
-    src: 'https://image01.cf.vidu.studio/vidu/media-asset/scene1-81572fce.webp',
+    src: '/assets/home/gallery/image-10.jpg',
     alt: 'why-vidu-10',
   },
   {
-    src: 'https://image01.cf.vidu.studio/vidu/media-asset/scene3-bc6635ad.webp',
+    src: '/assets/home/gallery/image-11.jpg',
     alt: 'why-vidu-11',
   },
   {
-    src: 'https://image01.cf.vidu.studio/vidu/media-asset/scene2-2cde166f.webp',
+    src: '/assets/home/gallery/image-12.jpg',
     alt: 'why-vidu-12',
   },
   {
-    src: 'https://image01.cf.vidu.studio/vidu/media-asset/last-935b4a6c.webp',
+    src: '/assets/home/gallery/image-13.jpg',
     alt: 'why-vidu-13',
   },
   {
-    src: 'https://image01.cf.vidu.studio/vidu/media-asset/banner2-475f6572.webp',
+    src: '/assets/home/gallery/image-14.avif',
     alt: 'why-vidu-14',
   },
   {
-    src: 'https://image01.cf.vidu.studio/vidu/media-asset/banner1-3b82d2a0.webp',
+    src: '/assets/home/gallery/image-15.webp',
     alt: 'why-vidu-15',
   },
 ];
