@@ -1,0 +1,15 @@
+services:
+  frontend:
+    image: ghcr.io/ziiyodullayevv/mock4ielts:latest
+    container_name: mock4ielts-frontend
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:3000:3000"
+    environment:
+      - NODE_ENV=production
+      - NEXT_PUBLIC_API_URL=https://mockapi.mock4ielts.uz
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:3000"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
