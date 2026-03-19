@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef, useEffect } from 'react';
+import { useRef, useEffect, useCallback } from 'react';
 import { Volume1, Volume2, VolumeX } from 'lucide-react';
 
 import { useListeningHeaderAudio } from './use-listening-header-audio';
@@ -26,10 +26,10 @@ export function ListeningHeaderAudio({ audioUrl }: ListeningHeaderAudioProps) {
   const VolumeIcon = volume === 0 ? VolumeX : volume < 50 ? Volume1 : Volume2;
   const isFilled = volume > 50;
 
-  const resetAutoClose = () => {
+  const resetAutoClose = useCallback(() => {
     if (autoCloseTimer.current) clearTimeout(autoCloseTimer.current);
     autoCloseTimer.current = setTimeout(() => setIsVolumeOpen(false), 3000);
-  };
+  }, [setIsVolumeOpen]);
 
   useEffect(() => {
     if (isVolumeOpen) resetAutoClose();
@@ -37,7 +37,7 @@ export function ListeningHeaderAudio({ audioUrl }: ListeningHeaderAudioProps) {
     return () => {
       if (autoCloseTimer.current) clearTimeout(autoCloseTimer.current);
     };
-  }, [isVolumeOpen]);
+  }, [isVolumeOpen, resetAutoClose]);
 
   const handleInteraction = () => {
     if (isVolumeOpen) resetAutoClose();
