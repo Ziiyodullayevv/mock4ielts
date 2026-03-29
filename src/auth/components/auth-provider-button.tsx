@@ -2,14 +2,18 @@ import type { ReactNode } from 'react';
 
 type AuthProviderButtonProps = {
   children: ReactNode;
+  disabled?: boolean;
   icon: ReactNode;
+  loading?: boolean;
   onClick?: () => void;
   variant?: 'solid' | 'subtle';
 };
 
 export function AuthProviderButton({
   children,
+  disabled = false,
   icon,
+  loading = false,
   onClick,
   variant = 'solid',
 }: AuthProviderButtonProps) {
@@ -22,10 +26,11 @@ export function AuthProviderButton({
     <button
       type="button"
       onClick={onClick}
+      disabled={disabled || loading}
       className={`inline-flex h-12 w-full items-center justify-center whitespace-nowrap rounded-lg px-4 py-2 text-base font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${className}`}
     >
       {icon}
-      {children}
+      {loading ? 'Please wait...' : children}
     </button>
   );
 }

@@ -97,7 +97,7 @@ export function QuestionBankRow({ index, item }: QuestionBankRowProps) {
     <Link
       href={item.href}
       className={cn(
-        'group flex min-h-3 items-center gap-4 rounded-xl px-5 py-2.5 transition-colors duration-200',
+        'group flex min-h-3 items-center gap-4 rounded-xl px-5 py-3 transition-colors duration-200',
         hasCardBackground ? 'bg-white/8' : 'bg-transparent'
       )}
     >
@@ -121,9 +121,14 @@ export function QuestionBankRow({ index, item }: QuestionBankRowProps) {
           </TooltipContent>
         </Tooltip>
 
-        <h3 className="truncate text-sm font-semibold tracking-[-0.03em]">
-          {item.id}. {item.title}
-        </h3>
+        <div className="min-w-0">
+          <h3 className="truncate text-sm font-semibold tracking-[-0.03em]">
+            {item.id}. {item.title}
+          </h3>
+          {item.subtitle ? (
+            <p className="mt-1 truncate text-xs tracking-[-0.02em] text-white/52">{item.subtitle}</p>
+          ) : null}
+        </div>
       </div>
 
       <div className="ml-3 grid shrink-0 grid-cols-[7.3rem_7.6rem_4.5rem_2.25rem] items-center gap-x-2.5 sm:ml-4 sm:gap-x-3">

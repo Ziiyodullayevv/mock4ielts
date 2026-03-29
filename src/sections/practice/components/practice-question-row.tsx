@@ -37,7 +37,9 @@ export function PracticeQuestionRow({
 }: PracticeQuestionRowProps) {
   const [isInfoOpen, setIsInfoOpen] = useState(false);
   const hasCardBackground = index % 2 === 0;
-  const attemptLabel = ATTEMPT_COUNT_FORMATTER.format(item.attemptCount).toLowerCase();
+  const attemptLabel = item.questionCount
+    ? `${item.questionCount} q`
+    : ATTEMPT_COUNT_FORMATTER.format(item.attemptCount).toLowerCase();
   const requiredTokenCount = item.tokenCost ?? 0;
 
   return (
@@ -146,11 +148,11 @@ export function PracticeQuestionRow({
             <div className="flex flex-wrap items-center gap-2 text-sm">
               <span className="inline-flex items-center gap-2 rounded-full bg-white/8 px-3 py-1.5 font-medium text-white/95">
                 <Headphones className="size-4 text-[#ff9f2f]" />
-                40 Questions
+                {item.questionCount ?? 40} Questions
               </span>
               <span className="inline-flex items-center gap-2 rounded-full bg-white/8 px-3 py-1.5 font-medium text-white/95">
                 <Timer className="size-4 text-[#ff9f2f]" />
-                35 minutes
+                {item.durationMinutes ?? 35} minutes
               </span>
               <span className="inline-flex items-center gap-2 rounded-full bg-white/8 px-3 py-1.5 font-medium text-[#0f9cff]">
                 <TokenIcon className="text-[15px]" />

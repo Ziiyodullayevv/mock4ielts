@@ -2,12 +2,16 @@ import { Funnel, Search, Shuffle, ArrowUpDown } from 'lucide-react';
 
 type QuestionBankToolbarProps = {
   completed: number;
+  isRefreshing?: boolean;
+  onRefresh?: () => void;
   progressPercent: number;
   total: number;
 };
 
 export function QuestionBankToolbar({
   completed,
+  isRefreshing = false,
+  onRefresh,
   progressPercent,
   total,
 }: QuestionBankToolbarProps) {
@@ -58,10 +62,12 @@ export function QuestionBankToolbar({
 
         <button
           type="button"
-          className="flex size-11 hover:bg-white/8 items-center justify-center rounded-full text-white/52"
+          className="flex size-11 items-center justify-center rounded-full text-white/52 transition-colors hover:bg-white/8 disabled:cursor-not-allowed disabled:opacity-60"
           aria-label="Refresh question bank"
+          disabled={isRefreshing}
+          onClick={onRefresh}
         >
-          <Shuffle className="size-4" />
+          <Shuffle className={isRefreshing ? 'size-4 animate-spin' : 'size-4'} />
         </button>
       </div>
     </div>

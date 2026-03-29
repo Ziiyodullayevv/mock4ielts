@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 
-import { MockExamsView } from '@/sections/mock-exams/view';
+import { MockExamsView } from '@/sections/mock-exams/view/mock-exams-view';
 
 export const metadata: Metadata = {
   title: 'Mock Exams',

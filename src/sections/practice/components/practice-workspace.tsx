@@ -17,12 +17,18 @@ type PracticeWindow = Window & {
 };
 
 type PracticeWorkspaceProps = {
+  emptyMessage?: string;
+  errorMessage?: string | null;
+  isLoading?: boolean;
   overview: PracticeOverview;
   questions: PracticeQuestionItem[];
   searchPlaceholder?: string;
 };
 
 export function PracticeWorkspace({
+  emptyMessage = 'No practice items found.',
+  errorMessage,
+  isLoading = false,
   overview,
   questions,
   searchPlaceholder,
@@ -163,6 +169,25 @@ export function PracticeWorkspace({
               onSortKeyChange={handleSortKeyChange}
               onStatusFilterChange={handleStatusFilterChange}
             />
+
+            {errorMessage ? (
+              <div className="rounded-2xl border border-red-400/20 bg-red-400/8 px-4 py-4 text-sm text-red-200">
+                {errorMessage}
+              </div>
+            ) : null}
+
+            {!errorMessage && isLoading && !sortedQuestions.length ? (
+              <div className="rounded-2xl bg-white/6 px-4 py-4 text-sm text-white/64">
+                Loading listening sections...
+              </div>
+            ) : null}
+
+            {!errorMessage && !isLoading && !sortedQuestions.length ? (
+              <div className="rounded-2xl bg-white/6 px-4 py-4 text-sm text-white/64">
+                {emptyMessage}
+              </div>
+            ) : null}
+
             <PracticeQuestionsList
               items={sortedQuestions}
               animateRows={isRowsAnimationActive}
