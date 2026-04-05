@@ -20,5 +20,18 @@ jobs:
           script: |
             cd /opt/mock4ielts-frontend
             docker compose pull
-            docker compose up -d
+            docker compose up -d --force-recreate
             docker image prune -f
+
+            # Health check
+            for i in 1 2 3 4 5 6; do
+              sleep 5
+              if curl -sf http://127.0.0.1:3000 > /dev/null; then
+                echo "Health check PASSED (attempt $i)"
+                exit 0
+              fi
+              echo "Waiting for app... (attempt $i)"
+            done
+            echo "Health check FAILED after 30s"
+            docker compose logs --tail=20
+            exit 1
