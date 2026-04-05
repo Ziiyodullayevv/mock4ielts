@@ -37,13 +37,13 @@ export function AuthEmailForm({
 
   return (
     <form
-      className="flex w-full flex-col items-center gap-8 pt-10 max-lg:pt-6"
+      className="flex w-full flex-col items-center gap-8 pt-10 max-lg:pt-6 max-sm:gap-6"
       onSubmit={handleSubmit(onSubmit)}
     >
       <div className="w-full">
         <input
           type="email"
-          className="flex h-12 w-full rounded-lg border border-white/12 bg-white/[0.08] px-6 py-2.5 text-sm text-white placeholder:text-white/[0.64] focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-60"
+          className="flex h-12 w-full rounded-lg border border-white/12 bg-white/[0.08] px-6 py-2.5 text-sm text-white placeholder:text-white/[0.64] focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-60 max-sm:px-4"
           placeholder="Email address"
           disabled={isSubmitting}
           {...register('email')}

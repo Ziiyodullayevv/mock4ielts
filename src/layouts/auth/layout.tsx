@@ -11,13 +11,13 @@ type Props = {
 
 export function AuthLayout({ children }: Props) {
   return (
-    <div className="relative h-screen w-screen overflow-hidden">
+    <div className="relative min-h-[100svh] w-full overflow-x-hidden sm:h-screen sm:w-screen sm:overflow-hidden">
       <AuthBackgroundMedia
         posterSrc={AUTH_BACKGROUND_POSTER}
         videoSrc={AUTH_BACKGROUND_VIDEO}
       />
 
-      <div className="relative z-10 h-full w-full">{children}</div>
+      <div className="relative z-10 min-h-[100svh] w-full sm:h-full">{children}</div>
     </div>
   );
 }

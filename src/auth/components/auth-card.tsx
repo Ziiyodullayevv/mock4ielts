@@ -152,31 +152,31 @@ export function AuthCard() {
   return (
     <div
       className={cn(
-        'flex min-h-168 max-w-125 shrink-0 flex-col rounded-xl bg-black/40 px-6 text-center shadow-sm backdrop-blur-[50px] max-lg:w-100 max-md:w-full max-md:max-w-125',
-        view === 'providers' ? 'px-18' : 'px-6'
+        'flex min-h-168 max-w-125 shrink-0 flex-col rounded-xl bg-black/40 px-6 text-center shadow-sm backdrop-blur-[50px] max-lg:w-100 max-sm:min-h-0 max-sm:w-full max-sm:max-w-125',
+        view === 'providers' ? 'px-18 max-sm:px-4' : 'px-6 max-sm:px-4'
       )}
     >
-      <div className="flex flex-1 flex-col py-6 max-lg:py-5">
+      <div className="flex flex-1 flex-col py-6 max-lg:py-5 max-sm:py-4">
         <div className="flex w-full items-center">
           {view !== 'providers' ? (
             <button
               type="button"
               aria-label="Go back"
               onClick={handleBack}
-              className=" text-white -ml-2.5 transition-opacity hover:opacity-80"
+              className="-ml-2.5 text-white transition-opacity hover:opacity-80 max-sm:-ml-1"
             >
               <ChevronLeft className="size-8" strokeWidth={2.5} />
             </button>
           ) : null}
         </div>
 
-        <div className="flex flex-1 flex-col items-center p-0 pt-8 pb-4 max-lg:pt-4">
+        <div className="flex flex-1 flex-col items-center p-0 pt-8 pb-4 max-lg:pt-4 max-sm:pb-2">
           <AuthBrandBadge />
 
           <h3 className="text-center text-2xl font-semibold leading-none tracking-tight">
             {view === 'verification' ? (
               <>
-                <div className="text-[28px] leading-10 font-medium text-white max-lg:text-2xl">
+                <div className="text-[28px] leading-10 font-medium text-white max-lg:text-2xl max-sm:text-[24px] max-sm:leading-8">
                   Verification Code
                 </div>
                 <div className="mt-2 text-base leading-6 font-normal text-white/[0.64] max-lg:text-sm">
@@ -185,7 +185,7 @@ export function AuthCard() {
               </>
             ) : (
               <>
-                <div className="text-[28px] leading-10 font-medium text-white max-lg:text-2xl">
+                <div className="text-[28px] leading-10 font-medium text-white max-lg:text-2xl max-sm:text-[24px] max-sm:leading-8">
                   Log in or sign up for free!
                 </div>
                 <div className="mt-2 text-base leading-6 font-normal text-white/[0.64] max-lg:text-sm">
