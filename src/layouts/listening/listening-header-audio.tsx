@@ -1,5 +1,6 @@
 'use client';
 
+import { cn } from '@/src/lib/utils';
 import { useRef, useEffect, useCallback } from 'react';
 import { Volume1, Volume2, VolumeX } from 'lucide-react';
 
@@ -7,9 +8,10 @@ import { useListeningHeaderAudio } from './use-listening-header-audio';
 
 type ListeningHeaderAudioProps = {
   audioUrl?: string;
+  triggerClassName?: string;
 };
 
-export function ListeningHeaderAudio({ audioUrl }: ListeningHeaderAudioProps) {
+export function ListeningHeaderAudio({ audioUrl, triggerClassName }: ListeningHeaderAudioProps) {
   const {
     audioRef,
     controlRef,
@@ -53,7 +55,10 @@ export function ListeningHeaderAudio({ audioUrl }: ListeningHeaderAudioProps) {
       <button
         type="button"
         onClick={() => setIsVolumeOpen((s) => !s)}
-        className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-border/30 bg-white text-stone-600 shadow-md transition-all duration-200 hover:bg-stone-100 hover:text-stone-900"
+        className={cn(
+          'inline-flex h-9 w-10 items-center justify-center rounded-full text-stone-700 transition-all duration-200 hover:bg-stone-100 hover:text-stone-900',
+          triggerClassName
+        )}
         aria-expanded={isVolumeOpen}
         aria-label="Open audio controls"
       >

@@ -3,8 +3,8 @@ const ROOTS = {
 };
 
 export const paths = {
-  questionBank: {
-    root: '/question-bank',
+  profile: {
+    root: '/my-profile',
   },
   practice: {
     listening: {

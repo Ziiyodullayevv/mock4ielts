@@ -8,8 +8,6 @@ import { PracticeOverviewCard } from './practice-overview-card';
 import { PracticeQuestionsList } from './practice-questions-list';
 import { PracticeQuestionsToolbar } from './practice-questions-toolbar';
 
-export type PracticeSortKey = 'attempts' | 'custom' | 'question-id' | 'standard';
-export type PracticeSortDirection = 'asc' | 'desc';
 export type PracticeStatusFilter = 'all' | 'completed' | 'uncompleted';
 
 type PracticeWindow = Window & {
@@ -36,8 +34,6 @@ export function PracticeWorkspace({
   const [rowsAnimationSeed, setRowsAnimationSeed] = useState(0);
   const [isRowsAnimationActive, setIsRowsAnimationActive] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
-  const [sortKey, setSortKey] = useState<PracticeSortKey>('custom');
-  const [sortDirection, setSortDirection] = useState<PracticeSortDirection>('asc');
   const [statusFilter, setStatusFilter] = useState<PracticeStatusFilter>('all');
   const rowsAnimationTimerRef = useRef<number | null>(null);
 
@@ -78,23 +74,6 @@ export function PracticeWorkspace({
     return () => window.cancelAnimationFrame(animationFrameId);
   }, [triggerRowsAnimation]);
 
-  const handleSortKeyChange = (nextSortKey: PracticeSortKey) => {
-    setSortKey(nextSortKey);
-
-    if (nextSortKey === 'attempts') {
-      setSortDirection('desc');
-    } else if (nextSortKey === 'question-id') {
-      setSortDirection('asc');
-    }
-
-    triggerRowsAnimation();
-  };
-
-  const handleSortDirectionChange = (nextSortDirection: PracticeSortDirection) => {
-    setSortDirection(nextSortDirection);
-    triggerRowsAnimation();
-  };
-
   const handleStatusFilterChange = (nextStatusFilter: PracticeStatusFilter) => {
     setStatusFilter(nextStatusFilter);
     triggerRowsAnimation();
@@ -106,67 +85,34 @@ export function PracticeWorkspace({
     setSearchTerm(nextSearchTerm);
   };
 
-  const sortedQuestions = useMemo(() => {
+  const filteredQuestions = useMemo(() => {
     const normalizedSearchTerm = searchTerm.trim().toLowerCase();
 
-    const withIndex = questions
-      .map((item, index) => ({ index, item }))
-      .filter(({ item }) => {
-        const matchesSearch =
-          !normalizedSearchTerm ||
-          item.title.toLowerCase().includes(normalizedSearchTerm) ||
-          String(item.id).includes(normalizedSearchTerm);
+    return questions.filter((item) => {
+      const matchesSearch =
+        !normalizedSearchTerm ||
+        item.title.toLowerCase().includes(normalizedSearchTerm) ||
+        String(item.id).includes(normalizedSearchTerm);
 
-        if (!matchesSearch) return false;
-        if (statusFilter === 'all') return true;
-        if (statusFilter === 'completed') return Boolean(item.isCompleted);
-        return !item.isCompleted;
-      });
-
-    const directionFactor = sortDirection === 'asc' ? 1 : -1;
-
-    const sorted = [...withIndex].sort((left, right) => {
-      if (sortKey === 'custom') {
-        return (left.index - right.index) * directionFactor;
-      }
-
-      if (sortKey === 'question-id') {
-        return (left.item.id - right.item.id) * directionFactor;
-      }
-
-      if (sortKey === 'attempts') {
-        return (left.item.attemptCount - right.item.attemptCount) * directionFactor;
-      }
-
-      const leftCompleted = left.item.isCompleted ? 1 : 0;
-      const rightCompleted = right.item.isCompleted ? 1 : 0;
-
-      if (leftCompleted !== rightCompleted) {
-        return (rightCompleted - leftCompleted) * directionFactor;
-      }
-
-      return (left.item.id - right.item.id) * directionFactor;
+      if (!matchesSearch) return false;
+      if (statusFilter === 'all') return true;
+      if (statusFilter === 'completed') return Boolean(item.isCompleted);
+      return !item.isCompleted;
     });
-
-    return sorted.map(({ item }) => item);
-  }, [questions, searchTerm, sortDirection, sortKey, statusFilter]);
+  }, [questions, searchTerm, statusFilter]);
 
   return (
     <main className="min-h-screen pt-25 text-sm">
-      <div className="mx-auto w-full max-w-[1200px] px-5 xl:px-10">
-        <div className="grid items-start gap-5 xl:grid-cols-[24rem_minmax(0,1fr)]">
-          <PracticeOverviewCard className="xl:sticky xl:top-28 xl:self-start" overview={overview} />
+      <div className="mx-auto w-full max-w-300 px-5 xl:px-10">
+        <div className="grid items-start gap-5 md:grid-cols-[21rem_minmax(0,1fr)] lg:grid-cols-[22.5rem_minmax(0,1fr)] xl:grid-cols-[24rem_minmax(0,1fr)]">
+          <PracticeOverviewCard className="md:sticky md:top-28 md:self-start" overview={overview} />
 
           <section className="space-y-3">
             <PracticeQuestionsToolbar
               searchTerm={searchTerm}
               statusFilter={statusFilter}
               searchPlaceholder={searchPlaceholder}
-              sortDirection={sortDirection}
-              sortKey={sortKey}
               onSearchTermChange={handleSearchTermChange}
-              onSortDirectionChange={handleSortDirectionChange}
-              onSortKeyChange={handleSortKeyChange}
               onStatusFilterChange={handleStatusFilterChange}
             />
 
@@ -176,20 +122,20 @@ export function PracticeWorkspace({
               </div>
             ) : null}
 
-            {!errorMessage && isLoading && !sortedQuestions.length ? (
+            {!errorMessage && isLoading && !filteredQuestions.length ? (
               <div className="rounded-2xl bg-white/6 px-4 py-4 text-sm text-white/64">
-                Loading listening sections...
+                {`Loading ${overview.title.toLowerCase()} sections...`}
               </div>
             ) : null}
 
-            {!errorMessage && !isLoading && !sortedQuestions.length ? (
+            {!errorMessage && !isLoading && !filteredQuestions.length ? (
               <div className="rounded-2xl bg-white/6 px-4 py-4 text-sm text-white/64">
                 {emptyMessage}
               </div>
             ) : null}
 
             <PracticeQuestionsList
-              items={sortedQuestions}
+              items={filteredQuestions}
               animateRows={isRowsAnimationActive}
               animationSeed={rowsAnimationSeed}
             />

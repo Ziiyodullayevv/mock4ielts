@@ -1,42 +1,47 @@
 import { cn } from '@/src/lib/utils';
 
+import { AuthGoogleButton } from './auth-google-button';
 import { AuthProviderButton } from './auth-provider-button';
-import { AppleIcon, EmailIcon, GoogleIcon } from './auth-provider-icons';
+import { AppleIcon, EmailIcon } from './auth-provider-icons';
 
 type AuthProviderGroupProps = {
   errorMessage?: string | null;
+  googleClientId: string;
   infoMessage?: string | null;
   invitationCode: string;
   isApplePending?: boolean;
   isGooglePending?: boolean;
   onAppleClick: () => void;
   onEmailClick: () => void;
-  onGoogleClick: () => void;
+  onGoogleCredential: (idToken: string) => Promise<void> | void;
+  onGoogleError: (message: string) => void;
   onInvitationCodeChange: (value: string) => void;
 };
 
 export function AuthProviderGroup({
   errorMessage,
+  googleClientId,
   infoMessage,
   invitationCode,
   isApplePending = false,
   isGooglePending = false,
   onAppleClick,
   onEmailClick,
-  onGoogleClick,
+  onGoogleCredential,
+  onGoogleError,
   onInvitationCodeChange,
 }: AuthProviderGroupProps) {
   const isBusy = isApplePending || isGooglePending;
 
   return (
     <div className="flex w-full flex-col items-center gap-5 pt-10 max-lg:gap-6 max-lg:pt-6">
-      <AuthProviderButton
-        icon={<GoogleIcon />}
+      <AuthGoogleButton
+        clientId={googleClientId}
+        disabled={isApplePending}
         loading={isGooglePending}
-        onClick={onGoogleClick}
-      >
-        Continue with Google
-      </AuthProviderButton>
+        onCredential={onGoogleCredential}
+        onError={onGoogleError}
+      />
 
       <AuthProviderButton icon={<AppleIcon />} loading={isApplePending} onClick={onAppleClick}>
         Continue with Apple

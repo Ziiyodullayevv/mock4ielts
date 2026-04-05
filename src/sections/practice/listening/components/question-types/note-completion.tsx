@@ -4,7 +4,12 @@ import type { NoteSection } from '../../types';
 
 import { CompletionInput } from './completion-input';
 import { getListeningQuestionAnchorId } from '../../utils';
-import { PaperPanel, PAPER_ROW_CLASS_NAME } from './paper-shell';
+import {
+  PaperPanel,
+  QuestionNumberBadge,
+  PAPER_ROW_CLASS_NAME,
+  PAPER_DIVIDER_CLASS_NAME,
+} from './paper-shell';
 
 interface Props {
   activeQuestionId?: string | null;
@@ -25,36 +30,33 @@ export function NoteCompletion({
 }: Props) {
   return (
     <PaperPanel title={noteTitle ?? 'Notes'}>
-      <div className="divide-y divide-white/65">
+      <div className={PAPER_DIVIDER_CLASS_NAME}>
         {sections.map((section, sectionIndex) => (
           <div key={sectionIndex}>
             {section.heading ? (
-              <div className="border-b border-white/65 px-8 py-4">
+              <div className="border-b border-[#dfdfdf] px-5 py-4 sm:px-8">
                 <p className="text-xs font-semibold uppercase tracking-[0.2em] text-stone-500">
                   {section.heading}
                 </p>
               </div>
             ) : null}
 
-            <ul className="divide-y divide-white/65">
+            <ul className={PAPER_DIVIDER_CLASS_NAME}>
               {section.bullets.map((bullet, bulletIndex) => (
                 <li
                   key={bulletIndex}
                   id={bullet.field ? getListeningQuestionAnchorId(bullet.field.id) : undefined}
-                  className={`${PAPER_ROW_CLASS_NAME} scroll-mt-28 flex items-start gap-3`}
+                  className={`${PAPER_ROW_CLASS_NAME} scroll-mt-28 !py-4`}
                 >
-                  <span className="mt-3 h-1.5 w-1.5 shrink-0 rounded-full bg-stone-500" />
-                  <div className="flex flex-wrap items-center gap-1.5 text-[1.05rem] leading-9 text-stone-800">
+                  <div className="flex flex-wrap items-center gap-1 text-[1.05rem] leading-8 text-stone-800">
                     <span>{bullet.text}</span>
                     {bullet.field ? (
                       <>
-                        <span
-                          className={`font-semibold ${
-                            bullet.field.id === activeQuestionId ? 'text-blue-600' : 'text-stone-800'
-                          }`}
-                        >
-                          ({bullet.field.number})
-                        </span>
+                        <QuestionNumberBadge
+                          isActive={bullet.field.id === activeQuestionId}
+                          number={bullet.field.number}
+                          size="xs"
+                        />
                         <CompletionInput
                           field={bullet.field}
                           value={answers[bullet.field.id] ?? ''}

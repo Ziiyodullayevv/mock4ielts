@@ -1,6 +1,8 @@
 'use client';
 
+import Link from 'next/link';
 import Image from 'next/image';
+import { paths } from '@/src/routes/paths';
 import { useRef, useState, useEffect } from 'react';
 import { Button } from '@/src/components/ui/button';
 
@@ -55,7 +57,7 @@ export function HomeHero() {
   }, [activeSlide]);
 
   return (
-    <section className="relative h-screen min-h-155 w-full overflow-hidden bg-black text-white">
+    <section className="relative h-[660px] w-full overflow-hidden bg-black text-white lg:h-screen lg:min-h-155">
       <div className="absolute inset-0">
         {HERO_SLIDES.map((slide, index) => {
           const isActive = index === activeSlide;
@@ -98,7 +100,27 @@ export function HomeHero() {
         })}
       </div>
 
-      <div className="relative z-10 mx-auto flex h-full w-full max-w-7xl flex-col items-center justify-end pb-40 px-6 text-center">
+      <div className="absolute inset-0 lg:bg-[linear-gradient(180deg,rgba(0,0,0,0.14)_0%,rgba(0,0,0,0.04)_34%,rgba(0,0,0,0.24)_100%)]" />
+
+      <div className="relative z-10 flex h-[660px] w-full flex-col justify-end px-6 pb-22 pt-28 text-center lg:hidden">
+        <h1 className="mx-auto max-w-[19rem] text-[3.15rem] font-semibold leading-[0.92] tracking-[-0.065em] text-white text-shadow-sm">
+          Reach your target IELTS score
+        </h1>
+
+        <p className="mx-auto mt-5 max-w-[22rem] text-lg font-medium leading-7 text-white/92 text-shadow-sm">
+          All-in-one IELTS practice platform — fast, realistic, and effective
+        </p>
+
+        <Button
+          asChild
+          className="mx-auto mt-8 h-14 w-full max-w-[14rem] rounded-full text-base font-semibold"
+          variant="black"
+        >
+          <Link href={paths.mockExam.root}>Try Now</Link>
+        </Button>
+      </div>
+
+      <div className="relative z-10 mx-auto hidden h-full w-full max-w-7xl flex-col items-center justify-end px-6 pb-40 text-center lg:flex">
         <h1 className="max-w-5xl text-4xl text-shadow-sm font-semibold leading-[1.04] tracking-[-0.02em] text-white sm:text-6xl md:text-7xl">
           Reach your target IELTS score
         </h1>
@@ -123,7 +145,9 @@ export function HomeHero() {
             {HERO_SLIDES[activeSlide].prompt}
           </p>
 
-          <Button variant="black">Try Now</Button>
+          <Button asChild className="h-11 rounded-full px-5 text-sm font-semibold" variant="black">
+            <Link href={paths.mockExam.root}>Try Now</Link>
+          </Button>
         </div>
       </div>
 

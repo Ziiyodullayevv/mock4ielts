@@ -2,8 +2,13 @@
 
 import type { MCQuestion } from '../../types';
 
-import { getListeningQuestionAnchorId } from '../../utils';
-import { PaperPanel, PAPER_ROW_CLASS_NAME } from './paper-shell';
+import { isAnswerCorrect, getListeningQuestionAnchorId } from '../../utils';
+import {
+  PaperPanel,
+  QuestionNumberBadge,
+  PAPER_ROW_CLASS_NAME,
+  PAPER_DIVIDER_CLASS_NAME,
+} from './paper-shell';
 
 interface Props {
   activeQuestionId?: string | null;
@@ -22,14 +27,15 @@ export function MultipleChoice({
 }: Props) {
   return (
     <PaperPanel title="Questions">
-      <div className="divide-y divide-white/65">
+      <div className={PAPER_DIVIDER_CLASS_NAME}>
         {questions.map((q) => {
           const isActiveQuestion = q.id === activeQuestionId;
           const selectedValues = (answers[q.id] ?? '')
             .split(',')
             .map((value) => value.trim())
             .filter(Boolean);
-          const correctValues = q.answer
+          const correctAnswer = Array.isArray(q.answer) ? q.answer[0] ?? '' : q.answer;
+          const correctValues = correctAnswer
             .split(',')
             .map((value) => value.trim())
             .filter(Boolean);
@@ -64,22 +70,22 @@ export function MultipleChoice({
             <section
               key={q.id}
               id={getListeningQuestionAnchorId(q.id)}
-              className={`${PAPER_ROW_CLASS_NAME} scroll-mt-28 space-y-5`}
+              className={`${PAPER_ROW_CLASS_NAME} scroll-mt-28 space-y-4 !py-4 sm:!py-5`}
             >
-              <p className="text-[1.15rem] leading-9 text-stone-800">
-                <span
-                  className={`mr-2 font-semibold ${
-                    isActiveQuestion ? 'text-blue-600' : 'text-stone-800'
-                  }`}
-                >
-                  {q.number})
-                </span>
-                {q.text}
-              </p>
+              <div className="flex items-start gap-2.5">
+                <QuestionNumberBadge
+                  className={isActiveQuestion ? 'bg-stone-900 text-white' : undefined}
+                  isActive={isActiveQuestion}
+                  number={q.number}
+                />
+                <p className="min-w-0 flex-1 pt-0.5 text-[1.08rem] leading-8 text-stone-800">
+                  {q.text}
+                </p>
+              </div>
 
-              <div className="space-y-3 pl-1">
+              <div className="space-y-2 pl-1">
                 {q.multiSelect && q.selectCount ? (
-                  <p className="text-sm font-medium uppercase tracking-[0.12em] text-stone-500">
+                  <p className="text-[0.82rem] font-medium uppercase tracking-[0.12em] text-stone-500">
                     Select {q.selectCount}
                   </p>
                 ) : null}
@@ -87,22 +93,27 @@ export function MultipleChoice({
                 {q.options.map((opt) => {
                   const isSelected = selectedValues.includes(opt.value);
                   const isCorrect = correctValues.includes(opt.value);
+                  const isQuestionCorrect = isAnswerCorrect(answers[q.id], q.answer, q.multiSelect);
                   let optionClassName =
-                    'bg-white/55 text-stone-700 hover:bg-white';
+                    'rounded-2xl py-1.5 text-stone-700';
                   let markerClassName =
-                    'border-stone-300 bg-transparent text-stone-500';
+                    'border-[#dfdfdf] bg-[#dfdfdf]';
+                  let markerValueClassName = 'text-stone-500';
 
                   if (showAnswer) {
                     if (isCorrect) {
-                      optionClassName = 'bg-green-50 text-green-800';
-                      markerClassName = 'border-green-600 bg-green-600 text-white';
-                    } else if (isSelected) {
-                      optionClassName = 'bg-red-50 text-red-700';
-                      markerClassName = 'border-red-500 bg-red-500 text-white';
+                      optionClassName = 'rounded-2xl bg-green-50/80 py-1.5 text-green-800';
+                      markerClassName = 'border-green-600 bg-green-600';
+                      markerValueClassName = 'text-white';
+                    } else if (isSelected && !isQuestionCorrect) {
+                      optionClassName = 'rounded-2xl bg-red-50/80 py-1.5 text-red-700';
+                      markerClassName = 'border-red-500 bg-red-500';
+                      markerValueClassName = 'text-white';
                     }
                   } else if (isSelected) {
-                    optionClassName = 'bg-white text-stone-900';
-                    markerClassName = 'border-stone-900 bg-stone-900 text-white';
+                    optionClassName = 'rounded-2xl py-1.5 text-stone-900';
+                    markerClassName = 'border-blue-600 bg-blue-600';
+                    markerValueClassName = 'text-white';
                   }
 
                   return (
@@ -112,14 +123,16 @@ export function MultipleChoice({
                       onClick={() => handleSelect(opt.value)}
                       disabled={showAnswer}
                       aria-pressed={isSelected}
-                      className={`flex w-full items-start gap-4 px-4 py-4 text-left text-[1.02rem] leading-8 transition-colors ${optionClassName} ${showAnswer ? 'cursor-default' : 'cursor-pointer'}`}
+                      className={`flex w-full items-start gap-3 text-left text-[1rem] leading-7 transition-colors ${optionClassName} ${showAnswer ? 'cursor-default' : 'cursor-pointer'}`}
                     >
                       <span
-                        className={`mt-1 flex h-6 w-6 shrink-0 items-center justify-center border text-[0.72rem] font-semibold transition-colors ${markerClassName}`}
+                        className={`mt-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-full border text-[0.92rem] font-semibold uppercase tracking-[0.04em] transition-colors ${markerClassName} ${markerValueClassName}`}
                       >
                         {opt.value}
                       </span>
-                      <span>{opt.text}</span>
+                      <span className="min-w-0 flex-1 pt-1">
+                        <span>{opt.text}</span>
+                      </span>
                     </button>
                   );
                 })}

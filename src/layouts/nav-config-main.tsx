@@ -14,11 +14,7 @@ type HeaderItem = {
 };
 
 export const HEADER_ITEMS: HeaderItem[] = [
-  {
-    href: paths.questionBank.root,
-    id: 'question-bank',
-    label: 'Question Bank',
-  },
+  { href: paths.mockExam.root, id: 'mock-exams', label: 'Mock Exams' },
   {
     href: paths.practice.listening.root,
     id: 'practice',
@@ -36,6 +32,5 @@ export const HEADER_ITEMS: HeaderItem[] = [
       { href: paths.practice.speaking.root, label: 'Speaking Practice' },
     ],
   },
-  { href: paths.mockExam.root, id: 'mock-exams', label: 'Mock Exams' },
   { href: paths.contest.root, id: 'contest', label: 'Contest' },
 ];

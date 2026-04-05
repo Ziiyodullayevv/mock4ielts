@@ -4,7 +4,7 @@ export const communityImages: CommunityImageItem[] = [
   {
     src: 'https://image01.cf.vidu.studio/vidu/media-asset/image13-0bff0a93.webp',
     alt: 'global_title13',
-    className: 'top-[8%] left-[6%] h-[25.5%]',
+    className: 'top-[8%] left-[6%] h-[25.5%] max-md:hidden',
     width: 360,
     height: 360,
     depth: 32,
@@ -12,7 +12,7 @@ export const communityImages: CommunityImageItem[] = [
   {
     src: 'https://image01.cf.vidu.studio/vidu/media-asset/image1-65c70b29.webp',
     alt: 'global_title1',
-    className: 'bottom-[13%] right-[2%] h-[16.8%]',
+    className: 'bottom-[13%] right-[2%] h-[16.8%] max-md:right-[-8%] max-md:bottom-[11%] max-md:h-[11%]',
     width: 320,
     height: 220,
     depth: 40,
@@ -20,7 +20,7 @@ export const communityImages: CommunityImageItem[] = [
   {
     src: 'https://image01.cf.vidu.studio/vidu/media-asset/image12-e3bc56cf.webp',
     alt: 'global_title12',
-    className: 'top-[65%] left-[-1%] h-[26.7%]',
+    className: 'top-[65%] left-[-1%] h-[26.7%] max-md:bottom-[4%] max-md:left-[-3%] max-md:top-auto max-md:h-[16%]',
     width: 420,
     height: 280,
     depth: 24,
@@ -28,7 +28,7 @@ export const communityImages: CommunityImageItem[] = [
   {
     src: 'https://image01.cf.vidu.studio/vidu/media-asset/image4-6d819a23.webp',
     alt: 'global_title4',
-    className: 'bottom-[40%] right-[5%] h-[35.5%]',
+    className: 'bottom-[40%] right-[5%] h-[35.5%] max-md:top-[11%] max-md:right-[-29%] max-md:bottom-auto max-md:h-[25%]',
     width: 440,
     height: 440,
     depth: 46,
@@ -36,7 +36,7 @@ export const communityImages: CommunityImageItem[] = [
   {
     src: 'https://image01.cf.vidu.studio/vidu/media-asset/image6-a7a59ef3.webp',
     alt: 'global_title5',
-    className: 'bottom-[20%] left-[23%] h-[21.2%] opacity-55 blur-[14px]',
+    className: 'bottom-[20%] left-[23%] h-[21.2%] opacity-55 blur-[14px] max-md:bottom-[11%] max-md:left-[-10%] max-md:h-[13%]',
     width: 220,
     height: 220,
     depth: 18,
@@ -44,7 +44,7 @@ export const communityImages: CommunityImageItem[] = [
   {
     src: 'https://image01.vidu.zone/vidu/media-asset/image8-4f0a80ae.webp',
     alt: 'global_title8',
-    className: 'bottom-[22%] right-[22%] h-[22.6%] opacity-55 blur-[14px]',
+    className: 'bottom-[22%] right-[22%] h-[22.6%] opacity-55 blur-[14px] max-md:hidden',
     width: 220,
     height: 220,
     depth: 22,
@@ -52,7 +52,7 @@ export const communityImages: CommunityImageItem[] = [
   {
     src: 'https://image01.cf.vidu.studio/vidu/media-asset/image10-2d33c11e.webp',
     alt: 'global_title10',
-    className: 'top-[30%] left-[1%] h-[15%]',
+    className: 'top-[30%] left-[1%] h-[15%] max-md:top-[18%] max-md:left-[-18%] max-md:h-[8%]',
     width: 260,
     height: 120,
     depth: 16,
@@ -60,7 +60,7 @@ export const communityImages: CommunityImageItem[] = [
   {
     src: 'https://image01.cf.vidu.studio/vidu/media-asset/image11-983b87c9.webp',
     alt: 'global_title11',
-    className: 'top-[25%] left-[17%] h-[29%]',
+    className: 'top-[25%] left-[17%] h-[29%] max-md:top-[8%] max-md:left-[-6%] max-md:h-[11%]',
     width: 320,
     height: 360,
     depth: 30,
@@ -68,7 +68,7 @@ export const communityImages: CommunityImageItem[] = [
   {
     src: 'https://image01.cf.vidu.studio/vidu/media-asset/image15-e2b3524a.webp',
     alt: 'global_title15',
-    className: 'top-[49%] right-[-4%] h-[19%]',
+    className: 'top-[49%] right-[-4%] h-[19%] max-md:top-[31%] max-md:right-[-10%] max-md:h-[10%]',
     width: 260,
     height: 180,
     depth: 20,
@@ -76,7 +76,7 @@ export const communityImages: CommunityImageItem[] = [
   {
     src: 'https://image01.cf.vidu.studio/vidu/media-asset/image14-067142d0.webp',
     alt: 'global_title14',
-    className: 'top-[50%] left-[-2%] h-[5.3%]',
+    className: 'top-[50%] left-[-2%] h-[5.3%] max-md:top-[45%] max-md:left-[-20%] max-md:h-[4.2%]',
     width: 180,
     height: 60,
     depth: 12,

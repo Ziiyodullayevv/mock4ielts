@@ -2,6 +2,8 @@
 
 import type { BlankField } from '../../types';
 
+import { isAnswerCorrect, getPrimaryAnswer } from '../../utils';
+
 interface CompletionInputProps {
   field: BlankField;
   value: string;
@@ -10,11 +12,10 @@ interface CompletionInputProps {
 }
 
 export function CompletionInput({ field, value, onChange, showAnswer }: CompletionInputProps) {
-  const isCorrect = showAnswer
-    ? value.trim().toLowerCase() === field.answer.toLowerCase()
-    : undefined;
+  const isCorrect = showAnswer ? isAnswerCorrect(value, field.answer) : undefined;
 
   const inputWidth = Math.max(92, field.answerLength * 12 + 18);
+  const primaryAnswer = getPrimaryAnswer(field.answer);
   return (
     <span className="inline-flex items-center gap-1.5 align-middle">
       {field.label && (
@@ -47,7 +48,7 @@ export function CompletionInput({ field, value, onChange, showAnswer }: Completi
         />
         {showAnswer && !isCorrect && (
           <span className="mt-1 whitespace-nowrap text-xs font-medium text-green-700">
-            ✓ {field.answer}
+            ✓ {primaryAnswer}
           </span>
         )}
       </span>

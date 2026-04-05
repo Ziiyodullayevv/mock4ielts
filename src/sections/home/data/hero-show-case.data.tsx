@@ -1,5 +1,6 @@
 import type { ReferenceVideoSlide, ListeningReadingSectionContent } from '../types';
 
+import { paths } from '@/src/routes/paths';
 import { Mic, PenTool, BookOpen, Headphones } from 'lucide-react';
 
 const listeningReadingSlides: ReferenceVideoSlide[] = [
@@ -112,6 +113,7 @@ export const listeningReadingSection: ListeningReadingSectionContent = {
       description:
         'Practice with real IELTS listening tasks including conversations, lectures, and multiple question types.',
       cta: 'Start Listening',
+      href: paths.practice.listening.root,
       icon: <Headphones className="size-9" strokeWidth={1.75} />,
       imageSrc: 'https://image01.cf.vidu.studio/vidu/media-asset/viduAbilityReEnd-254ebd10.webp',
       imageAlt: 'Listening practice card background',
@@ -122,6 +124,7 @@ export const listeningReadingSection: ListeningReadingSectionContent = {
       description:
         'Solve IELTS reading passages with different question formats and improve your speed and comprehension.',
       cta: 'Start Reading',
+      href: paths.practice.reading.root,
       icon: <BookOpen className="size-9" strokeWidth={1.75} />,
       imageSrc: 'https://image01.cf.vidu.studio/vidu/media-asset/viduAbilityReStart-01e52c27.webp',
       imageAlt: 'Reading practice card background',
@@ -141,6 +144,7 @@ export const writingSpeakingSection: ListeningReadingSectionContent = {
       description:
         'Practice IELTS Writing Task 1 and Task 2 with real prompts and structured answers.',
       cta: 'Start Writing',
+      href: paths.practice.writing.root,
       icon: <PenTool className="size-9" strokeWidth={1.75} />,
       imageSrc: 'https://image01.cf.vidu.studio/vidu/media-asset/viduAbilityStart-0779cc5f.webp',
       imageAlt: 'Writing tasks card background',
@@ -151,6 +155,7 @@ export const writingSpeakingSection: ListeningReadingSectionContent = {
       description:
         'Prepare for IELTS speaking interviews with cue cards and common exam questions.',
       cta: 'Start Speaking',
+      href: paths.practice.speaking.root,
       icon: <Mic className="size-9" strokeWidth={1.75} />,
       imageSrc: 'https://image01.cf.vidu.studio/vidu/media-asset/viduAbilityEnd-0a6abe66.webp',
       imageAlt: 'Speaking practice card background',

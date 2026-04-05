@@ -81,13 +81,13 @@ export function HeroWhy() {
       </div>
 
       <div ref={gallerySectionRef} className="relative mt-10 w-full overflow-hidden">
-        <div className="pointer-events-none absolute inset-x-0 top-10 z-20 h-20 bg-linear-to-b from-black to-transparent" />
+        <div className="pointer-events-none absolute inset-x-0 top-0 z-20 h-24 bg-linear-to-b from-black via-black/95 to-transparent max-md:h-16" />
 
         <div className="flex justify-center" style={{ perspective: '900px' }}>
-          <div className="max-w-none max-md:w-275" style={{ transform: 'rotateX(28deg)' }}>
-            <div className="relative h-135 overflow-hidden max-md:h-100">
+          <div className="max-w-none max-md:relative max-md:left-1/2 max-md:w-[calc(100%+3rem)] max-md:-translate-x-1/2" style={{ transform: 'rotateX(28deg)' }}>
+            <div className="relative h-135 overflow-hidden max-md:h-64">
               <div
-                className="grid grid-cols-5 justify-items-center gap-5 px-6 pb-10 transition-transform duration-75 ease-out max-md:grid-cols-4 max-md:gap-2 max-md:px-3"
+                className="grid grid-cols-5 justify-items-center gap-5 px-6 pb-10 transition-transform duration-75 ease-out max-md:grid-cols-3 max-md:gap-2 max-md:px-3"
                 style={{
                   transform: `translate3d(0, ${
                     typeof window !== 'undefined' && window.innerWidth < 768
@@ -105,7 +105,7 @@ export function HeroWhy() {
                     width={300}
                     height={180}
                     unoptimized
-                    className="aspect-[1.58/1] h-50 w-70 object-cover opacity-90 transition-transform duration-300"
+                    className="aspect-[1.58/1] h-50 w-70 object-cover opacity-90 transition-transform duration-300 max-md:h-32 max-md:w-46"
                   />
                 ))}
               </div>

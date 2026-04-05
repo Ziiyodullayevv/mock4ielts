@@ -1,6 +1,7 @@
 export type AuthProvider = 'apple' | 'google';
 
 export type ProviderAuthInput = {
+  idToken?: string;
   invitationCode?: string;
 };
 

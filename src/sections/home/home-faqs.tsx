@@ -17,13 +17,13 @@ function FAQAccordionItem({
   onToggle: () => void;
 }) {
   return (
-    <div className="flex w-full max-w-200 flex-col gap-3 bg-white/8 rounded-2xl px-6 py-2">
+    <div className="flex w-full max-w-none flex-col gap-3 rounded-2xl bg-white/8 px-5 py-2 sm:max-w-200 sm:px-6">
       <button
         type="button"
         onClick={onToggle}
-        className="flex w-full mt-3.5 items-center justify-between gap-4 text-left font-semibold"
+        className="mt-3.5 flex w-full items-center justify-between gap-4 text-left font-semibold"
       >
-        <div className="font-medium text-lg">{item.question}</div>
+        <div className="text-base font-medium sm:text-lg">{item.question}</div>
         <Plus className="size-5" />
       </button>
 
@@ -32,7 +32,7 @@ function FAQAccordionItem({
           isOpen ? 'max-h-250 opacity-100' : 'max-h-0 opacity-0'
         }`}
       >
-        <div className="text-sm leading-5 w-full">{item.answer}</div>
+        <div className="w-full text-sm leading-6">{item.answer}</div>
       </div>
     </div>
   );
@@ -46,19 +46,19 @@ export function FAQSection() {
   };
 
   return (
-    <section className="relative max-w-280 mx-auto my-20 flex gap-20">
+    <section className="relative mx-auto my-16 flex max-w-280 flex-col gap-10 px-4 sm:px-6 lg:my-20 lg:flex-row lg:gap-20">
       <div className="flex flex-col">
-        <h2 className="text-[54px] max-w-sm leading-[1.4] font-medium md:text-[36px] lg:text-[48px]">
+        <h2 className="max-w-sm text-[34px] font-medium leading-[1.2] sm:text-[42px] lg:text-[48px]">
           Frequently Asked Questions
         </h2>
 
-        <div className="mt-6 w-99 text-[14px] leading-7 text-system-text03 md:mt-6 md:mb-5.5 md:w-64 md:leading-5.5 lg:w-[320px]">
+        <div className="mt-5 max-w-[320px] text-[14px] leading-6 text-system-text03 md:mb-5.5 md:mt-6 md:leading-5.5">
           Find answers to common questions about Mock4IELTS, including practice sections, mock
           exams, pricing, and support.
         </div>
       </div>
 
-      <div className="flex  flex-col gap-3 md:mr-0 md:items-center">
+      <div className="flex flex-col gap-3 md:mr-0 md:items-center">
         {faqItems.map((item, index) => (
           <FAQAccordionItem
             key={item.question}

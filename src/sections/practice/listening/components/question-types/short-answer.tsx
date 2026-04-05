@@ -4,7 +4,12 @@ import type { BlankField } from '../../types';
 
 import { CompletionInput } from './completion-input';
 import { getListeningQuestionAnchorId } from '../../utils';
-import { PaperPanel, PAPER_ROW_CLASS_NAME } from './paper-shell';
+import {
+  PaperPanel,
+  QuestionNumberBadge,
+  PAPER_ROW_CLASS_NAME,
+  PAPER_DIVIDER_CLASS_NAME,
+} from './paper-shell';
 
 interface Props {
   activeQuestionId?: string | null;
@@ -23,23 +28,19 @@ export function ShortAnswer({
 }: Props) {
   return (
     <PaperPanel>
-      <div className="divide-y divide-white/65">
+      <div className={PAPER_DIVIDER_CLASS_NAME}>
         {questions.map((q) => (
           <div
             key={q.id}
             id={getListeningQuestionAnchorId(q.id)}
             className={`${PAPER_ROW_CLASS_NAME} scroll-mt-28 space-y-3`}
           >
-            <p className="text-[1.05rem] leading-9 text-stone-800">
-              <span
-                className={`mr-2 font-semibold ${
-                  q.id === activeQuestionId ? 'text-blue-600' : 'text-stone-800'
-                }`}
-              >
-                {q.number})
-              </span>
-              {q.label}
-            </p>
+            <div className="flex items-start gap-3">
+              <QuestionNumberBadge isActive={q.id === activeQuestionId} number={q.number} />
+              <p className="min-w-0 flex-1 pt-0.5 text-[1.05rem] leading-9 text-stone-800">
+                {q.label}
+              </p>
+            </div>
             <CompletionInput
               field={{ ...q, label: '' }}
               value={answers[q.id] ?? ''}

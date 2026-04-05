@@ -1,5 +1,6 @@
 'use client';
 
+import { LoaderCircle } from 'lucide-react';
 import { useRef, useState, useEffect } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -28,6 +29,7 @@ export function AuthVerificationForm({
 }: AuthVerificationFormProps) {
   const [secondsLeft, setSecondsLeft] = useState(RESEND_SECONDS);
   const inputRefs = useRef<Array<HTMLInputElement | null>>([]);
+  const lastSubmittedCodeRef = useRef<string | null>(null);
   const {
     control,
     formState: { errors },
@@ -44,6 +46,9 @@ export function AuthVerificationForm({
     control,
     name: 'otp',
   });
+  const otpCode = code.join('');
+
+  const submitVerification = handleSubmit((values) => onSubmit({ otp: values.otp.join('') }));
 
   useEffect(() => {
     let timeoutId: number | undefined;
@@ -61,8 +66,22 @@ export function AuthVerificationForm({
     };
   }, [secondsLeft]);
 
+  useEffect(() => {
+    if (otpCode.length !== CODE_LENGTH || isSubmitting) {
+      return;
+    }
+
+    if (lastSubmittedCodeRef.current === otpCode) {
+      return;
+    }
+
+    lastSubmittedCodeRef.current = otpCode;
+    void submitVerification();
+  }, [isSubmitting, otpCode, submitVerification]);
+
   const handleChange = (index: number, value: string) => {
     const nextValue = value.replace(/\D/g, '').slice(-1);
+    lastSubmittedCodeRef.current = null;
 
     setValue(`otp.${index}`, nextValue, {
       shouldDirty: true,
@@ -86,6 +105,7 @@ export function AuthVerificationForm({
     if (!digits) return;
 
     event.preventDefault();
+    lastSubmittedCodeRef.current = null;
 
     digits.split('').forEach((digit, index) => {
       setValue(`otp.${index}`, digit, {
@@ -102,6 +122,7 @@ export function AuthVerificationForm({
     if (secondsLeft > 0 || isResending) return;
 
     await onResend();
+    lastSubmittedCodeRef.current = null;
 
     reset({
       otp: Array(CODE_LENGTH).fill(''),
@@ -113,7 +134,7 @@ export function AuthVerificationForm({
   return (
     <form
       className="flex w-full flex-col items-center gap-8 pt-10 max-lg:pt-6"
-      onSubmit={handleSubmit((values) => onSubmit({ otp: values.otp.join('') }))}
+      onSubmit={submitVerification}
     >
       <div
         className="grid w-full grid-cols-6 gap-3 max-md:gap-2"
@@ -153,7 +174,14 @@ export function AuthVerificationForm({
         disabled={isSubmitting}
         className="inline-flex h-12 w-full items-center justify-center whitespace-nowrap rounded-lg bg-white px-4 py-2 text-base font-medium text-black transition-colors disabled:cursor-not-allowed disabled:opacity-80"
       >
-        {isSubmitting ? 'Verifying...' : 'Verify Code'}
+        {isSubmitting ? (
+          <span className="inline-flex items-center gap-2">
+            <LoaderCircle className="size-4 animate-spin" />
+            Verifying...
+          </span>
+        ) : (
+          'Verification starts automatically after 6 digits'
+        )}
       </button>
 
       <button

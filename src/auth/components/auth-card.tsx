@@ -5,11 +5,13 @@ import type { EmailOtpSchema } from '../schemas/auth-schema';
 import { useState } from 'react';
 import { cn } from '@/src/lib/utils';
 import { ChevronLeft } from 'lucide-react';
-import { useRouter } from '@/src/routes/hooks';
+import { CONFIG } from '@/src/global-config';
+import { useRouter, useSearchParams } from '@/src/routes/hooks';
 
 import { AuthEmailForm } from './auth-email-form';
 import { AuthBrandBadge } from './auth-brand-badge';
 import { AuthLegalNotice } from './auth-legal-notice';
+import { sanitizeReturnTo } from '../utils/return-to';
 import { AuthProviderGroup } from './auth-provider-group';
 import { useAuthMutations } from '../hooks/use-auth-mutations';
 import { AuthVerificationForm } from './auth-verification-form';
@@ -27,6 +29,7 @@ export function AuthCard() {
   const [verificationInfo, setVerificationInfo] = useState<string | null>(null);
   const [view, setView] = useState<'email' | 'providers' | 'verification'>('providers');
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { appleMutation, emailOtpMutation, googleMutation, verifyOtpMutation } =
     useAuthMutations();
 
@@ -44,7 +47,7 @@ export function AuthCard() {
       return;
     }
 
-    router.replace('/');
+    router.replace(sanitizeReturnTo(searchParams.get('returnTo')) ?? '/');
   };
 
   const handleBack = () => {
@@ -58,11 +61,14 @@ export function AuthCard() {
     setView('providers');
   };
 
-  const handleGoogleLogin = async () => {
+  const handleGoogleLogin = async (idToken: string) => {
     resetMessages();
 
     try {
-      const result = await googleMutation.mutateAsync({ invitationCode });
+      const result = await googleMutation.mutateAsync({
+        idToken,
+        invitationCode,
+      });
 
       if (result.accessToken || result.redirectUrl) {
         completeAuthFlow(result.redirectUrl);
@@ -192,6 +198,7 @@ export function AuthCard() {
           {view === 'providers' ? (
             <AuthProviderGroup
               errorMessage={providerError}
+              googleClientId={CONFIG.googleClientId}
               infoMessage={providerInfo}
               invitationCode={invitationCode}
               isApplePending={appleMutation.isPending}
@@ -201,7 +208,10 @@ export function AuthCard() {
                 resetMessages();
                 setView('email');
               }}
-              onGoogleClick={handleGoogleLogin}
+              onGoogleCredential={handleGoogleLogin}
+              onGoogleError={(message) => {
+                setProviderError(message);
+              }}
               onInvitationCodeChange={setInvitationCode}
             />
           ) : null}

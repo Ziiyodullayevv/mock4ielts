@@ -9,6 +9,7 @@ import { useListeningSectionsQuery } from '../hooks/use-listening-sections-query
 const DEFAULT_OVERVIEW: PracticeOverview = {
   avgBandScore: undefined,
   savedCount: 0,
+  sectionType: 'listening',
   sourceLabel: 'Published sections',
   title: 'Listening',
   totalAttempting: 0,
@@ -32,12 +33,13 @@ export function ListeningView() {
   }));
 
   const overview: PracticeOverview = data
-    ? {
-        avgBandScore: undefined,
-        savedCount: data.pagination.total,
-        sourceLabel: 'Published sections',
-        title: 'Listening',
-        totalAttempting: data.pagination.total,
+      ? {
+          avgBandScore: undefined,
+          savedCount: data.pagination.total,
+          sectionType: 'listening',
+          sourceLabel: 'Published sections',
+          title: 'Listening',
+          totalAttempting: data.pagination.total,
         totalQuestions: data.items.reduce((total, item) => total + item.questionCount, 0),
         totalSolved: 0,
         updatedAtLabel: 'Live',

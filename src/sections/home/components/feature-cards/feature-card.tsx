@@ -11,12 +11,12 @@ export function FeatureCard({ item }: FeatureCardProps) {
   const title = `${item.title} ${item.highlight}`;
 
   return (
-    <div className="detail-card relative flex h-[331px] min-h-[312px] w-[587px] flex-col justify-between overflow-hidden rounded-[20px] bg-white/12 px-10 pt-6 pb-10">
-      <div className="z-10 flex max-w-72 flex-col items-start">
+    <div className="detail-card relative flex min-h-[296px] w-full flex-col justify-between overflow-hidden rounded-[20px] bg-white/12 px-6 pb-8 pt-6 sm:min-h-[312px] sm:px-10 sm:pb-10 md:h-[331px] md:w-[587px]">
+      <div className="z-10 flex max-w-[14rem] flex-col items-start sm:max-w-72">
         {item.icon}
 
-        <h3 className="mt-4 text-[18px] font-semibold text-white">{title}</h3>
-        <p className="my-3 text-[14px] text-white/65">{item.description}</p>
+        <h3 className="mt-4 text-[18px] font-semibold text-white sm:text-[18px]">{title}</h3>
+        <p className="my-3 text-[14px] leading-7 text-white/65">{item.description}</p>
       </div>
 
       {item.href ? (
@@ -42,9 +42,11 @@ export function FeatureCard({ item }: FeatureCardProps) {
         alt={item.imageAlt}
         fill
         className="absolute right-0 bottom-0 h-full w-full object-cover object-bottom"
-        sizes="587px"
+        sizes="(min-width: 768px) 587px, 100vw"
         unoptimized
       />
+
+      <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(90deg,rgba(34,31,31,0.96)_0%,rgba(34,31,31,0.92)_42%,rgba(34,31,31,0.32)_72%,rgba(34,31,31,0)_100%)]" />
     </div>
   );
 }

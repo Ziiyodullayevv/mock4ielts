@@ -2,6 +2,7 @@ import type { AxiosRequestConfig, InternalAxiosRequestConfig } from 'axios';
 
 import axios from 'axios';
 import { CONFIG } from '@/src/global-config';
+import { buildLoginHref, getCurrentReturnTo } from '@/src/auth/utils/return-to';
 
 type TokenPair = {
   accessToken?: string;
@@ -16,7 +17,7 @@ type ApiRecord = Record<string, unknown>;
 
 export const JWT_STORAGE_KEY = 'jwt_access_token';
 export const JWT_REFRESH_KEY = 'jwt_refresh_token';
-const API_VERSION_PREFIX = '/api/v1';
+export const AUTH_STATE_CHANGE_EVENT = 'mock4ielts-auth-state-change';
 
 const asRecord = (value: unknown): ApiRecord | null =>
   typeof value === 'object' && value !== null ? (value as ApiRecord) : null;
@@ -39,20 +40,23 @@ const setStorageItem = (key: string, value: string) => {
   window.sessionStorage.setItem(key, value);
 };
 
+const notifyAuthStateChange = () => {
+  if (typeof window === 'undefined') return;
+
+  window.dispatchEvent(new Event(AUTH_STATE_CHANGE_EVENT));
+};
+
 const pickString = (...values: unknown[]) =>
   values.find((value): value is string => typeof value === 'string' && value.length > 0);
 
 const normalizeServerUrl = (serverUrl: string) => {
   const trimmedUrl = serverUrl.replace(/\/+$/, '');
 
-  if (trimmedUrl.endsWith(API_VERSION_PREFIX)) {
-    return trimmedUrl.slice(0, -API_VERSION_PREFIX.length);
-  }
-
   return trimmedUrl;
 };
 
 const apiBaseUrl = normalizeServerUrl(CONFIG.serverUrl);
+const joinApiUrl = (path: string) => `${apiBaseUrl}/${path.replace(/^\/+/, '')}`;
 
 const extractTokens = (payload: unknown) => {
   const root = asRecord(payload);
@@ -99,6 +103,7 @@ export const clearAuthTokens = () => {
   removeStorageItem(JWT_STORAGE_KEY);
   removeStorageItem(JWT_REFRESH_KEY);
   delete axiosInstance.defaults.headers.common.Authorization;
+  notifyAuthStateChange();
 };
 
 export const getAccessToken = () => getStorageItem(JWT_STORAGE_KEY);
@@ -113,24 +118,40 @@ export const setAuthTokens = ({ accessToken, refreshToken }: TokenPair) => {
   if (refreshToken) {
     setStorageItem(JWT_REFRESH_KEY, refreshToken);
   }
+
+  if (accessToken || refreshToken) {
+    notifyAuthStateChange();
+  }
 };
 
 export const endpoints = {
+  admin: {
+    media: {
+      upload: 'admin/media/upload',
+    },
+  },
   auth: {
-    apple: '/api/v1/auth/apple',
-    email: '/api/v1/auth/email',
-    google: '/api/v1/auth/google',
-    logout: '/api/v1/auth/logout',
-    refresh: '/api/v1/auth/refresh',
-    verifyOtp: '/api/v1/auth/verify-otp',
+    apple: 'auth/apple',
+    email: 'auth/email',
+    google: 'auth/google',
+    logout: 'auth/logout',
+    refresh: 'auth/refresh',
+    verifyOtp: 'auth/verify-otp',
   },
   contests: {},
   files: {},
   mockExams: {},
-  profile: {},
+  profile: {
+    delete: 'users/me',
+    me: 'users/me',
+    update: 'users/me',
+  },
   sections: {
-    details: (sectionId: string) => `/api/v1/sections/${sectionId}`,
-    list: '/api/v1/sections',
+    details: (sectionId: string) => `sections/${sectionId}`,
+    list: 'sections',
+    result: (sectionId: string, attemptId: string) => `sections/${sectionId}/result/${attemptId}`,
+    start: (sectionId: string) => `sections/${sectionId}/start`,
+    submit: (sectionId: string) => `sections/${sectionId}/submit`,
   },
   users: {},
 } as const;
@@ -198,14 +219,14 @@ axiosInstance.interceptors.response.use(
         clearAuthTokens();
 
         if (typeof window !== 'undefined') {
-          window.location.href = '/login';
+          window.location.href = buildLoginHref(getCurrentReturnTo());
         }
 
         return Promise.reject(new Error('Session expired. Please sign in again.'));
       }
 
       try {
-        const refreshResponse = await axios.post(`${apiBaseUrl}${endpoints.auth.refresh}`, {
+        const refreshResponse = await axios.post(joinApiUrl(endpoints.auth.refresh), {
           refresh_token: refreshToken,
         });
 
@@ -229,7 +250,7 @@ axiosInstance.interceptors.response.use(
         clearAuthTokens();
 
         if (typeof window !== 'undefined') {
-          window.location.href = '/login';
+          window.location.href = buildLoginHref(getCurrentReturnTo());
         }
 
         return Promise.reject(new Error(getErrorMessage(refreshError)));

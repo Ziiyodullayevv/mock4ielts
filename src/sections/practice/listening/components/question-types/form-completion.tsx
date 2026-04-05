@@ -4,7 +4,12 @@ import type { FormSection } from '../../types';
 
 import { CompletionInput } from './completion-input';
 import { getListeningQuestionAnchorId } from '../../utils';
-import { PaperPanel, PAPER_ROW_CLASS_NAME } from './paper-shell';
+import {
+  PaperPanel,
+  QuestionNumberBadge,
+  PAPER_ROW_CLASS_NAME,
+  PAPER_DIVIDER_CLASS_NAME,
+} from './paper-shell';
 
 interface Props {
   activeQuestionId?: string | null;
@@ -25,31 +30,29 @@ export function FormCompletion({
 }: Props) {
   return (
     <PaperPanel title={formTitle}>
-      <div className="divide-y divide-white/65">
+      <div className={PAPER_DIVIDER_CLASS_NAME}>
         {sections.map((section, sectionIndex) => (
           <div key={sectionIndex}>
             {section.heading ? (
-              <div className="border-b border-white/65 px-8 py-4">
+              <div className="border-b border-[#dfdfdf] px-5 py-4 sm:px-8">
                 <p className="text-xs font-semibold uppercase tracking-[0.2em] text-stone-500">
                   {section.heading}
                 </p>
               </div>
             ) : null}
 
-            <div className="divide-y divide-white/65">
+            <div className={PAPER_DIVIDER_CLASS_NAME}>
               {section.fields.map((field) => (
                 <div
                   key={field.id}
                   id={getListeningQuestionAnchorId(field.id)}
-                  className={`${PAPER_ROW_CLASS_NAME} scroll-mt-28 flex flex-wrap items-center gap-3`}
+                  className={`${PAPER_ROW_CLASS_NAME} scroll-mt-28 flex flex-wrap items-center gap-2.5 !py-4`}
                 >
-                  <span
-                    className={`w-10 shrink-0 text-[1.05rem] font-semibold ${
-                      field.id === activeQuestionId ? 'text-blue-600' : 'text-stone-800'
-                    }`}
-                  >
-                    ({field.number})
-                  </span>
+                  <QuestionNumberBadge
+                    isActive={field.id === activeQuestionId}
+                    number={field.number}
+                    size="sm"
+                  />
                   <CompletionInput
                     field={field}
                     value={answers[field.id] ?? ''}

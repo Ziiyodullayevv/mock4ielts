@@ -10,7 +10,7 @@ type FloatingImagesProps = {
 
 export function FloatingImages({ mouseX, mouseY, communityImages }: FloatingImagesProps) {
   return (
-    <div className="absolute inset-0 overflow-hidden">
+    <div className="pointer-events-none absolute inset-0 z-0 overflow-hidden">
       {communityImages.map((img, index) => {
         const moveX = -(mouseX * img.depth);
         const moveY = -(mouseY * img.depth);

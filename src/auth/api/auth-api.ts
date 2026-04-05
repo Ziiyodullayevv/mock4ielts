@@ -46,9 +46,14 @@ const withInvitationCode = (invitationCode?: string) =>
 
 const requestProviderLogin = async (
   provider: AuthProvider,
-  { invitationCode }: ProviderAuthInput
+  { idToken, invitationCode }: ProviderAuthInput
 ) => {
+  if (provider === 'google' && !idToken) {
+    throw new Error('Google did not return an ID token.');
+  }
+
   const response = await axiosInstance.post(endpoints.auth[provider], {
+    ...(provider === 'google' ? { id_token: idToken } : {}),
     ...withInvitationCode(invitationCode),
   });
 
@@ -76,7 +81,7 @@ export const requestEmailOtp = async ({
 export const verifyOtp = async ({ email, invitationCode, otp }: VerifyOtpInput) => {
   const response = await axiosInstance.post(endpoints.auth.verifyOtp, {
     email,
-    otp,
+    otp_code: otp,
     ...withInvitationCode(invitationCode),
   });
 
