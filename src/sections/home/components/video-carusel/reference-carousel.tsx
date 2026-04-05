@@ -43,7 +43,7 @@ export function ReferenceCarousel({ slides }: ReferenceCarouselProps) {
         className="reference-carousel__swiper overflow-hidden"
       >
         {slides.map((slide, index) => (
-          <SwiperSlide key={slide.id} className="px-0 pb-8 md:px-4 md:pb-10">
+          <SwiperSlide key={slide.id} className="px-0 pb-8 md:pb-10">
             <VideoCard isActive={index === activeIndex} slide={slide} />
           </SwiperSlide>
         ))}

@@ -1,33 +1,61 @@
 'use client';
 
-import { ArrowLeft, RotateCcw, ArrowRight } from 'lucide-react';
+import { cn } from '@/src/lib/utils';
+import { useState, useEffect } from 'react';
+import { Logo } from '@/src/components/logo';
+import { Menu, RotateCcw, ChevronLeft, ChevronRight } from 'lucide-react';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuTrigger,
+} from '@/src/components/ui/dropdown-menu';
 
 import { TimerDisplay } from './timer-display';
 import GradualBlur from '../../components/GradualBlur';
-import { FullscreenToggle } from './fullscreen-toggle';
 import { ListeningHeaderAudio } from './listening-header-audio';
+import { ListeningHeaderMoreMenu, ListeningHeaderFullscreenButton } from './header-more-menu';
 
 type ListeningTestHeaderProps = {
   audioUrl?: string;
+  isPrimaryActionDisabled?: boolean;
   isPrevDisabled: boolean;
   isReview: boolean;
   onPrevPart: () => void;
   onPrimaryAction: () => void;
+  prevActionLabel?: string;
   primaryActionLabel: string;
   timeLeftSeconds: number;
 };
 
 export function ListeningTestHeader({
   audioUrl,
+  isPrimaryActionDisabled = false,
   isPrevDisabled,
   isReview,
   onPrevPart,
   onPrimaryAction,
+  prevActionLabel = 'Prev',
   primaryActionLabel,
   timeLeftSeconds,
 }: ListeningTestHeaderProps) {
+  const [isScrolled, setIsScrolled] = useState(false);
+  const isSubmitAction = primaryActionLabel.toLowerCase().includes('submit');
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 6);
+    };
+
+    handleScroll();
+    window.addEventListener('scroll', handleScroll, { passive: true });
+
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+    };
+  }, []);
+
   return (
-    <header className="sticky top-0 z-100 isolate border-stone-200 bg-linear-to-b from-white from-20% to-transparent to-80%">
+    <header className="sticky top-0 z-40 isolate border-stone-200 bg-linear-to-b from-white from-20% to-transparent to-80%">
       <GradualBlur
         target="parent"
         position="top"
@@ -39,38 +67,139 @@ export function ListeningTestHeader({
         opacity={1}
         zIndex={0}
       />
-      <div className="relative z-10 mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-3">
-        <div className="flex items-center gap-3 rounded-full border border-border/20 bg-white p-2 shadow-lg">
+      <div className="relative z-10 mx-auto flex w-full max-w-6xl items-center justify-between gap-3 px-4 py-2.5 sm:hidden">
+        <Logo size={22} variant="dark" />
+
+        <div className="min-w-0 flex-1">
+          <div className="flex justify-center">
+            <TimerDisplay isReview={isReview} totalSeconds={timeLeftSeconds} />
+          </div>
+        </div>
+
+        <ListeningHeaderMobileMenu
+          audioUrl={audioUrl}
+        />
+      </div>
+
+      <div className="relative z-10 mx-auto hidden w-full max-w-6xl grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-3 py-2.5 sm:grid">
+        <div
+          className={cn(
+            'group justify-self-start flex items-center rounded-full border border-border/40 bg-white/95 p-1 transition-shadow',
+            isScrolled
+              ? 'shadow-[0_14px_30px_rgba(15,23,42,0.16),0_4px_14px_rgba(15,23,42,0.1)]'
+              : 'shadow-lg'
+          )}
+        >
           <button
             type="button"
             onClick={onPrevPart}
             disabled={isPrevDisabled}
-            className="inline-flex h-11 shrink-0 items-center gap-2 rounded-full border border-border/30 bg-black px-4 text-sm font-medium text-white shadow-md transition-colors hover:bg-black/70 disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:bg-black"
+            title={prevActionLabel}
+            className="inline-flex h-9 w-10 shrink-0 items-center justify-center rounded-full text-stone-800 transition-colors hover:bg-stone-100 disabled:cursor-not-allowed disabled:text-stone-300 disabled:hover:bg-transparent"
           >
-            <ArrowLeft className="size-4" />
-            <span className="hidden sm:inline">Prev</span>
+            <ChevronLeft className="size-5" strokeWidth={1.9} />
           </button>
 
-          <FullscreenToggle />
+          <span className="mx-0.5 h-7 w-px bg-stone-200 transition-opacity group-hover:opacity-0" />
+
+          <button
+            type="button"
+            onClick={onPrimaryAction}
+            disabled={isPrimaryActionDisabled}
+            aria-label={primaryActionLabel}
+            title={primaryActionLabel}
+            className={cn(
+              'inline-flex h-9 shrink-0 items-center justify-center rounded-full transition-colors disabled:cursor-not-allowed disabled:text-stone-300 disabled:hover:bg-transparent',
+              isSubmitAction
+                ? 'px-3 text-sm font-semibold text-stone-700 hover:bg-stone-100'
+                : 'w-10 text-stone-400 hover:bg-stone-100 hover:text-stone-700'
+            )}
+          >
+            {isReview ? (
+              <RotateCcw className="size-4.5" strokeWidth={1.9} />
+            ) : isSubmitAction ? (
+              <span>{primaryActionLabel}</span>
+            ) : (
+              <ChevronRight className="size-5" strokeWidth={1.9} />
+            )}
+          </button>
         </div>
 
         <div className="flex justify-center">
           <TimerDisplay isReview={isReview} totalSeconds={timeLeftSeconds} />
         </div>
 
-        <div className="ml-auto flex gap-2 rounded-full border border-border/20 bg-white p-2 shadow-lg md:ml-0">
-          <ListeningHeaderAudio audioUrl={audioUrl} />
-
-          <button
-            type="button"
-            onClick={onPrimaryAction}
-            className="inline-flex h-11 shrink-0 items-center gap-2 rounded-full border border-stone-900 bg-stone-900 px-5 text-sm font-medium text-white shadow-md transition-colors hover:border-stone-700 hover:bg-stone-700"
+        <div className="flex items-center justify-self-end gap-2">
+          <div
+            className={cn(
+              'group flex items-center rounded-full border border-border/20 bg-white p-1 transition-shadow',
+              isScrolled
+                ? 'shadow-[0_14px_30px_rgba(15,23,42,0.16),0_4px_14px_rgba(15,23,42,0.1)]'
+                : 'shadow-lg'
+            )}
           >
-            {primaryActionLabel}
-            {isReview ? <RotateCcw className="size-4" /> : <ArrowRight className="size-4" />}
-          </button>
+            <ListeningHeaderAudio audioUrl={audioUrl} />
+
+            <span className="mx-0.5 h-7 w-px bg-stone-200 transition-opacity group-hover:opacity-0" />
+
+            <ListeningHeaderFullscreenButton />
+          </div>
+
+          <div
+            className={cn(
+              'flex items-center rounded-full border border-border/20 bg-white p-1 transition-shadow',
+              isScrolled
+                ? 'shadow-[0_14px_30px_rgba(15,23,42,0.16),0_4px_14px_rgba(15,23,42,0.1)]'
+                : 'shadow-lg'
+            )}
+          >
+            <ListeningHeaderMoreMenu />
+          </div>
         </div>
       </div>
     </header>
+  );
+}
+
+type ListeningHeaderMobileMenuProps = {
+  audioUrl?: string;
+};
+
+function ListeningHeaderMobileMenu({ audioUrl }: ListeningHeaderMobileMenuProps) {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <DropdownMenu open={open} onOpenChange={setOpen}>
+      <DropdownMenuTrigger asChild>
+        <button
+          type="button"
+          aria-label="Open listening controls"
+          className="inline-flex size-10 shrink-0 items-center justify-center rounded-full border border-border/30 bg-white text-stone-800 shadow-lg transition-colors hover:bg-stone-50"
+        >
+          <Menu className="size-4.5" strokeWidth={2} />
+        </button>
+      </DropdownMenuTrigger>
+
+      <DropdownMenuContent
+        align="end"
+        sideOffset={10}
+        className="w-56 rounded-2xl border border-stone-200 bg-white p-2 text-stone-900 shadow-[0_20px_40px_rgba(15,23,42,0.18)]"
+      >
+        <div className="space-y-1">
+          <div className="flex items-center justify-between rounded-xl px-3 py-2 text-sm font-medium text-stone-900">
+            <span>Audio</span>
+            <ListeningHeaderAudio
+              audioUrl={audioUrl}
+              triggerClassName="h-8 w-9 rounded-full hover:bg-stone-100"
+            />
+          </div>
+
+          <div className="flex items-center justify-between rounded-xl px-3 py-2 text-sm font-medium text-stone-900">
+            <span>Full screen</span>
+            <ListeningHeaderFullscreenButton />
+          </div>
+        </div>
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 }

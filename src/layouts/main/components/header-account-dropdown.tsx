@@ -1,25 +1,55 @@
 'use client';
 
+import Link from 'next/link';
+import { paths } from '@/src/routes/paths';
 import { Avatar, AvatarImage, AvatarFallback } from '@/src/components/ui/avatar';
-import { Globe, Settings, BadgePlus, CircleHelp, MessageCircleMore } from 'lucide-react';
+import { LogOut, UserRound, BadgePlus, CircleHelp, MessageCircleMore } from 'lucide-react';
 import {
   DropdownMenu,
-  DropdownMenuSub,
   DropdownMenuItem,
+  DropdownMenuLabel,
   DropdownMenuContent,
   DropdownMenuTrigger,
   DropdownMenuSeparator,
-  DropdownMenuSubContent,
-  DropdownMenuSubTrigger,
 } from '@/src/components/ui/dropdown-menu';
 
-export function HeaderAccountDropdown() {
+type HeaderAccountDropdownProps = {
+  avatar?: string | null;
+  email?: string;
+  fullName?: string | null;
+  isLoggingOut?: boolean;
+  onLogout: () => Promise<void> | void;
+};
+
+const getInitials = (fullName?: string | null, email?: string) => {
+  const source = fullName?.trim() || email?.trim() || 'A';
+  const parts = source.split(/\s+/).filter(Boolean);
+
+  if (!parts.length) {
+    return 'A';
+  }
+
+  return parts
+    .slice(0, 2)
+    .map((part) => part.charAt(0).toUpperCase())
+    .join('');
+};
+
+export function HeaderAccountDropdown({
+  avatar,
+  email,
+  fullName,
+  isLoggingOut = false,
+  onLogout,
+}: HeaderAccountDropdownProps) {
+  const fallback = getInitials(fullName, email);
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Avatar className="size-10">
-          <AvatarImage src="https://github.com/shadcn.png" alt="@shadcn" />
-          <AvatarFallback className="bg-white text-black">A</AvatarFallback>
+          <AvatarImage src={avatar ?? undefined} alt={fullName || email || 'Profile'} />
+          <AvatarFallback className="bg-white text-black">{fallback}</AvatarFallback>
         </Avatar>
       </DropdownMenuTrigger>
 
@@ -28,9 +58,23 @@ export function HeaderAccountDropdown() {
         sideOffset={10}
         className="w-[300px] rounded-xl border-none bg-[#141414] p-4 text-sm text-white shadow-[0_24px_44px_rgba(0,0,0,0.45)]"
       >
-        <DropdownMenuItem className="h-11 rounded-xl px-3 text-sm font-medium text-white/95 focus:bg-white/8 focus:text-white">
-          <Settings className="size-5 text-white/90" />
-          Account Settings
+        <DropdownMenuLabel className="px-3 py-2">
+          <div className="flex flex-col">
+            <span className="text-sm font-semibold text-white">{fullName || 'My Account'}</span>
+            {email ? <span className="text-xs text-white/60">{email}</span> : null}
+          </div>
+        </DropdownMenuLabel>
+
+        <DropdownMenuSeparator className="my-2 bg-white/10" />
+
+        <DropdownMenuItem
+          asChild
+          className="h-11 rounded-xl px-3 text-sm font-medium text-white/95 focus:bg-white/8 focus:text-white"
+        >
+          <Link href={paths.profile.root}>
+            <UserRound className="size-5 text-white/90" />
+            My Profile
+          </Link>
         </DropdownMenuItem>
 
         <DropdownMenuItem className="h-11 rounded-xl px-3 text-sm font-medium text-white/95 focus:bg-white/8 focus:text-white">
@@ -43,25 +87,6 @@ export function HeaderAccountDropdown() {
           Help Center
         </DropdownMenuItem>
 
-        <DropdownMenuSub>
-          <DropdownMenuSubTrigger className="h-11 rounded-xl px-3 text-sm font-medium text-white/95 focus:bg-white/8 focus:text-white data-[state=open]:bg-white/8 data-[state=open]:text-white [&_svg]:text-white/90">
-            <Globe className="size-5" />
-            Language
-          </DropdownMenuSubTrigger>
-
-          <DropdownMenuSubContent className="min-w-[170px] rounded-xl border-none bg-[#141414] p-2 text-sm text-white shadow-[0_16px_30px_rgba(0,0,0,0.4)]">
-            <DropdownMenuItem className="h-10 rounded-xl px-3 text-sm text-white/90 focus:bg-white/8 focus:text-white">
-              English
-            </DropdownMenuItem>
-            <DropdownMenuItem className="h-10 rounded-xl px-3 text-sm text-white/90 focus:bg-white/8 focus:text-white">
-              Uzbek
-            </DropdownMenuItem>
-            <DropdownMenuItem className="h-10 rounded-xl px-3 text-sm text-white/90 focus:bg-white/8 focus:text-white">
-              Russian
-            </DropdownMenuItem>
-          </DropdownMenuSubContent>
-        </DropdownMenuSub>
-
         <DropdownMenuItem className="h-11 rounded-xl px-3 text-sm font-medium text-white/95 focus:bg-white/8 focus:text-white">
           <MessageCircleMore className="size-5 text-white/90" />
           Connect on Discord
@@ -69,8 +94,16 @@ export function HeaderAccountDropdown() {
 
         <DropdownMenuSeparator className="my-2 bg-white/10" />
 
-        <DropdownMenuItem className="h-11 rounded-xl px-3 text-sm font-medium text-white/65 focus:bg-white/8 focus:text-white">
-          Logout
+        <DropdownMenuItem
+          className="h-11 rounded-xl px-3 text-sm font-medium text-white/65 focus:bg-white/8 focus:text-white"
+          disabled={isLoggingOut}
+          onSelect={(event) => {
+            event.preventDefault();
+            void onLogout();
+          }}
+        >
+          <LogOut className="size-5 text-white/90" />
+          {isLoggingOut ? 'Logging out...' : 'Logout'}
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>

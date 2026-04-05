@@ -1,0 +1,71 @@
+import type { PracticeOverview, PracticeQuestionItem } from '@/src/sections/practice/types';
+
+import { paths } from '@/src/routes/paths';
+
+export const MOCK_EXAMS_OVERVIEW: PracticeOverview = {
+  avgBandScore: undefined,
+  savedCount: 4,
+  sectionType: 'mock-exam',
+  sourceLabel: 'Full IELTS format',
+  summaryLabel: 'Full IELTS format · 4 exams',
+  title: 'Mock Exams',
+  totalAttempting: 4,
+  totalQuestions: 4,
+  totalSolved: 0,
+  updatedAtLabel: 'Live',
+};
+
+export const MOCK_EXAMS_ITEMS: PracticeQuestionItem[] = [
+  {
+    attemptCount: 12600,
+    countLabel: '4 skills',
+    durationMinutes: 165,
+    href: `${paths.mockExam.root}#exam-1`,
+    id: 1,
+    isStarred: false,
+    isStartAvailable: false,
+    questionCount: 4,
+    sectionType: 'mock-exam',
+    statLabel: '4 sections',
+    title: 'IELTS Academic Mock Exam 1',
+  },
+  {
+    attemptCount: 10300,
+    countLabel: '4 skills',
+    durationMinutes: 165,
+    href: `${paths.mockExam.root}#exam-2`,
+    id: 2,
+    isStarred: false,
+    isStartAvailable: false,
+    questionCount: 4,
+    sectionType: 'mock-exam',
+    statLabel: '4 sections',
+    title: 'IELTS Academic Mock Exam 2',
+  },
+  {
+    attemptCount: 8900,
+    countLabel: '4 skills',
+    durationMinutes: 165,
+    href: `${paths.mockExam.root}#exam-3`,
+    id: 3,
+    isStarred: false,
+    isStartAvailable: false,
+    questionCount: 4,
+    sectionType: 'mock-exam',
+    statLabel: '4 sections',
+    title: 'IELTS Academic Mock Exam 3',
+  },
+  {
+    attemptCount: 7400,
+    countLabel: '4 skills',
+    durationMinutes: 165,
+    href: `${paths.mockExam.root}#exam-4`,
+    id: 4,
+    isStarred: false,
+    isStartAvailable: false,
+    questionCount: 4,
+    sectionType: 'mock-exam',
+    statLabel: '4 sections',
+    title: 'IELTS Academic Mock Exam 4',
+  },
+];

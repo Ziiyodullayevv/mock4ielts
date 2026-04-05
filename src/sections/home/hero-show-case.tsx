@@ -6,16 +6,16 @@ export function HeroShowCase() {
   return (
     <>
       {heroShowCaseSections.map(({ cards, description, slides, title }) => (
-        <section key={title} className="my-50 px-4 text-white sm:px-6 lg:px-10">
+        <section key={title} className="my-20 px-4 text-white sm:my-28 sm:px-6 lg:my-40 lg:px-10">
           <div className="mx-auto w-full">
             <div className="mx-auto max-w-230">
-              <div className="mx-auto mb-10 flex w-full flex-col gap-5 border-white/15 pb-2 md:mb-14 md:flex-row md:items-start md:gap-8">
-                <h2 className="whitespace-nowrap font-semibold leading-[1.05] tracking-[-0.03em] text-white lg:text-5xl">
+              <div className="mx-auto mb-10 flex w-full max-w-[42rem] flex-col items-center text-center md:mb-14">
+                <h2 className="text-3xl font-semibold leading-[1.05] tracking-[-0.03em] text-white sm:text-4xl lg:text-5xl">
                   {title}
                 </h2>
-                <span className="hidden h-12 w-px bg-white/25 md:block" />
+                <span className="mt-6 h-px w-16 bg-white/24" />
 
-                <p className="max-w-2xl text-sm leading-6 text-white/70 sm:text-base md:pt-1">
+                <p className="mt-6 max-w-[34rem] text-sm leading-7 text-white/68 sm:text-base sm:leading-8">
                   {description}
                 </p>
               </div>
@@ -23,7 +23,7 @@ export function HeroShowCase() {
               <ReferenceVideoSection slides={slides} />
             </div>
 
-            <div className="max-w-[1200px] mx-auto">
+            <div className="mx-auto max-w-[1200px]">
               <FeatureCardsSection cards={cards} />
             </div>
           </div>

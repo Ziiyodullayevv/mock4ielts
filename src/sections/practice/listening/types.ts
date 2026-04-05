@@ -10,7 +10,10 @@ export type QuestionType =
   | 'sentence-completion'
   | 'short-answer'
   | 'map-labelling'
-  | 'summary-completion';
+  | 'summary-completion'
+  | 'diagram-completion';
+
+export type CorrectAnswer = string | string[];
 
 // ─── Multiple Choice ──────────────────────────────────────────────────────────
 
@@ -20,11 +23,12 @@ export interface MCOption {
 }
 
 export interface MCQuestion {
+  backendQuestionId?: string;
   id: string;
   number: number;
   text: string;
   options: MCOption[];
-  answer: string;
+  answer: CorrectAnswer;
   multiSelect?: boolean; // true = pick 2+
   selectCount?: number; // how many to pick
 }
@@ -37,10 +41,11 @@ export interface MatchingOption {
 }
 
 export interface MatchingPair {
+  backendQuestionId?: string;
   id: string;
   number: number;
   text: string;
-  answer: string; // correct option value
+  answer: CorrectAnswer; // correct option value
 }
 
 export interface MatchingData {
@@ -51,12 +56,13 @@ export interface MatchingData {
 // ─── Completion (Form / Note / Sentence / Short Answer) ───────────────────────
 
 export interface BlankField {
+  backendQuestionId?: string;
   id: string;
   number: number;
   label: string; // text before blank
   suffix?: string; // text after blank
   answerLength: number;
-  answer: string;
+  answer: CorrectAnswer;
 }
 
 export interface FormSection {
@@ -91,15 +97,33 @@ export interface SummaryParagraph {
 export interface TableCell {
   id?: string;
   number?: number;
+  backendQuestionId?: string;
   isBlank: boolean;
   content?: string;
   answerLength?: number;
-  answer?: string;
+  answer?: CorrectAnswer;
+  segments?: TableCellSegment[];
+}
+
+export type TableCellSegment =
+  | {
+      type: 'text';
+      content: string;
+    }
+  | {
+      type: 'blank';
+      field: BlankField;
+    };
+
+export interface TableSection {
+  rows: TableCell[][];
+  title: string;
 }
 
 export interface TableData {
   headers: string[];
-  rows: TableCell[][];
+  rows?: TableCell[][];
+  sections?: TableSection[];
 }
 
 // ─── Flow Chart ───────────────────────────────────────────────────────────────
@@ -107,29 +131,42 @@ export interface TableData {
 export interface FlowStep {
   id?: string;
   number?: number;
+  backendQuestionId?: string;
   isBlank: boolean;
   content?: string;
   answerLength?: number;
-  answer?: string;
+  answer?: CorrectAnswer;
 }
 
 // ─── Map Labelling ────────────────────────────────────────────────────────────
 
 export interface MapPin {
+  backendQuestionId?: string;
   id: string;
   number: number;
   x: number; // percentage 0–100
   y: number; // percentage 0–100
-  answer: string;
+  answer: CorrectAnswer;
   answerLength: number;
   hideBadge?: boolean;
 }
 
 export interface MapData {
+  imageUrl?: string;
+  legendOptions?: MCOption[];
   panelTitle?: string | null;
   showBadges?: boolean;
   wordBank: string[];
   pins: MapPin[];
+}
+
+// ─── Diagram Completion ───────────────────────────────────────────────────────
+
+export interface DiagramData {
+  imageUrl?: string;
+  instructions?: string;
+  title?: string;
+  questions: BlankField[];
 }
 
 // ─── Question Groups ──────────────────────────────────────────────────────────
@@ -149,6 +186,7 @@ export type QuestionGroup = GroupBase &
     | { type: 'sentence-completion'; questions: BlankField[] }
     | { type: 'short-answer'; questions: BlankField[] }
     | { type: 'map-labelling'; data: MapData }
+    | { type: 'diagram-completion'; data: DiagramData }
     | {
         type: 'summary-completion';
         summaryTitle?: string;
@@ -160,7 +198,9 @@ export type QuestionGroup = GroupBase &
 // ─── Part & Test ──────────────────────────────────────────────────────────────
 
 export interface Part {
-  number: 1 | 2 | 3 | 4;
+  audioEndTime?: number;
+  audioStartTime?: number;
+  number: number;
   title: string;
   scenario: string;
   audioUrl?: string;
@@ -168,7 +208,9 @@ export interface Part {
 }
 
 export interface ListeningTest {
+  durationMinutes?: number;
   id: string;
+  supportsLocalScoring?: boolean;
   title: string;
   difficulty: 'easy' | 'medium' | 'hard';
   description: string;
@@ -181,7 +223,11 @@ export type Answers = Record<string, string>;
 
 export interface TestResult {
   answers: Answers;
+  attemptId?: string;
+  overallBand?: number | null;
   score: number;
+  source?: 'backend' | 'local';
   total: number;
+  timeSpentSeconds?: number | null;
   partScores: Record<number, { score: number; total: number }>;
 }

@@ -28,7 +28,7 @@ export function VideoCard({ isActive, slide }: VideoCardProps) {
 
   return (
     <div className="relative">
-      <div className="relative overflow-hidden rounded-xl bg-[#0b0b0b] shadow-[0_30px_120px_rgba(0,0,0,0.75)] md:rounded-xl">
+      <div className="relative overflow-hidden bg-[#0b0b0b] shadow-[0_30px_120px_rgba(0,0,0,0.75)]">
         <div className="relative aspect-video w-full">
           <Image
             fill

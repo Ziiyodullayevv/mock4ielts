@@ -1,9 +1,36 @@
-import type { Part, Answers, TestResult, ListeningTest, QuestionGroup } from './types';
+import type {
+  Part,
+  Answers,
+  TestResult,
+  CorrectAnswer,
+  ListeningTest,
+  QuestionGroup,
+} from './types';
 
 export type PartQuestionMeta = {
   id: string;
   number: number;
 };
+
+export function getPrimaryAnswer(answer: CorrectAnswer): string {
+  return Array.isArray(answer) ? answer[0] ?? '' : answer;
+}
+
+export function isAnswerCorrect(userAnswer: string | undefined, correctAnswer: CorrectAnswer, multiSelect?: boolean) {
+  if (multiSelect) {
+    const expectedAnswers = Array.isArray(correctAnswer)
+      ? correctAnswer.map((answer) => normalizeMultiSelectAnswer(answer))
+      : [normalizeMultiSelectAnswer(correctAnswer)];
+
+    return expectedAnswers.includes(normalizeMultiSelectAnswer(userAnswer ?? ''));
+  }
+
+  const expectedAnswers = Array.isArray(correctAnswer)
+    ? correctAnswer.map((answer) => normalizeAnswer(answer))
+    : [normalizeAnswer(correctAnswer)];
+
+  return expectedAnswers.includes(normalizeAnswer(userAnswer ?? ''));
+}
 
 /** Collect all blank fields from a test with their correct answers */
 export function getCorrectAnswers(test: ListeningTest): Record<string, string> {
@@ -12,29 +39,50 @@ export function getCorrectAnswers(test: ListeningTest): Record<string, string> {
   for (const part of test.parts) {
     for (const group of part.groups) {
       if (group.type === 'multiple-choice') {
-        for (const q of group.questions) map[q.id] = q.answer;
+        for (const q of group.questions) map[q.id] = getPrimaryAnswer(q.answer);
       } else if (group.type === 'matching') {
-        for (const p of group.data.pairs) map[p.id] = p.answer;
+        for (const p of group.data.pairs) map[p.id] = getPrimaryAnswer(p.answer);
       } else if (group.type === 'form-completion') {
-        for (const s of group.sections) for (const f of s.fields) map[f.id] = f.answer;
+        for (const s of group.sections) for (const f of s.fields) map[f.id] = getPrimaryAnswer(f.answer);
       } else if (group.type === 'note-completion') {
         for (const s of group.sections)
-          for (const b of s.bullets) if (b.field) map[b.field.id] = b.field.answer;
+          for (const b of s.bullets) if (b.field) map[b.field.id] = getPrimaryAnswer(b.field.answer);
       } else if (group.type === 'table-completion') {
-        for (const row of group.data.rows)
-          for (const cell of row) if (cell.isBlank && cell.id) map[cell.id] = cell.answer!;
+        const rows = [
+          ...(group.data.rows ?? []),
+          ...(group.data.sections?.flatMap((section) => section.rows) ?? []),
+        ];
+
+        for (const row of rows) {
+          for (const cell of row) {
+            if (cell.isBlank && cell.id && cell.answer) {
+              map[cell.id] = getPrimaryAnswer(cell.answer);
+            }
+
+            for (const segment of cell.segments ?? []) {
+              if (segment.type === 'blank') {
+                map[segment.field.id] = getPrimaryAnswer(segment.field.answer);
+              }
+            }
+          }
+        }
       } else if (group.type === 'flow-chart') {
-        for (const step of group.steps) if (step.isBlank && step.id) map[step.id] = step.answer!;
+        for (const step of group.steps)
+          if (step.isBlank && step.id && step.answer) map[step.id] = getPrimaryAnswer(step.answer);
       } else if (group.type === 'sentence-completion') {
-        for (const q of group.questions) map[q.id] = q.answer;
+        for (const q of group.questions) map[q.id] = getPrimaryAnswer(q.answer);
       } else if (group.type === 'short-answer') {
-        for (const q of group.questions) map[q.id] = q.answer;
+        for (const q of group.questions) map[q.id] = getPrimaryAnswer(q.answer);
       } else if (group.type === 'map-labelling') {
-        for (const pin of group.data.pins) map[pin.id] = pin.answer;
+        for (const pin of group.data.pins) map[pin.id] = getPrimaryAnswer(pin.answer);
+      } else if (group.type === 'diagram-completion') {
+        for (const question of group.data.questions) {
+          map[question.id] = getPrimaryAnswer(question.answer);
+        }
       } else if (group.type === 'summary-completion') {
         for (const paragraph of group.paragraphs)
           for (const segment of paragraph.segments)
-            if (segment.type === 'blank') map[segment.field.id] = segment.field.answer;
+            if (segment.type === 'blank') map[segment.field.id] = getPrimaryAnswer(segment.field.answer);
       }
     }
   }
@@ -81,11 +129,23 @@ export function computeResult(test: ListeningTest, answers: Answers): TestResult
           }
         }
       } else if (group.type === 'table-completion') {
-        for (const row of group.data.rows) {
+        const rows = [
+          ...(group.data.rows ?? []),
+          ...(group.data.sections?.flatMap((section) => section.rows) ?? []),
+        ];
+
+        for (const row of rows) {
           for (const cell of row) {
-            if (!cell.isBlank || !cell.id || !cell.answer) continue;
-            pTotal++;
-            if (isAnswerCorrect(answers[cell.id], cell.answer)) pScore++;
+            if (cell.isBlank && cell.id && cell.answer) {
+              pTotal++;
+              if (isAnswerCorrect(answers[cell.id], cell.answer)) pScore++;
+            }
+
+            for (const segment of cell.segments ?? []) {
+              if (segment.type !== 'blank') continue;
+              pTotal++;
+              if (isAnswerCorrect(answers[segment.field.id], segment.field.answer)) pScore++;
+            }
           }
         }
       } else if (group.type === 'flow-chart') {
@@ -103,6 +163,11 @@ export function computeResult(test: ListeningTest, answers: Answers): TestResult
         for (const pin of group.data.pins) {
           pTotal++;
           if (isAnswerCorrect(answers[pin.id], pin.answer)) pScore++;
+        }
+      } else if (group.type === 'diagram-completion') {
+        for (const question of group.data.questions) {
+          pTotal++;
+          if (isAnswerCorrect(answers[question.id], question.answer)) pScore++;
         }
       } else if (group.type === 'summary-completion') {
         for (const paragraph of group.paragraphs) {
@@ -132,12 +197,23 @@ export function getGroupIds(group: QuestionGroup): string[] {
   if (group.type === 'note-completion')
     return group.sections.flatMap((s) => s.bullets.filter((b) => b.field).map((b) => b.field!.id));
   if (group.type === 'table-completion')
-    return group.data.rows.flatMap((r) => r.filter((c) => c.isBlank && c.id).map((c) => c.id!));
+    return [
+      ...(group.data.rows ?? []),
+      ...(group.data.sections?.flatMap((section) => section.rows) ?? []),
+    ].flatMap((row) =>
+      row.flatMap((cell) => [
+        ...(cell.isBlank && cell.id ? [cell.id] : []),
+        ...(cell.segments
+          ?.filter((segment) => segment.type === 'blank')
+          .map((segment) => segment.field.id) ?? []),
+      ])
+    );
   if (group.type === 'flow-chart')
     return group.steps.filter((s) => s.isBlank && s.id).map((s) => s.id!);
   if (group.type === 'sentence-completion') return group.questions.map((q) => q.id);
   if (group.type === 'short-answer') return group.questions.map((q) => q.id);
   if (group.type === 'map-labelling') return group.data.pins.map((p) => p.id);
+  if (group.type === 'diagram-completion') return group.data.questions.map((question) => question.id);
   if (group.type === 'summary-completion')
     return group.paragraphs.flatMap((paragraph) =>
       paragraph.segments
@@ -171,10 +247,16 @@ export function getGroupQuestions(group: QuestionGroup): PartQuestionMeta[] {
   }
 
   if (group.type === 'table-completion') {
-    return group.data.rows.flatMap((row) =>
-      row
-        .filter((cell) => cell.isBlank && cell.id && cell.number)
-        .map((cell) => ({ id: cell.id!, number: cell.number! }))
+    return [
+      ...(group.data.rows ?? []),
+      ...(group.data.sections?.flatMap((section) => section.rows) ?? []),
+    ].flatMap((row) =>
+      row.flatMap((cell) => [
+        ...(cell.isBlank && cell.id && cell.number ? [{ id: cell.id, number: cell.number }] : []),
+        ...(cell.segments
+          ?.filter((segment) => segment.type === 'blank')
+          .map((segment) => ({ id: segment.field.id, number: segment.field.number })) ?? []),
+      ])
     );
   }
 
@@ -190,6 +272,10 @@ export function getGroupQuestions(group: QuestionGroup): PartQuestionMeta[] {
 
   if (group.type === 'map-labelling') {
     return group.data.pins.map((pin) => ({ id: pin.id, number: pin.number }));
+  }
+
+  if (group.type === 'diagram-completion') {
+    return group.data.questions.map((question) => ({ id: question.id, number: question.number }));
   }
 
   if (group.type === 'summary-completion') {
@@ -246,12 +332,4 @@ function normalizeMultiSelectAnswer(value: string) {
     .filter(Boolean)
     .sort()
     .join(',');
-}
-
-function isAnswerCorrect(userAnswer: string | undefined, correctAnswer: string, multiSelect?: boolean) {
-  if (multiSelect) {
-    return normalizeMultiSelectAnswer(userAnswer ?? '') === normalizeMultiSelectAnswer(correctAnswer);
-  }
-
-  return normalizeAnswer(userAnswer ?? '') === normalizeAnswer(correctAnswer);
 }

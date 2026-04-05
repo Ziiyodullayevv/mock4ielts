@@ -8,7 +8,7 @@ type FeatureCardsSectionProps = {
 
 export function FeatureCardsSection({ cards }: FeatureCardsSectionProps) {
   return (
-    <section className="mt-5 hidden w-full items-center justify-center gap-5 md:flex">
+    <section className="mt-2 flex w-full flex-col items-stretch justify-center gap-4 md:mt-5 md:flex-row md:items-center md:gap-5">
       {cards.map((item) => (
         <FeatureCard key={`${item.title}-${item.highlight}`} item={item} />
       ))}

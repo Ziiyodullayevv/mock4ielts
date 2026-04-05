@@ -1,6 +1,14 @@
 import type { NextConfig } from 'next';
 
+const isStaticExport = false;
+
 const nextConfig: NextConfig = {
+  reactStrictMode: false,
+  trailingSlash: true,
+  output: isStaticExport ? 'export' : undefined,
+  env: {
+    BUILD_STATIC_EXPORT: JSON.stringify(isStaticExport),
+  },
   images: {
     remotePatterns: [
       {
@@ -12,6 +20,9 @@ const nextConfig: NextConfig = {
         hostname: '**.vidu.studio',
       },
     ],
+  },
+  turbopack: {
+    root: process.cwd(),
   },
 };
 

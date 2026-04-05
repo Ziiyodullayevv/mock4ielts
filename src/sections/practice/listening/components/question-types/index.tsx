@@ -12,6 +12,7 @@ import { FormCompletion } from './form-completion';
 import { NoteCompletion } from './note-completion';
 import { QuestionGroupIntro } from './paper-shell';
 import { TableCompletion } from './table-completion';
+import { DiagramCompletion } from './diagram-completion';
 import { SummaryCompletion } from './summary-completion';
 import { SentenceCompletion } from './sentence-completion';
 
@@ -41,7 +42,7 @@ export function QuestionGroupRenderer({
       : 'Questions';
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-5">
       <QuestionGroupIntro title={groupTitle} instruction={group.instructions} />
 
       {group.type === 'multiple-choice' && (
@@ -133,6 +134,16 @@ export function QuestionGroupRenderer({
           activeQuestionId={activeQuestionId}
           data={group.data}
           answers={answers}
+          onChange={onChange}
+          showAnswer={showAnswer}
+        />
+      )}
+
+      {group.type === 'diagram-completion' && (
+        <DiagramCompletion
+          activeQuestionId={activeQuestionId}
+          answers={answers}
+          data={group.data}
           onChange={onChange}
           showAnswer={showAnswer}
         />
