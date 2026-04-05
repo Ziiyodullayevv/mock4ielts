@@ -35,11 +35,11 @@ export function HeaderAuthActions() {
 
   if (!isAuthenticated) {
     return (
-      <Link href={signInHref}>
-        <Button className="h-10 text-sm leading-none" size="sm" variant="black">
+      <Button asChild className="h-10 rounded-full px-5 text-sm leading-none" size="sm" variant="black">
+        <Link href={signInHref}>
           Sign In
-        </Button>
-      </Link>
+        </Link>
+      </Button>
     );
   }
 
