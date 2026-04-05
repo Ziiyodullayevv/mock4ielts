@@ -3,12 +3,17 @@ services:
     image: ghcr.io/ziiyodullayevv/mock4ielts:latest
     container_name: mock4ielts
     restart: unless-stopped
+    env_file:
+      - .env
     ports:
       - '127.0.0.1:8083:8083'
     environment:
       NODE_ENV: production
       HOSTNAME: 0.0.0.0
       PORT: 8083
+      NEXT_PUBLIC_SERVER_URL: ${NEXT_PUBLIC_SERVER_URL:-}
+      NEXT_PUBLIC_ASSETS_DIR: ${NEXT_PUBLIC_ASSETS_DIR:-}
+      NEXT_PUBLIC_GOOGLE_CLIENT_ID: ${NEXT_PUBLIC_GOOGLE_CLIENT_ID:-}
     healthcheck:
       test: ['CMD', 'wget', '--spider', '-q', 'http://localhost:8083']
       interval: 30s
