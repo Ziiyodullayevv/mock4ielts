@@ -34,7 +34,7 @@ export function AuthProviderGroup({
   const isBusy = isApplePending || isGooglePending;
 
   return (
-    <div className="flex w-full flex-col items-center gap-5 pt-10 max-lg:gap-6 max-lg:pt-6">
+    <div className="flex w-full flex-col items-center gap-5 pt-10 max-lg:gap-6 max-lg:pt-6 max-sm:gap-4 max-sm:pt-5">
       <AuthGoogleButton
         clientId={googleClientId}
         disabled={isApplePending}
@@ -51,7 +51,7 @@ export function AuthProviderGroup({
         Continue with Email
       </AuthProviderButton>
 
-      <div className="flex w-full items-center py-1 text-sm text-white opacity-70 before:mr-2 before:h-px before:w-1/2 before:bg-white after:ml-2 after:h-px after:w-1/2 after:bg-white max-lg:text-xs">
+      <div className="flex w-full items-center py-1 text-sm text-white opacity-70 before:mr-2 before:h-px before:w-1/2 before:bg-white after:ml-2 after:h-px after:w-1/2 after:bg-white max-lg:text-xs max-sm:py-0.5">
         <span className="px-2 leading-4">&amp;</span>
       </div>
 

@@ -133,7 +133,7 @@ export function AuthVerificationForm({
 
   return (
     <form
-      className="flex w-full flex-col items-center gap-8 pt-10 max-lg:pt-6"
+      className="flex w-full flex-col items-center gap-8 pt-10 max-lg:pt-6 max-sm:gap-6"
       onSubmit={submitVerification}
     >
       <div
@@ -152,7 +152,7 @@ export function AuthVerificationForm({
             disabled={isSubmitting}
             onChange={(event) => handleChange(index, event.target.value)}
             onKeyDown={(event) => handleKeyDown(index, event)}
-            className="aspect-square min-w-0 rounded-lg border border-white/15 bg-white/[0.04] text-center text-2xl font-semibold text-white outline-none transition focus:border-white/35 max-md:text-xl"
+            className="aspect-square min-w-0 rounded-lg border border-white/15 bg-white/[0.04] text-center text-2xl font-semibold text-white outline-none transition focus:border-white/35 max-sm:text-xl"
           />
         ))}
       </div>
@@ -172,7 +172,7 @@ export function AuthVerificationForm({
       <button
         type="submit"
         disabled={isSubmitting}
-        className="inline-flex h-12 w-full items-center justify-center whitespace-nowrap rounded-lg bg-white px-4 py-2 text-base font-medium text-black transition-colors disabled:cursor-not-allowed disabled:opacity-80"
+        className="inline-flex h-12 w-full items-center justify-center whitespace-nowrap rounded-lg bg-white px-4 py-2 text-base font-medium text-black transition-colors disabled:cursor-not-allowed disabled:opacity-80 max-sm:min-h-12 max-sm:whitespace-normal max-sm:py-3 max-sm:text-sm max-sm:leading-5"
       >
         {isSubmitting ? (
           <span className="inline-flex items-center gap-2">
@@ -188,7 +188,7 @@ export function AuthVerificationForm({
         type="button"
         onClick={handleResend}
         disabled={secondsLeft > 0 || isResending || isSubmitting}
-        className="inline-flex h-12 w-full items-center justify-center whitespace-nowrap rounded-lg bg-white px-4 py-2 text-base font-medium text-black transition-colors disabled:cursor-not-allowed disabled:opacity-80"
+        className="inline-flex h-12 w-full items-center justify-center whitespace-nowrap rounded-lg bg-white px-4 py-2 text-base font-medium text-black transition-colors disabled:cursor-not-allowed disabled:opacity-80 max-sm:min-h-12 max-sm:whitespace-normal max-sm:py-3 max-sm:text-sm max-sm:leading-5"
       >
         {isResending ? 'Resending...' : `Resend Code ${secondsLeft > 0 ? `(${secondsLeft}s)` : ''}`}
       </button>
