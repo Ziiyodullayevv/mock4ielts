@@ -21,12 +21,12 @@ jobs:
       NEXT_PUBLIC_SERVER_URL: ${{ secrets.NEXT_PUBLIC_SERVER_URL }}
       NEXT_PUBLIC_ASSETS_DIR: ${{ secrets.NEXT_PUBLIC_ASSETS_DIR }}
       NEXT_PUBLIC_GOOGLE_CLIENT_ID: ${{ secrets.NEXT_PUBLIC_GOOGLE_CLIENT_ID }}
-      DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
-      DEPLOY_PORT: ${{ secrets.DEPLOY_PORT }}
-      DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
-      DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
-      DEPLOY_PATH: ${{ secrets.DEPLOY_PATH }}
-      DEPLOY_RESTART_COMMAND: ${{ secrets.DEPLOY_RESTART_COMMAND }}
+      DEPLOY_HOST: ${{ secrets.DEPLOY_HOST || secrets.SSH_HOST || secrets.VPS_HOST || vars.DEPLOY_HOST || vars.SSH_HOST || vars.VPS_HOST }}
+      DEPLOY_PORT: ${{ secrets.DEPLOY_PORT || vars.DEPLOY_PORT || vars.SSH_PORT || vars.VPS_PORT || '22' }}
+      DEPLOY_USER: ${{ secrets.DEPLOY_USER || secrets.SSH_USERNAME || secrets.VPS_USER || vars.DEPLOY_USER || vars.SSH_USERNAME || vars.VPS_USER }}
+      DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY || secrets.SSH_PRIVATE_KEY || secrets.VPS_SSH_KEY }}
+      DEPLOY_PATH: ${{ secrets.DEPLOY_PATH || vars.DEPLOY_PATH }}
+      DEPLOY_RESTART_COMMAND: ${{ secrets.DEPLOY_RESTART_COMMAND || vars.DEPLOY_RESTART_COMMAND }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -42,12 +42,40 @@ jobs:
         run: |
           missing=0
 
-          for name in NEXT_PUBLIC_SERVER_URL NEXT_PUBLIC_GOOGLE_CLIENT_ID DEPLOY_HOST DEPLOY_USER DEPLOY_SSH_KEY DEPLOY_PATH DEPLOY_RESTART_COMMAND; do
-            if [ -z "${!name}" ]; then
-              echo "::error::Missing required secret: $name"
-              missing=1
-            fi
-          done
+          if [ -z "$NEXT_PUBLIC_SERVER_URL" ]; then
+            echo "::error::Missing NEXT_PUBLIC_SERVER_URL"
+            missing=1
+          fi
+
+          if [ -z "$NEXT_PUBLIC_GOOGLE_CLIENT_ID" ]; then
+            echo "::error::Missing NEXT_PUBLIC_GOOGLE_CLIENT_ID"
+            missing=1
+          fi
+
+          if [ -z "$DEPLOY_HOST" ]; then
+            echo "::error::Missing deploy host. Supported names: DEPLOY_HOST, SSH_HOST, VPS_HOST"
+            missing=1
+          fi
+
+          if [ -z "$DEPLOY_USER" ]; then
+            echo "::error::Missing deploy user. Supported names: DEPLOY_USER, SSH_USERNAME, VPS_USER"
+            missing=1
+          fi
+
+          if [ -z "$DEPLOY_SSH_KEY" ]; then
+            echo "::error::Missing SSH private key. Supported names: DEPLOY_SSH_KEY, SSH_PRIVATE_KEY, VPS_SSH_KEY"
+            missing=1
+          fi
+
+          if [ -z "$DEPLOY_PATH" ]; then
+            echo "::error::Missing DEPLOY_PATH. Add it as a GitHub Secret or Variable"
+            missing=1
+          fi
+
+          if [ -z "$DEPLOY_RESTART_COMMAND" ]; then
+            echo "::error::Missing DEPLOY_RESTART_COMMAND. Add it as a GitHub Secret or Variable"
+            missing=1
+          fi
 
           if [ "$missing" -ne 0 ]; then
             exit 1
