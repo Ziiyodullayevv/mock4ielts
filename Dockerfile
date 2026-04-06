@@ -26,7 +26,7 @@ ARG NEXT_PUBLIC_GOOGLE_CLIENT_ID
 
 ENV NODE_ENV=production
 ENV HOSTNAME=0.0.0.0
-ENV PORT=8083
+ENV PORT=3000
 ENV NEXT_PUBLIC_SERVER_URL=$NEXT_PUBLIC_SERVER_URL
 ENV NEXT_PUBLIC_ASSETS_DIR=$NEXT_PUBLIC_ASSETS_DIR
 ENV NEXT_PUBLIC_GOOGLE_CLIENT_ID=$NEXT_PUBLIC_GOOGLE_CLIENT_ID
@@ -37,6 +37,6 @@ COPY --from=builder /app/package.json ./
 COPY --from=builder /app/public ./public
 COPY --from=builder /app/next.config.ts ./next.config.ts
 
-EXPOSE 8083
+EXPOSE 3000
 
 CMD ["npm", "run", "start"]
