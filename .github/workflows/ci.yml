@@ -22,7 +22,6 @@ jobs:
       - run: npm run build
         env:
           NEXT_PUBLIC_SERVER_URL: ${{ secrets.NEXT_PUBLIC_SERVER_URL }}
-          NEXT_PUBLIC_ASSETS_DIR: ${{ secrets.NEXT_PUBLIC_ASSETS_DIR }}
           NEXT_PUBLIC_GOOGLE_CLIENT_ID: ${{ secrets.NEXT_PUBLIC_GOOGLE_CLIENT_ID }}
 
   docker:
