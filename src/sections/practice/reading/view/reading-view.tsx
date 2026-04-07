@@ -27,7 +27,7 @@ export function ReadingView() {
     href: item.href,
     id: item.id,
     isStarred: false,
-    isStartAvailable: false,
+    isStartAvailable: true,
     questionCount: item.questionCount,
     sectionType: 'reading',
     tokenCost: undefined,

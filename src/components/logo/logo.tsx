@@ -1,3 +1,5 @@
+import type { MouseEventHandler } from 'react';
+
 import Link from 'next/link';
 import { cn } from '@/src/lib/utils';
 
@@ -15,17 +17,25 @@ export type LogoVariant = keyof typeof LOGO_CLASS_BY_VARIANT;
 type LogoProps = {
   className?: string;
   href?: string;
+  onClick?: MouseEventHandler<HTMLAnchorElement>;
   size?: number;
   variant?: LogoVariant;
 };
 
-export function Logo({ className, href = '/', size = 30, variant = 'light' }: LogoProps) {
+export function Logo({
+  className,
+  href = '/',
+  onClick,
+  size = 30,
+  variant = 'light',
+}: LogoProps) {
   const width = Math.round((size * LOGO_VIEWBOX_WIDTH) / LOGO_VIEWBOX_HEIGHT);
 
   return (
     <Link
       href={href}
       aria-label="Go to home page"
+      onClick={onClick}
       className={cn(
         'inline-flex items-center justify-center',
         LOGO_CLASS_BY_VARIANT[variant],

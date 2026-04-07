@@ -63,7 +63,7 @@ export async function listPublishedWritingSections(): Promise<WritingPracticeSec
     items: sections.map((section, index) => ({
       difficulty: section.difficulty,
       durationMinutes: section.duration_minutes,
-      href: `${paths.practice.writing.root}#section-${section.id}`,
+      href: paths.practice.writing.details(section.id),
       id: index + 1,
       questionCount: section.question_count,
       remoteId: section.id,

@@ -13,9 +13,11 @@ export const paths = {
     },
     reading: {
       root: `${ROOTS.PRACTICE}/reading`,
+      details: (id: string) => `${ROOTS.PRACTICE}/reading/${id}`,
     },
     writing: {
       root: `${ROOTS.PRACTICE}/writing`,
+      details: (id: string) => `${ROOTS.PRACTICE}/writing/${id}`,
     },
     speaking: {
       root: `${ROOTS.PRACTICE}/speaking`,

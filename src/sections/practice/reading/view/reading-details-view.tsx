@@ -8,21 +8,24 @@ import { buildLoginHref } from '@/src/auth/utils/return-to';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuthSession } from '@/src/auth/hooks/use-auth-session';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { PracticePageState, PracticeCountdownOverlay } from '@/src/sections/practice/components';
 import {
-  startListeningSectionAttempt,
-  submitListeningSectionAttempt,
-} from '@/src/sections/practice/listening/api/listening-attempt-api';
+  PracticePageState,
+  PracticeCountdownOverlay,
+} from '@/src/sections/practice/components';
+import {
+  startReadingSectionAttempt,
+  submitReadingSectionAttempt,
+} from '@/src/sections/practice/reading/api/reading-attempt-api';
 
-import { ListeningTestView } from '../components/listening-test-view';
-import { useListeningSectionDetailQuery } from '../hooks/use-listening-section-detail-query';
-import { useListeningSectionResultQuery } from '../hooks/use-listening-section-result-query';
+import { ReadingTestView } from '../components/reading-test-view';
+import { useReadingSectionDetailQuery } from '../hooks/use-reading-section-detail-query';
+import { useReadingSectionResultQuery } from '../hooks/use-reading-section-result-query';
 
-type ListeningDetailsViewProps = {
+type ReadingDetailsViewProps = {
   sectionId: string;
 };
 
-export function ListeningDetailsView({ sectionId }: ListeningDetailsViewProps) {
+export function ReadingDetailsView({ sectionId }: ReadingDetailsViewProps) {
   const router = useRouter();
   const queryClient = useQueryClient();
   const searchParams = useSearchParams();
@@ -30,26 +33,23 @@ export function ListeningDetailsView({ sectionId }: ListeningDetailsViewProps) {
   const view = searchParams.get('view');
   const shouldRestoreResult = view === 'result';
   const { isAuthenticated, isHydrated } = useAuthSession();
-  const canLoadListeningSection = isHydrated && isAuthenticated;
+  const canLoadReadingSection = isHydrated && isAuthenticated;
   const [countdownValue, setCountdownValue] = useState<number | null>(null);
   const [pendingAttemptId, setPendingAttemptId] = useState<string | null>(null);
-  const { data, error, isLoading } = useListeningSectionDetailQuery(
-    sectionId,
-    canLoadListeningSection
-  );
+  const { data, error, isLoading } = useReadingSectionDetailQuery(sectionId, canLoadReadingSection);
   const {
     data: attemptResult,
     error: attemptResultError,
     isLoading: isAttemptResultLoading,
-  } = useListeningSectionResultQuery(
+  } = useReadingSectionResultQuery(
     sectionId,
     attemptId,
     data,
-    canLoadListeningSection && Boolean(data) && shouldRestoreResult
+    canLoadReadingSection && Boolean(data) && shouldRestoreResult
   );
 
   const startAttemptMutation = useMutation({
-    mutationFn: startListeningSectionAttempt,
+    mutationFn: startReadingSectionAttempt,
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ['auth', 'me'] });
     },
@@ -57,7 +57,7 @@ export function ListeningDetailsView({ sectionId }: ListeningDetailsViewProps) {
 
   const submitAttemptMutation = useMutation({
     mutationFn: (answers: Answers) =>
-      submitListeningSectionAttempt({
+      submitReadingSectionAttempt({
         answers,
         attemptId: attemptId ?? '',
         sectionId,
@@ -71,7 +71,7 @@ export function ListeningDetailsView({ sectionId }: ListeningDetailsViewProps) {
     }
 
     if (!isAuthenticated) {
-      router.replace(buildLoginHref(paths.practice.listening.details(sectionId)));
+      router.replace(buildLoginHref(paths.practice.reading.details(sectionId)));
     }
   }, [isAuthenticated, isHydrated, router, sectionId]);
 
@@ -83,7 +83,7 @@ export function ListeningDetailsView({ sectionId }: ListeningDetailsViewProps) {
     if (countdownValue === 1) {
       const startTimer = window.setTimeout(() => {
         router.replace(
-          `${paths.practice.listening.details(sectionId)}?attemptId=${encodeURIComponent(pendingAttemptId)}`
+          `${paths.practice.reading.details(sectionId)}?attemptId=${encodeURIComponent(pendingAttemptId)}`
         );
       }, 1000);
 
@@ -134,14 +134,6 @@ export function ListeningDetailsView({ sectionId }: ListeningDetailsViewProps) {
     }
   };
 
-  const handleStartAttempt = async () => {
-    await beginAttempt();
-  };
-
-  const handleRetryAttempt = async () => {
-    await beginAttempt();
-  };
-
   const countdownOverlay =
     countdownValue !== null ? <PracticeCountdownOverlay value={countdownValue} /> : null;
 
@@ -166,7 +158,7 @@ export function ListeningDetailsView({ sectionId }: ListeningDetailsViewProps) {
   if (isLoading) {
     return (
       <>
-        <PracticePageState icon="spinner" label="Loading listening test..." />
+        <PracticePageState icon="spinner" label="Loading reading test..." />
         {countdownOverlay}
       </>
     );
@@ -176,10 +168,10 @@ export function ListeningDetailsView({ sectionId }: ListeningDetailsViewProps) {
     return (
       <>
         <PracticePageState
-          actionLabel="Back to listening"
+          actionLabel="Back to reading"
           description={error.message}
-          label="We couldn't load this listening test."
-          onAction={() => router.push(paths.practice.listening.root)}
+          label="We couldn't load this reading test."
+          onAction={() => router.push(paths.practice.reading.root)}
         />
         {countdownOverlay}
       </>
@@ -190,10 +182,10 @@ export function ListeningDetailsView({ sectionId }: ListeningDetailsViewProps) {
     return (
       <>
         <PracticePageState
-          actionLabel="Back to listening"
-          description="This listening practice could not be loaded."
-          label="Listening test unavailable"
-          onAction={() => router.push(paths.practice.listening.root)}
+          actionLabel="Back to reading"
+          description="This reading practice could not be loaded."
+          label="Reading test unavailable"
+          onAction={() => router.push(paths.practice.reading.root)}
         />
         {countdownOverlay}
       </>
@@ -212,7 +204,7 @@ export function ListeningDetailsView({ sectionId }: ListeningDetailsViewProps) {
           }
           icon="play"
           label={data.title}
-          onAction={startAttemptMutation.isPending ? undefined : handleStartAttempt}
+          onAction={startAttemptMutation.isPending ? undefined : beginAttempt}
         />
         {countdownOverlay}
       </>
@@ -222,7 +214,7 @@ export function ListeningDetailsView({ sectionId }: ListeningDetailsViewProps) {
   if (shouldRestoreResult && isAttemptResultLoading) {
     return (
       <>
-        <PracticePageState icon="spinner" label="Restoring your listening attempt..." />
+        <PracticePageState icon="spinner" label="Restoring your reading attempt..." />
         {countdownOverlay}
       </>
     );
@@ -232,10 +224,10 @@ export function ListeningDetailsView({ sectionId }: ListeningDetailsViewProps) {
     return (
       <>
         <PracticePageState
-          actionLabel="Back to listening"
+          actionLabel="Back to reading"
           description={attemptResultError.message}
-          label="We couldn't restore this listening attempt."
-          onAction={() => router.push(paths.practice.listening.root)}
+          label="We couldn't restore this reading attempt."
+          onAction={() => router.push(paths.practice.reading.root)}
         />
         {countdownOverlay}
       </>
@@ -244,12 +236,16 @@ export function ListeningDetailsView({ sectionId }: ListeningDetailsViewProps) {
 
   return (
     <>
-      <ListeningTestView
+      <ReadingTestView
         key={attemptId}
         attemptId={attemptId}
         initialResult={shouldRestoreResult ? attemptResult?.result : undefined}
         initialReviewTest={shouldRestoreResult ? attemptResult?.reviewTest : undefined}
         isRetrying={startAttemptMutation.isPending}
+        onBack={() => {
+          router.push(paths.practice.reading.root);
+        }}
+        onRetryAttempt={beginAttempt}
         onShowSubmittedResult={() => {
           if (!attemptId) {
             return;
@@ -258,15 +254,11 @@ export function ListeningDetailsView({ sectionId }: ListeningDetailsViewProps) {
           window.history.replaceState(
             window.history.state,
             '',
-            `${paths.practice.listening.details(sectionId)}?attemptId=${encodeURIComponent(attemptId)}&view=result`
+            `${paths.practice.reading.details(sectionId)}?attemptId=${encodeURIComponent(attemptId)}&view=result`
           );
         }}
-        onRetryAttempt={handleRetryAttempt}
         onSubmitAttempt={(answers) => submitAttemptMutation.mutateAsync(answers)}
         test={data}
-        onBack={() => {
-          router.push(paths.practice.listening.root);
-        }}
       />
       {countdownOverlay}
     </>

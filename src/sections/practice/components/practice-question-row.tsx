@@ -71,8 +71,7 @@ const PRACTICE_SECTION_CONTENT = {
     aboutTitle: 'About IELTS Reading',
     description:
       'IELTS reading section details and structure.',
-    emptyStartNotice:
-      'Reading practice list is live, but starting a reading set is not enabled yet.',
+    emptyStartNotice: null,
     examCoverageItems: [
       'Three passages with increasing difficulty and academic-style topics.',
       'Question types such as matching headings, multiple choice, true/false/not given, and summary completion.',
