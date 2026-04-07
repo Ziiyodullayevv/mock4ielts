@@ -35,13 +35,13 @@ export function ReadingView() {
   }));
 
   const overview: PracticeOverview = data
-      ? {
-          avgBandScore: undefined,
-          savedCount: data.pagination.total,
-          sectionType: 'reading',
-          sourceLabel: 'Published sections',
-          title: 'Reading',
-          totalAttempting: data.pagination.total,
+    ? {
+        avgBandScore: undefined,
+        savedCount: data.pagination.total,
+        sectionType: 'reading',
+        sourceLabel: 'Published sections',
+        title: 'Reading',
+        totalAttempting: data.pagination.total,
         totalQuestions: data.items.reduce((total, item) => total + item.questionCount, 0),
         totalSolved: 0,
         updatedAtLabel: 'Live',

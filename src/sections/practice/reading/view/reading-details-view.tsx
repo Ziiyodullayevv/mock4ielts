@@ -1,6 +1,6 @@
 'use client';
 
-import type { Answers } from '../types';
+import type { Answers, ReadingTest } from '../types';
 
 import { paths } from '@/src/routes/paths';
 import { useState, useEffect } from 'react';
@@ -8,10 +8,7 @@ import { buildLoginHref } from '@/src/auth/utils/return-to';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuthSession } from '@/src/auth/hooks/use-auth-session';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import {
-  PracticePageState,
-  PracticeCountdownOverlay,
-} from '@/src/sections/practice/components';
+import { PracticePageState, PracticeCountdownOverlay } from '@/src/sections/practice/components';
 import {
   startReadingSectionAttempt,
   submitReadingSectionAttempt,
@@ -240,7 +237,9 @@ export function ReadingDetailsView({ sectionId }: ReadingDetailsViewProps) {
         key={attemptId}
         attemptId={attemptId}
         initialResult={shouldRestoreResult ? attemptResult?.result : undefined}
-        initialReviewTest={shouldRestoreResult ? attemptResult?.reviewTest : undefined}
+        initialReviewTest={
+          shouldRestoreResult ? (attemptResult?.reviewTest as ReadingTest | undefined) : undefined
+        }
         isRetrying={startAttemptMutation.isPending}
         onBack={() => {
           router.push(paths.practice.reading.root);
@@ -257,7 +256,10 @@ export function ReadingDetailsView({ sectionId }: ReadingDetailsViewProps) {
             `${paths.practice.reading.details(sectionId)}?attemptId=${encodeURIComponent(attemptId)}&view=result`
           );
         }}
-        onSubmitAttempt={(answers) => submitAttemptMutation.mutateAsync(answers)}
+        onSubmitAttempt={async (answers) => {
+          const r = await submitAttemptMutation.mutateAsync(answers);
+          return { result: r.result, reviewTest: r.reviewTest as ReadingTest };
+        }}
         test={data}
       />
       {countdownOverlay}
