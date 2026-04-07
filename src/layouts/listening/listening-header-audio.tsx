@@ -1,164 +1,74 @@
 'use client';
 
+import type { ListeningHeaderAudioControls } from './use-listening-header-audio';
+
 import { cn } from '@/src/lib/utils';
-import { useRef, useEffect, useCallback } from 'react';
+import { Slider } from '@/src/components/ui/slider';
 import { Volume1, Volume2, VolumeX } from 'lucide-react';
 
-import { useListeningHeaderAudio } from './use-listening-header-audio';
-
 type ListeningHeaderAudioProps = {
-  audioUrl?: string;
-  triggerClassName?: string;
+  controls: ListeningHeaderAudioControls;
+  variant?: 'desktop' | 'mobile';
 };
 
-export function ListeningHeaderAudio({ audioUrl, triggerClassName }: ListeningHeaderAudioProps) {
-  const {
-    audioRef,
-    controlRef,
-    handleToggleMute,
-    handleVolumeChange,
-    handleVolumeTrackPointerDown,
-    isVolumeOpen,
-    setIsVolumeOpen,
-    volume,
-    volumeSurfaceRef,
-  } = useListeningHeaderAudio(audioUrl);
-
-  const autoCloseTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const VolumeIcon = volume === 0 ? VolumeX : volume < 50 ? Volume1 : Volume2;
-  const isFilled = volume > 50;
-
-  const resetAutoClose = useCallback(() => {
-    if (autoCloseTimer.current) clearTimeout(autoCloseTimer.current);
-    autoCloseTimer.current = setTimeout(() => setIsVolumeOpen(false), 3000);
-  }, [setIsVolumeOpen]);
-
-  useEffect(() => {
-    if (isVolumeOpen) resetAutoClose();
-    else if (autoCloseTimer.current) clearTimeout(autoCloseTimer.current);
-    return () => {
-      if (autoCloseTimer.current) clearTimeout(autoCloseTimer.current);
-    };
-  }, [isVolumeOpen, resetAutoClose]);
-
-  const handleInteraction = () => {
-    if (isVolumeOpen) resetAutoClose();
-  };
+export function ListeningHeaderAudio({
+  controls,
+  variant = 'desktop',
+}: ListeningHeaderAudioProps) {
+  const { handleToggleMute, handleVolumeChange, volume } = controls;
+  const isMobileVariant = variant === 'mobile';
+  const LeadingVolumeIcon = volume === 0 ? VolumeX : Volume1;
 
   return (
-    <div ref={controlRef} className="relative flex shrink-0 flex-col items-center">
-      {audioUrl ? (
-        <audio ref={audioRef} autoPlay preload="auto" src={audioUrl} className="hidden" />
-      ) : null}
-
-      {/* Trigger button */}
-      <button
-        type="button"
-        onClick={() => setIsVolumeOpen((s) => !s)}
-        className={cn(
-          'inline-flex h-9 w-10 items-center justify-center rounded-full text-stone-700 transition-all duration-200 hover:bg-stone-100 hover:text-stone-900',
-          triggerClassName
-        )}
-        aria-expanded={isVolumeOpen}
-        aria-label="Open audio controls"
-      >
-        <VolumeIcon style={{ width: isVolumeOpen ? 14 : 16, height: isVolumeOpen ? 14 : 16 }} />
-      </button>
-
-      {/* Volume popup */}
-      <div
-        className="absolute top-[calc(100%+10px)] z-40"
-        style={{
-          left: '50%',
-          transformOrigin: 'top center',
-          transition:
-            'opacity 0.25s cubic-bezier(0.34,1.4,0.64,1), transform 0.25s cubic-bezier(0.34,1.4,0.64,1)',
-          opacity: isVolumeOpen ? 1 : 0,
-          transform: isVolumeOpen
-            ? 'translateX(-50%) scale(1) translateY(0)'
-            : 'translateX(-50%) scale(0.88) translateY(-8px)',
-          pointerEvents: isVolumeOpen ? 'auto' : 'none',
-        }}
-      >
-        {/* Slider — rounded-xl, overflow-hidden ichki fill ni kesadi */}
-        <div
-          ref={volumeSurfaceRef}
-          data-volume-surface
-          role="slider"
-          aria-label="Audio volume"
-          aria-valuemax={100}
-          aria-valuemin={0}
-          aria-valuenow={volume}
-          tabIndex={0}
-          onPointerDown={(e) => {
-            e.preventDefault();
-            handleInteraction();
-            handleVolumeTrackPointerDown(e.clientY);
-          }}
-          onPointerMove={handleInteraction}
-          onKeyDown={(e) => {
-            handleInteraction();
-            if (e.key === 'ArrowUp' || e.key === 'ArrowRight') {
-              e.preventDefault();
-              handleVolumeChange(Math.min(100, volume + 5));
-            }
-            if (e.key === 'ArrowDown' || e.key === 'ArrowLeft') {
-              e.preventDefault();
-              handleVolumeChange(Math.max(0, volume - 5));
-            }
-          }}
-          className="relative cursor-ns-resize overflow-hidden outline-none rounded-xl shadow-lg"
-          style={{
-            marginTop: 10,
-            width: 52,
-            height: 140,
-            background: 'rgba(124, 124, 124, 0.92)',
-            backdropFilter: 'blur(24px) saturate(160%)',
-            WebkitBackdropFilter: 'blur(24px) saturate(160%)',
-          }}
+    <div
+      className={cn(
+        'flex shrink-0 items-center',
+        isMobileVariant ? 'w-full' : 'w-[230px]'
+      )}
+    >
+      <div className="flex min-w-0 flex-1 items-center gap-2">
+        <button
+          type="button"
+          onClick={handleToggleMute}
+          className={cn(
+            'inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-stone-700 transition-colors hover:bg-stone-100 hover:text-stone-900',
+            isMobileVariant ? 'h-9 w-9' : ''
+          )}
+          aria-label={volume === 0 ? 'Unmute audio' : 'Mute audio'}
+          title={volume === 0 ? 'Unmute audio' : 'Mute audio'}
         >
-          {/* Fill — rounded yo'q, overflow-hidden parent kesadi */}
-          <div
-            className="absolute inset-x-0 bottom-0"
-            style={{
-              height: `${volume}%`,
-              background: 'white',
-              transition: 'height 0.1s cubic-bezier(0.25, 0.46, 0.45, 0.94)',
-              willChange: 'height',
-            }}
+          <LeadingVolumeIcon
+            className={cn(isMobileVariant ? 'size-5' : 'size-4.5')}
+            strokeWidth={2.2}
           />
+        </button>
 
-          {/* Foiz */}
-          <button
-            type="button"
-            onPointerDown={(e) => {
-              e.stopPropagation();
-              handleInteraction();
-            }}
-            onClick={(e) => {
-              e.stopPropagation();
-              handleToggleMute();
-              handleInteraction();
-            }}
-            className="absolute left-1/2 z-10 -translate-x-1/2 outline-none transition-transform duration-150 hover:scale-105 active:scale-95"
-            style={{ bottom: 12 }}
-            aria-label={volume === 0 ? 'Unmute audio' : 'Mute audio'}
-          >
-            <span
-              className="tabular-nums font-semibold leading-none"
-              style={{
-                fontSize: 13,
-                letterSpacing: '-0.02em',
-                color: isFilled ? 'black' : 'rgb(189, 189, 189)',
-                transition: 'color 0.2s ease',
-                fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif',
-              }}
-            >
-              {volume}
-              <span style={{ fontSize: 9, marginLeft: 1, fontWeight: 500 }}>%</span>
-            </span>
-          </button>
-        </div>
+        <Slider
+          value={[volume]}
+          max={100}
+          step={1}
+          onValueChange={(nextValue) => handleVolumeChange(nextValue[0] ?? 0)}
+          aria-label="Audio volume"
+          className={cn(
+            'min-w-0 flex-1 [&_[data-slot=slider-range]]:bg-stone-400 [&_[data-slot=slider-thumb]]:border-stone-800 [&_[data-slot=slider-thumb]]:bg-white [&_[data-slot=slider-thumb]]:shadow-[0_8px_18px_rgba(15,23,42,0.18)] [&_[data-slot=slider-track]]:bg-stone-200',
+            isMobileVariant
+              ? '[&_[data-slot=slider-thumb]]:size-5 [&_[data-slot=slider-track]]:h-2'
+              : '[&_[data-slot=slider-thumb]]:size-5 [&_[data-slot=slider-track]]:h-2'
+          )}
+        />
+
+        <button
+          type="button"
+          onClick={() => handleVolumeChange(100)}
+          className={cn(
+            'inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-stone-700 transition-colors hover:bg-stone-100 hover:text-stone-900',
+            isMobileVariant ? 'h-9 w-9' : ''
+          )}
+          aria-label="Set audio volume to maximum"
+          title="Set audio volume to maximum"
+        >
+          <Volume2 className={cn(isMobileVariant ? 'size-5' : 'size-4.5')} strokeWidth={2.2} />
+        </button>
       </div>
     </div>
   );

@@ -31,6 +31,7 @@ export interface MCQuestion {
   answer: CorrectAnswer;
   multiSelect?: boolean; // true = pick 2+
   selectCount?: number; // how many to pick
+  scoreWeight?: number;
 }
 
 // ─── Matching ─────────────────────────────────────────────────────────────────

@@ -1,10 +1,10 @@
 'use client';
 
-import type { Answers, TestResult, ListeningTest } from '../types';
+import type { Answers, TestResult, ReadingTest } from '../types';
 
 import { Button } from '@/src/components/ui/button';
 import { MainFooter } from '@/src/layouts/main/footer';
-import { ListeningTestLayout } from '@/src/layouts/listening';
+import { ReadingTestLayout } from '@/src/layouts/reading';
 import { RotateCcw, BarChart3, ArrowLeft } from 'lucide-react';
 import { useRef, useState, useEffect, useCallback } from 'react';
 import { PracticeScoreSummary, PracticeSubmittingOverlay } from '@/src/sections/practice/components';
@@ -17,7 +17,7 @@ import {
   DialogDescription,
 } from '@/src/components/ui/dialog';
 
-import { PartPanel } from './part-panel';
+import { ReadingPartPanel } from './reading-part-panel';
 import { computeResult, getPartQuestions, getListeningQuestionAnchorId } from '../utils';
 
 type Stage = 'test' | 'submitted' | 'review';
@@ -26,27 +26,27 @@ type ExitIntent = 'button' | 'browser-back';
 interface Props {
   attemptId?: string | null;
   initialResult?: TestResult | null;
-  initialReviewTest?: ListeningTest;
+  initialReviewTest?: ReadingTest;
   isRetrying?: boolean;
+  onBack: () => void;
+  onRetryAttempt?: () => Promise<void> | void;
   onShowSubmittedResult?: () => void;
   onSubmitAttempt?: (answers: Answers) => Promise<{
     result: TestResult;
-    reviewTest?: ListeningTest;
+    reviewTest?: ReadingTest;
   }>;
-  onRetryAttempt?: () => Promise<void> | void;
-  test: ListeningTest;
-  onBack: () => void;
+  test: ReadingTest;
 }
 
 const QUESTION_SCROLL_OFFSET = 156;
 const QUESTION_SCROLL_SETTLE_DELAY_MS = 260;
-const DEFAULT_DURATION_MINUTES = 30;
+const DEFAULT_DURATION_MINUTES = 60;
 
-function getTestDurationSeconds(test: ListeningTest) {
+function getTestDurationSeconds(test: ReadingTest) {
   return (test.durationMinutes ?? DEFAULT_DURATION_MINUTES) * 60;
 }
 
-function getFirstQuestionId(test: ListeningTest, partNumber: number) {
+function getFirstQuestionId(test: ReadingTest, partNumber: number) {
   const part = test.parts.find((entry) => entry.number === partNumber);
 
   if (!part) {
@@ -56,7 +56,7 @@ function getFirstQuestionId(test: ListeningTest, partNumber: number) {
   return getPartQuestions(part)[0]?.id ?? null;
 }
 
-function getNextQuestionTarget(test: ListeningTest, currentQuestionId: string) {
+function getNextQuestionTarget(test: ReadingTest, currentQuestionId: string) {
   for (const part of test.parts) {
     const questions = getPartQuestions(part);
     const currentQuestionIndex = questions.findIndex((question) => question.id === currentQuestionId);
@@ -90,16 +90,16 @@ function getNextQuestionTarget(test: ListeningTest, currentQuestionId: string) {
   return null;
 }
 
-export function ListeningTestView({
+export function ReadingTestView({
   attemptId,
   initialResult = null,
   initialReviewTest,
   isRetrying = false,
+  onBack,
+  onRetryAttempt,
   onShowSubmittedResult,
   onSubmitAttempt,
-  onRetryAttempt,
   test,
-  onBack,
 }: Props) {
   const allowNextBrowserNavigationRef = useRef(false);
   const hasAutoSubmittedOnTimeoutRef = useRef(false);
@@ -108,7 +108,7 @@ export function ListeningTestView({
   const [activeQuestionId, setActiveQuestionId] = useState<string | null>(() =>
     getFirstQuestionId(test, 1)
   );
-  const [displayTest, setDisplayTest] = useState<ListeningTest>(initialReviewTest ?? test);
+  const [displayTest, setDisplayTest] = useState<ReadingTest>(initialReviewTest ?? test);
   const [exitIntent, setExitIntent] = useState<ExitIntent>('button');
   const [isExitDialogOpen, setIsExitDialogOpen] = useState(false);
   const [isSubmitDialogOpen, setIsSubmitDialogOpen] = useState(false);
@@ -164,7 +164,7 @@ export function ListeningTestView({
       window.history.pushState(
         {
           ...(window.history.state ?? {}),
-          __listeningExitGuard: true,
+          __readingExitGuard: true,
         },
         '',
         window.location.href
@@ -350,9 +350,9 @@ export function ListeningTestView({
         return;
       }
 
-      const r = computeResult(test, answers);
+      const nextResult = computeResult(test, answers);
       setResult({
-        ...r,
+        ...nextResult,
         timeSpentSeconds: fallbackTimeSpentSeconds,
       });
       setStage('submitted');
@@ -427,7 +427,7 @@ export function ListeningTestView({
       return;
     }
 
-    const previousPart = Math.max(1, activePart - 1) as 1 | 2 | 3 | 4;
+    const previousPart = Math.max(1, activePart - 1);
 
     setActivePart(previousPart);
     setActiveQuestionId(getFirstQuestionId(displayTest, previousPart));
@@ -472,7 +472,7 @@ export function ListeningTestView({
                 className="h-11 rounded-xl border-transparent bg-white/8 px-4 text-sm font-medium text-white hover:bg-white/12"
               >
                 <ArrowLeft className="size-4" strokeWidth={2.2} />
-                Back to tests
+                Back to reading
               </Button>
 
               <div className="flex flex-col gap-3 sm:flex-row">
@@ -510,10 +510,9 @@ export function ListeningTestView({
 
   return (
     <>
-      <ListeningTestLayout
+      <ReadingTestLayout
         activePart={activePart}
         activeQuestionId={activeQuestionId}
-        audioUrl={currentPart.audioUrl}
         answers={answers}
         isPrimaryActionDisabled={isSubmitting}
         isPrevDisabled={false}
@@ -521,7 +520,7 @@ export function ListeningTestView({
         onLogoClick={handleLogoAction}
         onPartChange={(partNumber) => {
           setActivePart(partNumber);
-          setActiveQuestionId(getFirstQuestionId(test, partNumber));
+          setActiveQuestionId(getFirstQuestionId(displayTest, partNumber));
         }}
         onPrevPart={handlePrevAction}
         onPrimaryAction={handlePrimaryAction}
@@ -535,18 +534,18 @@ export function ListeningTestView({
         test={displayTest}
         timeLeftSeconds={timeLeftSeconds}
       >
-        <div className="mx-auto w-full max-w-[1000px]">
-          <PartPanel
-            activeQuestionId={activeQuestionId}
-            part={currentPart}
-            answers={answers}
-            onChange={handleChange}
-            showAnswer={isReview}
-          />
-        </div>
-      </ListeningTestLayout>
+        <ReadingPartPanel
+          activeQuestionId={activeQuestionId}
+          answers={answers}
+          onChange={handleChange}
+          part={currentPart}
+          showAnswer={isReview}
+        />
+      </ReadingTestLayout>
 
-      {isSubmitting ? <PracticeSubmittingOverlay /> : null}
+      {isSubmitting ? (
+        <PracticeSubmittingOverlay description="Your reading answers are being submitted and checked." />
+      ) : null}
 
       <Dialog open={isExitDialogOpen} onOpenChange={setIsExitDialogOpen}>
         <DialogContent
@@ -559,7 +558,7 @@ export function ListeningTestView({
               Leave this test?
             </DialogTitle>
             <DialogDescription className="text-sm leading-7 text-white/68">
-              If you leave now, this listening attempt will not be submitted and your result
+              If you leave now, this reading attempt will not be submitted and your result
               will not be calculated.
             </DialogDescription>
           </DialogHeader>
@@ -607,7 +606,7 @@ export function ListeningTestView({
               Submit your answers?
             </DialogTitle>
             <DialogDescription className="text-sm leading-7 text-white/68">
-              Your listening answers will be sent for checking and this attempt will be
+              Your reading answers will be sent for checking and this attempt will be
               completed. Are you sure you want to submit now?
             </DialogDescription>
           </DialogHeader>

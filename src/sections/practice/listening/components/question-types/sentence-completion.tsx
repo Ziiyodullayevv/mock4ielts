@@ -43,7 +43,7 @@ export function SentenceCompletion({
             <span className="flex flex-wrap items-center gap-1.5 text-stone-800">
               {q.label}
               <CompletionInput
-                field={q}
+                field={{ ...q, label: '' }}
                 value={answers[q.id] ?? ''}
                 onChange={onChange}
                 showAnswer={showAnswer}

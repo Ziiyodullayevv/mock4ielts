@@ -27,7 +27,7 @@ export function WritingView() {
     href: item.href,
     id: item.id,
     isStarred: false,
-    isStartAvailable: false,
+    isStartAvailable: true,
     questionCount: item.questionCount,
     sectionType: 'writing',
     tokenCost: undefined,

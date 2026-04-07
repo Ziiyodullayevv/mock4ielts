@@ -1,14 +1,13 @@
 'use client';
 
-import type { ListeningTestLayoutProps } from './types';
+import type { ReadingTestLayoutProps } from './types';
 
-import { ListeningTestFooter } from './footer';
-import { ListeningTestHeader } from './header';
+import { ReadingTestFooter } from './footer';
+import { ReadingTestHeader } from './header';
 
-export function ListeningTestLayout({
+export function ReadingTestLayout({
   activePart,
   activeQuestionId,
-  audioUrl,
   answers,
   children,
   isPrimaryActionDisabled,
@@ -23,7 +22,7 @@ export function ListeningTestLayout({
   prevActionLabel,
   test,
   timeLeftSeconds,
-}: ListeningTestLayoutProps) {
+}: ReadingTestLayoutProps) {
   const isLastPart = activePart === test.parts.length;
   const primaryActionLabel =
     primaryActionLabelOverride ?? (isReview ? 'Retry' : isLastPart ? 'Submit' : 'Next');
@@ -31,8 +30,7 @@ export function ListeningTestLayout({
 
   return (
     <div className="min-h-screen bg-white text-stone-950">
-      <ListeningTestHeader
-        audioUrl={audioUrl}
+      <ReadingTestHeader
         isPrimaryActionDisabled={isPrimaryActionDisabled}
         isPrevDisabled={resolvedIsPrevDisabled}
         isReview={isReview}
@@ -44,9 +42,9 @@ export function ListeningTestLayout({
         timeLeftSeconds={timeLeftSeconds}
       />
 
-      <main className="mx-auto max-w-[1000px] px-4 py-6 pb-32 md:pb-28">{children}</main>
+      <main className="mx-auto max-w-[1380px] px-4 py-6 pb-32 md:pb-28">{children}</main>
 
-      <ListeningTestFooter
+      <ReadingTestFooter
         activePart={activePart}
         activeQuestionId={activeQuestionId}
         answers={answers}

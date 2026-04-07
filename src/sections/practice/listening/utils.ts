@@ -103,9 +103,11 @@ export function computeResult(test: ListeningTest, answers: Answers): TestResult
     for (const group of part.groups) {
       if (group.type === 'multiple-choice') {
         for (const question of group.questions) {
-          pTotal++;
+          const scoreWeight = question.scoreWeight ?? 1;
+
+          pTotal += scoreWeight;
           if (isAnswerCorrect(answers[question.id], question.answer, question.multiSelect)) {
-            pScore++;
+            pScore += scoreWeight;
           }
         }
       } else if (group.type === 'matching') {

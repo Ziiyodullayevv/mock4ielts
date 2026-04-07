@@ -1,34 +1,21 @@
-/* eslint-disable react-hooks/refs */
-
 'use client';
 
 import { cn } from '@/src/lib/utils';
 import { paths } from '@/src/routes/paths';
 import { useState, useEffect } from 'react';
 import { Logo } from '@/src/components/logo';
+import { RotateCcw, ChevronLeft, ChevronRight, EllipsisVertical } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuTrigger,
 } from '@/src/components/ui/dropdown-menu';
-import {
-  Volume1,
-  Volume2,
-  VolumeX,
-  RotateCcw,
-  ChevronLeft,
-  ChevronRight,
-  EllipsisVertical,
-} from 'lucide-react';
 
-import { TimerDisplay } from './timer-display';
 import GradualBlur from '../../components/GradualBlur';
-import { ListeningHeaderAudio } from './listening-header-audio';
-import { useListeningHeaderAudio } from './use-listening-header-audio';
-import { ListeningHeaderMoreMenu, ListeningHeaderFullscreenButton } from './header-more-menu';
+import { TimerDisplay } from '../listening/timer-display';
+import { ListeningHeaderMoreMenu, ListeningHeaderFullscreenButton } from '../listening/header-more-menu';
 
-type ListeningTestHeaderProps = {
-  audioUrl?: string;
+type ReadingTestHeaderProps = {
   isPrimaryActionDisabled?: boolean;
   isPrevDisabled: boolean;
   isReview: boolean;
@@ -40,8 +27,7 @@ type ListeningTestHeaderProps = {
   timeLeftSeconds: number;
 };
 
-export function ListeningTestHeader({
-  audioUrl,
+export function ReadingTestHeader({
   isPrimaryActionDisabled = false,
   isPrevDisabled,
   isReview,
@@ -51,10 +37,9 @@ export function ListeningTestHeader({
   prevActionLabel = 'Prev',
   primaryActionLabel,
   timeLeftSeconds,
-}: ListeningTestHeaderProps) {
+}: ReadingTestHeaderProps) {
   const [isScrolled, setIsScrolled] = useState(false);
   const isSubmitAction = primaryActionLabel.toLowerCase().includes('submit');
-  const audioControls = useListeningHeaderAudio(audioUrl);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -71,16 +56,6 @@ export function ListeningTestHeader({
 
   return (
     <header className="sticky top-0 z-40 isolate border-stone-200 bg-linear-to-b from-white from-20% to-transparent to-80%">
-      {audioUrl ? (
-        <audio
-          ref={audioControls.audioRef}
-          autoPlay
-          preload="auto"
-          src={audioUrl}
-          className="hidden"
-        />
-      ) : null}
-
       <GradualBlur
         target="parent"
         position="top"
@@ -92,9 +67,10 @@ export function ListeningTestHeader({
         opacity={1}
         zIndex={0}
       />
-      <div className="relative z-10 mx-auto flex w-full max-w-6xl items-center justify-between gap-3 px-4 py-2.5 sm:hidden">
+
+      <div className="relative z-10 mx-auto flex w-full max-w-345 items-center justify-between gap-3 px-4 py-2.5 sm:hidden">
         <Logo
-          href={paths.practice.listening.root}
+          href={paths.practice.reading.root}
           size={22}
           variant="dark"
           onClick={
@@ -113,10 +89,10 @@ export function ListeningTestHeader({
           </div>
         </div>
 
-        <ListeningHeaderMobileMenu audioControls={audioControls} />
+        <ReadingHeaderMobileMenu />
       </div>
 
-      <div className="relative z-10 mx-auto hidden w-full max-w-6xl grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-3 px-4 py-2.5 sm:grid sm:px-6">
+      <div className="relative z-10 mx-auto hidden w-full max-w-345 grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-3 px-4 py-2.5 sm:grid sm:px-6">
         <div
           className={cn(
             'group justify-self-start flex items-center rounded-full border border-border/40 bg-white/95 p-1 transition-shadow',
@@ -167,16 +143,12 @@ export function ListeningTestHeader({
         <div className="flex items-center justify-self-end gap-2">
           <div
             className={cn(
-              'group flex items-center rounded-full border border-border/20 bg-white p-1 transition-shadow',
+              'flex items-center rounded-full border border-border/20 bg-white p-1 transition-shadow',
               isScrolled
                 ? 'shadow-[0_14px_30px_rgba(15,23,42,0.16),0_4px_14px_rgba(15,23,42,0.1)]'
                 : 'shadow-lg'
             )}
           >
-            <ListeningHeaderDesktopAudioMenu audioControls={audioControls} />
-
-            <span className="mx-0.5 h-7 w-px bg-stone-200 transition-opacity group-hover:opacity-0" />
-
             <ListeningHeaderFullscreenButton />
           </div>
 
@@ -196,43 +168,7 @@ export function ListeningTestHeader({
   );
 }
 
-type ListeningHeaderDesktopAudioMenuProps = {
-  audioControls: ReturnType<typeof useListeningHeaderAudio>;
-};
-
-function ListeningHeaderDesktopAudioMenu({ audioControls }: ListeningHeaderDesktopAudioMenuProps) {
-  const TriggerIcon =
-    audioControls.volume === 0 ? VolumeX : audioControls.volume < 50 ? Volume1 : Volume2;
-
-  return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <button
-          type="button"
-          aria-label="Open audio controls"
-          className="inline-flex h-9 w-10 shrink-0 items-center justify-center rounded-full text-stone-700 transition-colors hover:bg-stone-100 hover:text-stone-900"
-        >
-          <TriggerIcon className="size-4.5" strokeWidth={2} />
-        </button>
-      </DropdownMenuTrigger>
-
-      <DropdownMenuContent
-        forceMount
-        align="end"
-        sideOffset={10}
-        className="w-72 rounded-2xl border border-stone-200 bg-white p-3 text-stone-900 shadow-[0_20px_40px_rgba(15,23,42,0.18)]"
-      >
-        <ListeningHeaderAudio controls={audioControls} />
-      </DropdownMenuContent>
-    </DropdownMenu>
-  );
-}
-
-type ListeningHeaderMobileMenuProps = {
-  audioControls: ReturnType<typeof useListeningHeaderAudio>;
-};
-
-function ListeningHeaderMobileMenu({ audioControls }: ListeningHeaderMobileMenuProps) {
+function ReadingHeaderMobileMenu() {
   const [open, setOpen] = useState(false);
 
   return (
@@ -240,7 +176,7 @@ function ListeningHeaderMobileMenu({ audioControls }: ListeningHeaderMobileMenuP
       <DropdownMenuTrigger asChild>
         <button
           type="button"
-          aria-label="Open listening controls"
+          aria-label="Open reading controls"
           className="inline-flex size-10 shrink-0 items-center justify-center rounded-full border border-border/30 bg-white text-stone-800 shadow-lg transition-colors hover:bg-stone-50"
         >
           <EllipsisVertical className="size-4.5" strokeWidth={2} />
@@ -251,11 +187,9 @@ function ListeningHeaderMobileMenu({ audioControls }: ListeningHeaderMobileMenuP
         forceMount
         align="end"
         sideOffset={10}
-        className="w-72 rounded-2xl border border-stone-200 bg-white p-2 text-stone-900 shadow-[0_20px_40px_rgba(15,23,42,0.18)]"
+        className="w-56 rounded-2xl border border-stone-200 bg-white p-2 text-stone-900 shadow-[0_20px_40px_rgba(15,23,42,0.18)]"
       >
         <div className="space-y-1">
-          <ListeningHeaderAudio controls={audioControls} variant="mobile" />
-
           <div className="flex items-center justify-between rounded-xl px-3 py-2 text-sm font-medium text-stone-900">
             <span>Full screen</span>
             <ListeningHeaderFullscreenButton />

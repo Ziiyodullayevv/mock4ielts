@@ -11,6 +11,7 @@ export type ListeningTestLayoutProps = {
   isPrimaryActionDisabled?: boolean;
   isPrevDisabled?: boolean;
   isReview?: boolean;
+  onLogoClick?: () => void;
   onPartChange: (part: ListeningPartNumber) => void;
   onPrevPart: () => void;
   onPrimaryAction: () => void;
