@@ -2,6 +2,7 @@ import '../globals.css';
 
 import type { Metadata } from 'next';
 
+import { Suspense } from 'react';
 import { Geist, Geist_Mono } from 'next/font/google';
 import { Toaster } from '@/src/components/ui/sonner';
 import { CONFIG, getAssetUrl } from '@/src/global-config';
@@ -45,7 +46,9 @@ export default function RootLayout({
       <body className={`${geistSans.variable} ${geistMono.variable} bg-black antialiased`}>
         <QueryProvider>
           <TooltipProvider>
-            <NavigationProgress />
+            <Suspense fallback={null}>
+              <NavigationProgress />
+            </Suspense>
             {children}
             <Toaster />
           </TooltipProvider>

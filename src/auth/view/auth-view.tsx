@@ -1,3 +1,4 @@
+import { Suspense } from 'react';
 import { Logo } from '@/src/components/logo';
 
 import { AuthCard, AuthCaptchaOverlay } from '../components';
@@ -10,7 +11,9 @@ export function AuthView() {
           <Logo />
         </header>
 
-        <AuthCard />
+        <Suspense fallback={null}>
+          <AuthCard />
+        </Suspense>
       </div>
 
       <AuthCaptchaOverlay />
