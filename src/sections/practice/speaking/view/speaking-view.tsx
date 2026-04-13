@@ -27,7 +27,7 @@ export function SpeakingView() {
     href: item.href,
     id: item.id,
     isStarred: false,
-    isStartAvailable: false,
+    isStartAvailable: true,
     questionCount: item.questionCount,
     sectionType: 'speaking',
     tokenCost: undefined,

@@ -1,4 +1,8 @@
-import type { WritingTest, WritingAnswers } from '@/src/sections/practice/writing/types';
+import type {
+  WritingTest,
+  WritingAnswers,
+  WritingTextSize,
+} from '@/src/sections/practice/writing/types';
 
 export type WritingPartNumber = number;
 
@@ -13,8 +17,10 @@ export type WritingTestLayoutProps = {
   onPartChange: (part: WritingPartNumber) => void;
   onPrevPart: () => void;
   onPrimaryAction: () => void;
+  onTextSizeChange: (textSize: WritingTextSize) => void;
   primaryActionLabelOverride?: string;
   prevActionLabel?: string;
   test: WritingTest;
+  textSize: WritingTextSize;
   timeLeftSeconds: number;
 };

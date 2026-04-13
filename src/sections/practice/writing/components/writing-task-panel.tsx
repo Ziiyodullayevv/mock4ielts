@@ -1,105 +1,81 @@
 'use client';
 
-import type { WritingPart, WritingAnswers } from '../types';
+import type { MouseEvent as ReactMouseEvent } from 'react';
+import type { TextAnnotation } from './writing-task-panel.shared';
+import type { WritingPart, WritingAnswers, WritingTextSize } from '../types';
 
 import { cn } from '@/src/lib/utils';
 import { useRef, useState, useEffect, useCallback } from 'react';
 import { PaperSurface } from '@/src/sections/practice/listening/components/question-types/paper-shell';
 
 import { countWords } from '../utils';
+import { PromptContent } from './writing-task-prompt-content';
+import { WritingResponsePanel } from './writing-response-panel';
 
 type WritingTaskPanelProps = {
   answers: WritingAnswers;
   isReview?: boolean;
   onChange: (taskId: string, value: string) => void;
   part: WritingPart;
+  textSize: WritingTextSize;
+};
+
+type MobileTab = 'prompt' | 'answer';
+
+type WritingPromptPaperProps = {
+  annotations: TextAnnotation[];
+  contentClassName?: string;
+  headingClassName?: string;
+  isReview?: boolean;
+  onAnnotationsChange: (annotations: TextAnnotation[]) => void;
+  part: WritingPart;
+  textSize: WritingTextSize;
 };
 
 const MIN_PANEL_PERCENT = 20;
 const DEFAULT_SPLIT_PERCENT = 50;
 
-function PromptContent({ part, isReview }: { part: WritingPart; isReview?: boolean }) {
-  const { task } = part;
-
+function WritingPromptPaper({
+  annotations,
+  contentClassName,
+  headingClassName = 'text-xl',
+  isReview = false,
+  onAnnotationsChange,
+  part,
+  textSize,
+}: WritingPromptPaperProps) {
   return (
-    <div className="space-y-4">
-      <div className="space-y-1">
-        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-stone-500">
-          {task.questionType === 'graph_description' ? 'Graph / Chart Description' : 'Essay'}
-        </p>
-        <p className="text-sm leading-6 text-stone-500">{task.instructions}</p>
-      </div>
-
-      {task.imageUrl ? (
-        <div className="overflow-hidden rounded-xl border border-stone-200 bg-stone-50">
-          <img src={task.imageUrl} alt="Task graphic" className="h-auto w-full object-contain" />
-        </div>
-      ) : null}
-
-      <div className="rounded-xl border border-stone-200 bg-white p-4">
-        <p className="text-[1.02rem] leading-8 text-stone-800 whitespace-pre-line">{task.prompt}</p>
-      </div>
-
-      {isReview && task.modelAnswer ? (
-        <div className="space-y-2">
-          <p className="text-xs font-semibold uppercase tracking-[0.12em] text-emerald-600">
-            Model Answer
+    <PaperSurface className="overflow-hidden">
+      <div className="border-b border-[#dfdfdf] px-5 py-4 sm:px-6">
+        <div className="space-y-1">
+          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-stone-500">
+            {part.title}
           </p>
-          <div className="rounded-xl border border-emerald-200 bg-emerald-50/50 p-4">
-            <p className="text-[0.97rem] leading-8 text-stone-700 whitespace-pre-line">
-              {task.modelAnswer}
-            </p>
-          </div>
+          <h2 className={cn('font-semibold tracking-[-0.03em] text-stone-900', headingClassName)}>
+            Task Prompt
+          </h2>
         </div>
-      ) : null}
-    </div>
+      </div>
+
+      <div className={cn('px-5 py-5 sm:px-6', contentClassName)}>
+        <PromptContent
+          annotations={annotations}
+          isReview={isReview}
+          onAnnotationsChange={onAnnotationsChange}
+          part={part}
+          textSize={textSize}
+        />
+      </div>
+    </PaperSurface>
   );
 }
-
-function AutoResizeTextarea({
-  disabled,
-  onChange,
-  placeholder,
-  value,
-}: {
-  disabled?: boolean;
-  onChange: (value: string) => void;
-  placeholder?: string;
-  value: string;
-}) {
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
-
-  useEffect(() => {
-    const el = textareaRef.current;
-    if (!el) return;
-    el.style.height = 'auto';
-    el.style.height = `${el.scrollHeight}px`;
-  }, [value]);
-
-  return (
-    <textarea
-      ref={textareaRef}
-      value={value}
-      disabled={disabled}
-      onChange={(e) => onChange(e.target.value)}
-      placeholder={placeholder}
-      rows={20}
-      className={cn(
-        'w-full resize-none overflow-hidden rounded-xl border border-stone-200 bg-white px-5 py-4 text-[1.02rem] leading-8 text-stone-800 outline-none transition-colors placeholder:text-stone-400',
-        'focus:border-blue-400 focus:ring-2 focus:ring-blue-100',
-        disabled && 'cursor-default bg-stone-50 text-stone-600'
-      )}
-    />
-  );
-}
-
-type MobileTab = 'prompt' | 'answer';
 
 export function WritingTaskPanel({
   answers,
   isReview = false,
   onChange,
   part,
+  textSize,
 }: WritingTaskPanelProps) {
   const { task } = part;
   const value = answers[task.id] ?? '';
@@ -107,18 +83,31 @@ export function WritingTaskPanel({
   const meetsMinimum = words >= task.wordLimitMin;
 
   const [mobileTab, setMobileTab] = useState<MobileTab>('prompt');
-
-  const containerRef = useRef<HTMLDivElement>(null);
+  const [annotationsByTaskId, setAnnotationsByTaskId] = useState<Record<string, TextAnnotation[]>>(
+    {}
+  );
   const [splitPercent, setSplitPercent] = useState(DEFAULT_SPLIT_PERCENT);
   const [isDragging, setIsDragging] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
 
-  // Reset to prompt tab when part changes
+  const currentAnnotations = annotationsByTaskId[task.id] ?? [];
+
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setMobileTab('prompt');
   }, [part.number]);
 
-  const handleResizerMouseDown = useCallback((event: React.MouseEvent) => {
+  const handleAnnotationsChange = useCallback(
+    (nextAnnotations: TextAnnotation[]) => {
+      setAnnotationsByTaskId((previousState) => ({
+        ...previousState,
+        [task.id]: nextAnnotations,
+      }));
+    },
+    [task.id]
+  );
+
+  const handleResizerMouseDown = useCallback((event: ReactMouseEvent) => {
     event.preventDefault();
     setIsDragging(true);
 
@@ -146,49 +135,9 @@ export function WritingTaskPanel({
     window.addEventListener('mouseup', handleMouseUp);
   }, []);
 
-  const writePanel = (
-    <div className="space-y-3">
-      <div className="space-y-2">
-        <h3 className="text-xl font-semibold tracking-[-0.03em] text-stone-800">Your response</h3>
-        {isReview ? (
-          <p className="text-sm text-stone-500">Review your submitted essay below.</p>
-        ) : (
-          <p className="text-sm text-stone-500">
-            Write at least{' '}
-            <span className="font-semibold text-stone-700">{task.wordLimitMin} words</span>.
-            {task.timeRecommendedMinutes
-              ? ` Recommended time: ${task.timeRecommendedMinutes} minutes.`
-              : ''}
-          </p>
-        )}
-      </div>
-
-      <AutoResizeTextarea
-        value={value}
-        disabled={isReview}
-        onChange={(text) => onChange(task.id, text)}
-        placeholder={`Start writing your ${task.questionType === 'essay' ? 'essay' : 'description'} here...`}
-      />
-
-      <div className="flex items-center justify-between px-1">
-        <span
-          className={cn(
-            'text-sm font-medium tabular-nums transition-colors',
-            words === 0 ? 'text-stone-400' : meetsMinimum ? 'text-emerald-600' : 'text-amber-600'
-          )}
-        >
-          {words} word{words !== 1 ? 's' : ''}
-        </span>
-        <span className="text-sm text-stone-400">Minimum: {task.wordLimitMin} words</span>
-      </div>
-    </div>
-  );
-
   return (
     <>
-      {/* ── Mobile / tablet: tab switcher ── */}
       <div className="flex flex-col gap-0 lg:hidden">
-        {/* Tab bar */}
         <div className="sticky top-11 z-10 flex border-b border-stone-200 bg-white">
           <button
             type="button"
@@ -202,6 +151,7 @@ export function WritingTaskPanel({
           >
             <span>Task Prompt</span>
           </button>
+
           <button
             type="button"
             onClick={() => setMobileTab('answer')}
@@ -226,36 +176,32 @@ export function WritingTaskPanel({
           </button>
         </div>
 
-        {/* Tab content */}
         <div className="pt-4">
           {mobileTab === 'prompt' ? (
-            <PaperSurface className="overflow-hidden">
-              <div className="border-b border-[#dfdfdf] px-5 py-4 sm:px-6">
-                <div className="space-y-1">
-                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-stone-500">
-                    {part.title}
-                  </p>
-                  <h2 className="text-2xl font-semibold tracking-[-0.03em] text-stone-900">
-                    Task Prompt
-                  </h2>
-                </div>
-              </div>
-              <div className="px-5 py-5 sm:px-6">
-                <PromptContent part={part} isReview={isReview} />
-              </div>
-            </PaperSurface>
+            <WritingPromptPaper
+              annotations={currentAnnotations}
+              headingClassName="text-2xl"
+              isReview={isReview}
+              onAnnotationsChange={handleAnnotationsChange}
+              part={part}
+              textSize={textSize}
+            />
           ) : (
-            writePanel
+            <WritingResponsePanel
+              isReview={isReview}
+              onChange={(text) => onChange(task.id, text)}
+              task={task}
+              textSize={textSize}
+              value={value}
+            />
           )}
         </div>
       </div>
 
-      {/* ── Desktop (xl+): resizable split pane ── */}
       <div
         ref={containerRef}
         className={cn('relative hidden lg:flex lg:items-start', isDragging && 'select-none')}
       >
-        {/* Full-height divider line */}
         <div
           className={cn(
             'pointer-events-none absolute bottom-0 w-0.5 -translate-x-1/2 transition-colors duration-150',
@@ -264,32 +210,23 @@ export function WritingTaskPanel({
           style={{ left: `${splitPercent}%`, top: '-6rem' }}
         />
 
-        {/* Left: prompt panel (sticky) */}
         <div className="sticky top-28 shrink-0" style={{ width: `calc(${splitPercent}% - 10px)` }}>
-          <PaperSurface className="overflow-hidden">
-            <div className="border-b border-[#dfdfdf] px-5 py-4 sm:px-6">
-              <div className="space-y-1">
-                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-stone-500">
-                  {part.title}
-                </p>
-                <h2 className="text-xl font-semibold tracking-[-0.03em] text-stone-900">
-                  Task Prompt
-                </h2>
-              </div>
-            </div>
-            <div className="max-h-[calc(100vh-11rem)] overflow-y-auto px-5 py-5 sm:px-6">
-              <PromptContent part={part} isReview={isReview} />
-            </div>
-          </PaperSurface>
+          <WritingPromptPaper
+            annotations={currentAnnotations}
+            contentClassName="max-h-[calc(100vh-11rem)] overflow-y-auto"
+            isReview={isReview}
+            onAnnotationsChange={handleAnnotationsChange}
+            part={part}
+            textSize={textSize}
+          />
         </div>
 
-        {/* Resizer grip */}
         <div
           role="separator"
           aria-label="Drag to resize panels"
           aria-orientation="vertical"
           onMouseDown={handleResizerMouseDown}
-          className="group sticky top-[calc(50vh-22px)] w-5 shrink-0 cursor-col-resize flex items-center justify-center"
+          className="group sticky top-[calc(50vh-22px)] flex w-5 shrink-0 cursor-col-resize items-center justify-center"
         >
           <div
             className={cn(
@@ -299,9 +236,9 @@ export function WritingTaskPanel({
                 : 'border-stone-200 group-hover:border-stone-300 group-hover:shadow-md'
             )}
           >
-            {Array.from({ length: 5 }).map((_, i) => (
+            {Array.from({ length: 5 }).map((_, index) => (
               <div
-                key={i}
+                key={index}
                 className={cn(
                   'h-0.75 w-0.75 rounded-full transition-colors',
                   isDragging ? 'bg-blue-500' : 'bg-stone-400 group-hover:bg-stone-600'
@@ -311,8 +248,15 @@ export function WritingTaskPanel({
           </div>
         </div>
 
-        {/* Right: writing area */}
-        <div className="min-w-0 flex-1">{writePanel}</div>
+        <div className="min-w-0 flex-1">
+          <WritingResponsePanel
+            isReview={isReview}
+            onChange={(text) => onChange(task.id, text)}
+            task={task}
+            textSize={textSize}
+            value={value}
+          />
+        </div>
       </div>
     </>
   );

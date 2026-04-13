@@ -146,6 +146,10 @@ export const endpoints = {
     me: 'users/me',
     update: 'users/me',
   },
+  speaking: {
+    gradeAttempt: (attemptId: string) => `attempts/${attemptId}/grade-speaking`,
+    startSession: 'speaking/start-session',
+  },
   sections: {
     details: (sectionId: string) => `sections/${sectionId}`,
     list: 'sections',

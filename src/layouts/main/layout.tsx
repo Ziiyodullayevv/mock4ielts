@@ -1,4 +1,4 @@
-'use client';
+import { Suspense } from 'react';
 
 import { MainFooter } from './footer';
 import { MainHeader } from './header';
@@ -10,7 +10,9 @@ type MainLayoutProps = {
 export function MainLayout({ children }: MainLayoutProps) {
   return (
     <div className="bg-black text-white w-full mx-auto">
-      <MainHeader />
+      <Suspense fallback={null}>
+        <MainHeader />
+      </Suspense>
 
       <main className="min-h-screen">{children}</main>
 

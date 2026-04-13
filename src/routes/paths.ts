@@ -21,6 +21,7 @@ export const paths = {
     },
     speaking: {
       root: `${ROOTS.PRACTICE}/speaking`,
+      details: (id: string) => `${ROOTS.PRACTICE}/speaking/${id}`,
     },
   },
   mockExam: {

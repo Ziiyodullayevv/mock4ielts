@@ -6,6 +6,13 @@ import type { WritingPartNumber } from './types';
 import { cn } from '@/src/lib/utils';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { countWords } from '@/src/sections/practice/writing/utils';
+import {
+  PRACTICE_FOOTER_SHELL_CLASS,
+  PRACTICE_FOOTER_TOP_BAR_CLASS,
+  PRACTICE_FOOTER_ACTIVE_BADGE_CLASS,
+  PRACTICE_FOOTER_ACTIVE_BUTTON_CLASS,
+  PRACTICE_FOOTER_ACTIVE_SURFACE_CLASS,
+} from '@/src/layouts/practice-footer-theme';
 
 type WritingTestFooterProps = {
   activePart: WritingPartNumber;
@@ -48,7 +55,8 @@ export function WritingTestFooter({
   };
 
   return (
-    <footer className="fixed right-0 bottom-0 left-0 z-30 border-t border-border bg-white">
+    <footer className={PRACTICE_FOOTER_SHELL_CLASS}>
+      <div className={PRACTICE_FOOTER_TOP_BAR_CLASS} />
       <div className="relative z-10 mx-auto max-w-345 px-4 py-3">
         {/* Mobile */}
         <div className="flex items-center gap-2 sm:hidden">
@@ -75,7 +83,7 @@ export function WritingTestFooter({
                   className={cn(
                     'flex h-8 flex-1 items-center justify-center gap-1.5 rounded-lg border text-xs font-semibold transition-colors',
                     isActive
-                      ? 'border-blue-600 bg-blue-600 text-white'
+                      ? PRACTICE_FOOTER_ACTIVE_BUTTON_CLASS
                       : 'border-stone-300 bg-stone-100 text-stone-700 hover:bg-stone-200'
                   )}
                 >
@@ -100,7 +108,7 @@ export function WritingTestFooter({
         </div>
 
         {/* Desktop */}
-        <div className="hidden items-stretch gap-2.5 sm:flex">
+        <div className="hidden flex-wrap items-stretch justify-center gap-2.5 sm:flex">
           {test.parts.map((part) => {
             const words = countWords(answers[part.task.id] ?? '');
             const isActive = activePart === part.number;
@@ -112,13 +120,13 @@ export function WritingTestFooter({
                   key={part.number}
                   type="button"
                   onClick={() => handlePartSelect(part.number)}
-                  className="flex min-w-0 flex-[0.9] items-center rounded-xl border border-border/50 bg-white px-3 py-2 text-left shadow-md/5 transition-colors hover:cursor-pointer hover:bg-stone-50"
+                  className="flex shrink-0 items-center rounded-xl border border-border/50 bg-white px-3 py-2 text-left shadow-md/5 transition-colors hover:cursor-pointer hover:bg-stone-50"
                 >
-                  <div className="flex min-w-0 items-baseline gap-2 text-sm">
+                  <div className="flex items-baseline gap-2 text-sm whitespace-nowrap">
                     <span className="shrink-0 font-semibold text-stone-900">{part.title}:</span>
                     <span
                       className={cn(
-                        'truncate',
+                        'whitespace-nowrap',
                         meetsMinimum ? 'text-emerald-600' : 'text-stone-500'
                       )}
                     >
@@ -132,7 +140,10 @@ export function WritingTestFooter({
             return (
               <section
                 key={part.number}
-                className="flex shrink-0 items-center gap-3 rounded-xl border-2 border-black/80 bg-stone-100 px-3 py-2.5 shadow-lg"
+                className={cn(
+                  'flex shrink-0 items-center gap-3 rounded-xl border-2 px-3 py-2.5',
+                  PRACTICE_FOOTER_ACTIVE_SURFACE_CLASS
+                )}
               >
                 <button
                   type="button"
@@ -145,7 +156,9 @@ export function WritingTestFooter({
                 <div
                   className={cn(
                     'flex items-center gap-1.5 rounded-lg px-2 py-1 text-xs font-semibold tabular-nums',
-                    meetsMinimum ? 'bg-emerald-100 text-emerald-700' : 'bg-stone-200 text-stone-600'
+                    meetsMinimum
+                      ? PRACTICE_FOOTER_ACTIVE_BADGE_CLASS
+                      : 'bg-stone-200 text-stone-600'
                   )}
                 >
                   <span>{words}</span>

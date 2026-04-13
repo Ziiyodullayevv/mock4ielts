@@ -172,7 +172,6 @@ export function AuthGoogleButton({
               ? 'pointer-events-none absolute inset-0 opacity-0'
               : 'absolute inset-0 opacity-0'
           }
-          aria-hidden="true"
         >
           <div ref={containerRef} className="h-12 w-full overflow-hidden rounded-lg" />
         </div>

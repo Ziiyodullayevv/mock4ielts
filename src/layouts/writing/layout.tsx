@@ -16,9 +16,11 @@ export function WritingTestLayout({
   onPartChange,
   onPrevPart,
   onPrimaryAction,
+  onTextSizeChange,
   primaryActionLabelOverride,
   prevActionLabel,
   test,
+  textSize,
   timeLeftSeconds,
 }: WritingTestLayoutProps) {
   const isLastPart = activePart === test.parts.length;
@@ -35,8 +37,10 @@ export function WritingTestLayout({
         onLogoClick={onLogoClick}
         onPrevPart={onPrevPart}
         onPrimaryAction={onPrimaryAction}
+        onTextSizeChange={onTextSizeChange}
         prevActionLabel={prevActionLabel}
         primaryActionLabel={primaryActionLabel}
+        textSize={textSize}
         timeLeftSeconds={timeLeftSeconds}
       />
 
