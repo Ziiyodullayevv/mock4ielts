@@ -149,3 +149,31 @@ body {
 .question-bank-templates__swiper > .swiper-wrapper > .swiper-slide {
   flex-shrink: 0;
 }
+
+#nprogress {
+  pointer-events: none;
+}
+
+#nprogress .bar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 9999;
+  height: 3px;
+  width: 100%;
+  background: linear-gradient(90deg, #ffb347 0%, #ff9f2f 48%, #ffd27a 100%);
+  box-shadow: 0 0 14px rgba(255, 159, 47, 0.55);
+}
+
+#nprogress .peg {
+  position: absolute;
+  right: 0;
+  display: block;
+  height: 100%;
+  width: 140px;
+  opacity: 1;
+  transform: rotate(3deg) translate(0, -1px);
+  box-shadow:
+    0 0 10px rgba(255, 159, 47, 0.75),
+    0 0 6px rgba(255, 159, 47, 0.55);
+}

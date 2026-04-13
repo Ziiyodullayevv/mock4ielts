@@ -1,6 +1,6 @@
 'use client';
 
-import type { WritingTest, WritingAnswers, WritingTestResult } from '../types';
+import type { WritingTest, WritingAnswers, WritingTextSize, WritingTestResult } from '../types';
 
 import { cn } from '@/src/lib/utils';
 import { Button } from '@/src/components/ui/button';
@@ -19,6 +19,7 @@ import {
 } from '@/src/components/ui/dialog';
 
 import { countWords } from '../utils';
+import { WRITING_TEXT_SIZE_DEFAULT } from '../types';
 import { WritingTaskPanel } from './writing-task-panel';
 
 type Stage = 'test' | 'submitted' | 'review';
@@ -63,6 +64,7 @@ export function WritingTestView({
   const [result, setResult] = useState<WritingTestResult | null>(initialResult);
   const totalDurationSeconds = getTestDurationSeconds(test);
   const [timeLeftSeconds, setTimeLeftSeconds] = useState(totalDurationSeconds);
+  const [textSize, setTextSize] = useState<WritingTextSize>(WRITING_TEXT_SIZE_DEFAULT);
   const currentPart = test.parts.find((part) => part.number === activePart)!;
 
   useEffect(() => {
@@ -329,9 +331,11 @@ export function WritingTestView({
         onPartChange={(partNumber) => setActivePart(partNumber)}
         onPrevPart={handlePrevAction}
         onPrimaryAction={handlePrimaryAction}
+        onTextSizeChange={setTextSize}
         primaryActionLabelOverride={isSubmitting ? 'Submitting...' : undefined}
         prevActionLabel={isBackToTestsAction ? 'Back to tests' : 'Prev'}
         test={test}
+        textSize={textSize}
         timeLeftSeconds={timeLeftSeconds}
       >
         <WritingTaskPanel
@@ -339,6 +343,7 @@ export function WritingTestView({
           isReview={isReview}
           onChange={handleChange}
           part={currentPart}
+          textSize={textSize}
         />
       </WritingTestLayout>
 

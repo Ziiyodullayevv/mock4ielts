@@ -6,6 +6,12 @@ import type { ReadingPartNumber } from './types';
 import { cn } from '@/src/lib/utils';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { getPartQuestions, countPartAnswered } from '@/src/sections/practice/reading/utils';
+import {
+  PRACTICE_FOOTER_SHELL_CLASS,
+  PRACTICE_FOOTER_TOP_BAR_CLASS,
+  PRACTICE_FOOTER_ACTIVE_BUTTON_CLASS,
+  PRACTICE_FOOTER_ACTIVE_SURFACE_CLASS,
+} from '@/src/layouts/practice-footer-theme';
 
 type ReadingTestFooterProps = {
   activePart: ReadingPartNumber;
@@ -58,7 +64,8 @@ export function ReadingTestFooter({
   const activePartQuestions = activePartEntry ? getPartQuestions(activePartEntry) : [];
 
   return (
-    <footer className="fixed right-0 bottom-0 left-0 z-30 border border-border bg-white">
+    <footer className={PRACTICE_FOOTER_SHELL_CLASS}>
+      <div className={PRACTICE_FOOTER_TOP_BAR_CLASS} />
       <div className="relative z-10 mx-auto max-w-6xl px-4 py-3">
         <div className="flex items-center gap-2 sm:hidden">
           <button
@@ -87,7 +94,7 @@ export function ReadingTestFooter({
                         className={cn(
                           'flex h-7 w-7 shrink-0 items-center justify-center rounded-md border text-[11px] font-semibold transition-colors',
                           isCurrentQuestion
-                            ? 'border-blue-600 bg-blue-600 text-white'
+                            ? PRACTICE_FOOTER_ACTIVE_BUTTON_CLASS
                             : isAnswered
                               ? 'border-stone-900 bg-stone-900 text-white'
                               : 'border-stone-300 bg-stone-200 text-stone-700 hover:bg-stone-300'
@@ -133,7 +140,7 @@ export function ReadingTestFooter({
                     className={cn(
                       'flex shrink-0 flex-col rounded-xl border px-3 py-2 text-left transition-colors',
                       isActive
-                        ? 'border-black/80 bg-stone-100 shadow-md'
+                        ? PRACTICE_FOOTER_ACTIVE_SURFACE_CLASS
                         : 'border-border/60 bg-white hover:bg-stone-50'
                     )}
                     aria-current={isActive ? 'step' : undefined}
@@ -183,7 +190,10 @@ export function ReadingTestFooter({
             return (
               <section
                 key={part.number}
-                className="flex shrink-0 items-center gap-3 rounded-xl border-2 border-black/80 bg-stone-100 px-3 py-2.5 shadow-lg"
+                className={cn(
+                  'flex shrink-0 items-center gap-3 rounded-xl border-2 px-3 py-2.5',
+                  PRACTICE_FOOTER_ACTIVE_SURFACE_CLASS
+                )}
               >
                 <button
                   type="button"
@@ -210,7 +220,7 @@ export function ReadingTestFooter({
                         className={cn(
                           'flex h-7 w-7 shrink-0 items-center justify-center rounded-md border text-[11px] font-semibold transition-colors',
                           isCurrentQuestion
-                            ? 'border-blue-600 bg-blue-600 text-white'
+                            ? PRACTICE_FOOTER_ACTIVE_BUTTON_CLASS
                             : isAnswered
                               ? 'border-stone-900 bg-stone-900 text-white'
                               : isActive

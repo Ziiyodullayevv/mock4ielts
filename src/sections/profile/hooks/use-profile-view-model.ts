@@ -5,8 +5,8 @@ import type { Country } from '@/src/components/ui/country-dropdown';
 import type { Gender, ProfileFormState } from '@/src/sections/profile/types/profile-form';
 
 import { paths } from '@/src/routes/paths';
-import { useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
+import { useRouter } from '@/src/routes/hooks';
 import { clearAuthTokens } from '@/src/lib/axios';
 import { toast } from '@/src/components/ui/sonner';
 import { buildLoginHref } from '@/src/auth/utils/return-to';

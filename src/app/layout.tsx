@@ -7,6 +7,7 @@ import { Toaster } from '@/src/components/ui/sonner';
 import { CONFIG, getAssetUrl } from '@/src/global-config';
 import { TooltipProvider } from '@/src/components/ui/tooltip';
 import { QueryProvider } from '@/src/components/providers/query-provider';
+import { NavigationProgress } from '@/src/components/navigation/navigation-progress';
 
 const geistSans = Geist({
   variable: '--font-geist-sans',
@@ -44,6 +45,7 @@ export default function RootLayout({
       <body className={`${geistSans.variable} ${geistMono.variable} bg-black antialiased`}>
         <QueryProvider>
           <TooltipProvider>
+            <NavigationProgress />
             {children}
             <Toaster />
           </TooltipProvider>

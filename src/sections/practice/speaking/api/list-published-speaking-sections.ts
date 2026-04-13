@@ -63,7 +63,7 @@ export async function listPublishedSpeakingSections(): Promise<SpeakingPracticeS
     items: sections.map((section, index) => ({
       difficulty: section.difficulty,
       durationMinutes: section.duration_minutes,
-      href: `${paths.practice.speaking.root}#section-${section.id}`,
+      href: paths.practice.speaking.details(section.id),
       id: index + 1,
       questionCount: section.question_count,
       remoteId: section.id,

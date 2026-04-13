@@ -5,7 +5,7 @@ import type { WritingAnswers } from '../types';
 import { paths } from '@/src/routes/paths';
 import { useState, useEffect } from 'react';
 import { buildLoginHref } from '@/src/auth/utils/return-to';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter, useSearchParams } from '@/src/routes/hooks';
 import { useAuthSession } from '@/src/auth/hooks/use-auth-session';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import {

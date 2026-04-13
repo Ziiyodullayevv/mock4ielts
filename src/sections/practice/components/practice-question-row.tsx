@@ -5,7 +5,7 @@ import type { PracticeSectionType, PracticeQuestionItem } from '../types';
 import { cn } from '@/src/lib/utils';
 import { motion } from 'motion/react';
 import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter } from '@/src/routes/hooks';
 import { buildLoginHref } from '@/src/auth/utils/return-to';
 import { TokenIcon } from '@/src/components/icons/token-icon';
 import { useAuthSession } from '@/src/auth/hooks/use-auth-session';
@@ -134,8 +134,7 @@ const PRACTICE_SECTION_CONTENT = {
     aboutTitle: 'About IELTS Speaking',
     description:
       'IELTS speaking section details and structure.',
-    emptyStartNotice:
-      'Speaking practice list is live, but starting a speaking set is not enabled yet.',
+    emptyStartNotice: null,
     examCoverageItems: [
       'Part 1 focuses on short personal questions with natural everyday answers.',
       'Part 2 focuses on an individual long turn built from a cue card prompt.',
@@ -229,7 +228,8 @@ export function PracticeQuestionRow({
   const [startError, setStartError] = useState<string | null>(null);
   const [targetHref, setTargetHref] = useState(item.href);
   const sectionType = item.sectionType ?? 'listening';
-  const isStartAvailable = item.isStartAvailable ?? sectionType === 'listening';
+  const isStartAvailable =
+    item.isStartAvailable ?? ['listening', 'reading', 'writing', 'speaking'].includes(sectionType);
   const content = PRACTICE_SECTION_CONTENT[sectionType];
   const hasCardBackground = index % 2 === 0;
   const attemptLabel =
@@ -288,6 +288,8 @@ export function PracticeQuestionRow({
     }
 
     if (sectionType !== 'listening') {
+      setIsInfoOpen(false);
+      router.prefetch(item.href);
       router.push(item.href);
       return;
     }
