@@ -174,6 +174,25 @@ export function removeAnnotationsForSelection(
   });
 }
 
+export function updateAnnotationNote(
+  annotations: TextAnnotation[],
+  annotationId: string,
+  note?: string
+) {
+  const normalizedNote = note?.trim();
+
+  return sortAnnotations(
+    annotations.map((annotation) =>
+      annotation.id === annotationId
+        ? {
+            ...annotation,
+            note: normalizedNote || undefined,
+          }
+        : annotation
+    )
+  );
+}
+
 function getBlockElement(node: Node | null) {
   if (!node) return null;
   const element = node instanceof HTMLElement ? node : node.parentElement;

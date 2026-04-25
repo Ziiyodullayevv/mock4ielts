@@ -23,7 +23,7 @@ export function ScoreSummaryView({ result }: ScoreSummaryViewProps) {
   return (
     <div className="space-y-4 text-base">
       <div className="grid gap-4 xl:grid-cols-[minmax(0,1.7fr)_minmax(320px,0.83fr)]">
-        <section className="rounded-2xl bg-white/8 p-3 shadow-[0_24px_56px_rgba(0,0,0,0.3)]">
+        <section className="rounded-2xl bg-white p-3 shadow-[0_24px_56px_rgba(15,23,42,0.12)] dark:bg-white/8 dark:shadow-[0_24px_56px_rgba(0,0,0,0.3)]">
           <div className="grid gap-3 lg:grid-cols-[minmax(250px,0.92fr)_minmax(0,1fr)]">
             <QuickSummaryCard viewModel={viewModel} />
             <PartBreakdownCard viewModel={viewModel} />

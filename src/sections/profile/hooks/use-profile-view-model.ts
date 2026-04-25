@@ -15,9 +15,11 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useMyProfileQuery } from '@/src/auth/hooks/use-my-profile-query';
 import { EMPTY_FORM_STATE } from '@/src/sections/profile/constants/profile-form';
 import {
+  type UserProfile,
   deleteMyAccount,
+  removeMyAvatar,
   updateMyProfile,
-  uploadProfileAvatar,
+  updateMyAvatar,
 } from '@/src/auth/api/profile-api';
 import {
   toFormState,
@@ -29,7 +31,7 @@ import {
 export function useProfileViewModel() {
   const router = useRouter();
   const queryClient = useQueryClient();
-  const { isAuthenticated } = useAuthSession();
+  const { isAuthenticated, isHydrated } = useAuthSession();
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [draftState, setDraftState] = useState<ProfileFormState | null>(null);
   const {
@@ -42,10 +44,14 @@ export function useProfileViewModel() {
   const formState = draftState ?? profileFormState;
 
   useEffect(() => {
+    if (!isHydrated) {
+      return;
+    }
+
     if (!isAuthenticated) {
       router.replace(buildLoginHref(paths.profile.root));
     }
-  }, [isAuthenticated, router]);
+  }, [isAuthenticated, isHydrated, router]);
 
   const patchFormState = (updater: (current: ProfileFormState) => ProfileFormState) => {
     setDraftState((current) => updater(current ?? profileFormState));
@@ -65,18 +71,44 @@ export function useProfileViewModel() {
     },
   });
 
+  const patchProfileAvatar = (avatar: string | null) => {
+    queryClient.setQueryData<UserProfile | undefined>(['auth', 'me'], (currentProfile) =>
+      currentProfile
+        ? {
+            ...currentProfile,
+            avatar,
+          }
+        : currentProfile
+    );
+
+    setDraftState((current) => ({
+      ...(current ?? profileFormState),
+      avatar: avatar ?? '',
+    }));
+  };
+
   const uploadAvatarMutation = useMutation({
-    mutationFn: uploadProfileAvatar,
-    onSuccess: (media) => {
-      setDraftState((current) => ({
-        ...(current ?? profileFormState),
-        avatar: media.url,
-      }));
-      toast.success('Avatar uploaded. Save changes to update your profile.');
+    mutationFn: updateMyAvatar,
+    onSuccess: (avatarUrl) => {
+      patchProfileAvatar(avatarUrl);
+      toast.success('Avatar updated.');
     },
     onError: (mutationError) => {
       toast.error(
         mutationError instanceof Error ? mutationError.message : 'Avatar upload failed.'
+      );
+    },
+  });
+
+  const removeAvatarMutation = useMutation({
+    mutationFn: removeMyAvatar,
+    onSuccess: () => {
+      patchProfileAvatar(null);
+      toast.success('Avatar removed.');
+    },
+    onError: (mutationError) => {
+      toast.error(
+        mutationError instanceof Error ? mutationError.message : 'Failed to remove avatar.'
       );
     },
   });
@@ -111,6 +143,10 @@ export function useProfileViewModel() {
     }
 
     uploadAvatarMutation.mutate(file);
+  };
+
+  const handleRemoveAvatar = () => {
+    removeAvatarMutation.mutate();
   };
 
   const handleDateOfBirthChange = (nextDate?: Date) => {
@@ -163,12 +199,15 @@ export function useProfileViewModel() {
     formState,
     hasProfile: Boolean(profile),
     isAuthenticated,
+    isHydrated,
     isBusy:
       updateProfileMutation.isPending ||
       uploadAvatarMutation.isPending ||
+      removeAvatarMutation.isPending ||
       deleteAccountMutation.isPending,
     isDeletingAccount: deleteAccountMutation.isPending,
     isLoading,
+    isRemovingAvatar: removeAvatarMutation.isPending,
     isSavingProfile: updateProfileMutation.isPending,
     isUploadingAvatar: uploadAvatarMutation.isPending,
     refetch,
@@ -181,6 +220,7 @@ export function useProfileViewModel() {
     handleInputChange,
     handlePhoneChange,
     handlePhoneCountryChange,
+    handleRemoveAvatar,
     handleSaveProfile,
   };
 }

@@ -1,11 +1,16 @@
 'use client';
 
+import type { TextAnnotation } from '@/src/sections/practice/writing/components/writing-task-panel.shared';
 import type { Answers, ReadingPart } from '../types';
 
 import { cn } from '@/src/lib/utils';
-import { useRef, useState, useCallback } from 'react';
+import { useRef, useMemo, useState, useCallback } from 'react';
+import { READING_OPEN_NOTES_EVENT } from '@/src/layouts/practice';
 import { QuestionGroupRenderer } from '@/src/sections/practice/listening/components/question-types';
 import { PaperSurface } from '@/src/sections/practice/listening/components/question-types/paper-shell';
+import { usePracticeTextAnnotations } from '@/src/sections/practice/shared/use-practice-text-annotations';
+import { usePracticeTextSize, getPracticeTextStyle } from '@/src/sections/practice/shared/practice-text-size';
+import { buildQuestionGroupAnnotationBlocks } from '@/src/sections/practice/listening/components/question-types/annotation-blocks';
 
 type ReadingPartPanelProps = {
   activeQuestionId?: string | null;
@@ -27,25 +32,39 @@ function getPassageParagraphs(passageText: string) {
     .filter(Boolean);
 }
 
-function PassageContent({ part }: { part: ReadingPart }) {
+function AnnotatedPassageContent({
+  part,
+  renderAnnotatedTextBlock,
+}: {
+  part: ReadingPart;
+  renderAnnotatedTextBlock: ReturnType<typeof usePracticeTextAnnotations>['renderAnnotatedTextBlock'];
+}) {
+  const textSize = usePracticeTextSize();
   const paragraphs = getPassageParagraphs(part.passageText);
 
   return (
     <div className="space-y-5">
       {paragraphs.length ? (
-        paragraphs.map((paragraph, index) => (
-          <p
-            key={`${part.number}-paragraph-${index}`}
-            className={cn(
-              'text-[1.02rem] leading-8 text-stone-800',
+        paragraphs.map((paragraph, index) =>
+          renderAnnotatedTextBlock({
+            as: 'p',
+            blockId: `reading-part-${part.number}-passage-${index}`,
+            className: cn(
+              'text-stone-800 dark:text-white/84',
               paragraph.match(/^[A-Z]\s+/) ? 'font-medium' : ''
-            )}
-          >
-            {paragraph}
-          </p>
-        ))
+            ),
+            style: getPracticeTextStyle(textSize, 'body'),
+            text: paragraph,
+          })
+        )
       ) : (
-        <p className="text-[1.02rem] leading-8 text-stone-800">{part.passageText}</p>
+        renderAnnotatedTextBlock({
+          as: 'p',
+          blockId: `reading-part-${part.number}-passage-0`,
+          className: 'text-stone-800 dark:text-white/84',
+          style: getPracticeTextStyle(textSize, 'body'),
+          text: part.passageText,
+        })
       )}
     </div>
   );
@@ -58,11 +77,65 @@ export function ReadingPartPanel({
   part,
   showAnswer,
 }: ReadingPartPanelProps) {
+  const textSize = usePracticeTextSize();
   const [mobileTab, setMobileTab] = useState<MobileTab>('passage');
+  const [annotationsByPartId, setAnnotationsByPartId] = useState<Record<string, TextAnnotation[]>>(
+    {}
+  );
 
   const containerRef = useRef<HTMLDivElement>(null);
   const [splitPercent, setSplitPercent] = useState(DEFAULT_SPLIT_PERCENT);
   const [isDragging, setIsDragging] = useState(false);
+  const currentAnnotations = annotationsByPartId[part.number] ?? [];
+  const passageParagraphs = useMemo(() => getPassageParagraphs(part.passageText), [part.passageText]);
+  const annotationBlocks = useMemo(
+    () =>
+      Object.fromEntries([
+        [
+          `reading-part-${part.number}-title`,
+          {
+            label: 'Part Title',
+            text: part.title,
+          },
+        ],
+        [
+          `reading-part-${part.number}-scenario`,
+          {
+            label: 'Passage Overview',
+            text: part.scenario,
+          },
+        ],
+        ...passageParagraphs.map((paragraph, index) => [
+          `reading-part-${part.number}-passage-${index}`,
+          {
+            label: `Passage ${index + 1}`,
+            text: paragraph,
+          },
+        ]),
+        ...part.groups.map((group, groupIndex) => [
+          `reading-part-${part.number}-group-${groupIndex}-instructions`,
+          {
+            label: `Instructions ${groupIndex + 1}`,
+            text: group.instructions,
+          },
+        ]),
+        ...part.groups.flatMap((group, groupIndex) =>
+          buildQuestionGroupAnnotationBlocks(`reading-part-${part.number}-group-${groupIndex}`, group)
+        ),
+      ]),
+    [part.groups, part.number, part.scenario, part.title, passageParagraphs]
+  );
+  const annotations = usePracticeTextAnnotations({
+    annotations: currentAnnotations,
+    blocks: annotationBlocks,
+    onAnnotationsChange: (nextAnnotations) =>
+      setAnnotationsByPartId((previousState) => ({
+        ...previousState,
+        [part.number]: nextAnnotations,
+      })),
+    openNotesEventName: READING_OPEN_NOTES_EVENT,
+  });
+  const { floatingUi, renderAnnotatedTextBlock, rootRef } = annotations;
 
   const handleResizerMouseDown = useCallback((event: React.MouseEvent) => {
     event.preventDefault();
@@ -94,11 +167,24 @@ export function ReadingPartPanel({
 
   const questionsContent = (
     <div className="space-y-6">
-      <div className="space-y-2.5 border-b border-stone-200 pb-4">
-        <h3 className="text-2xl font-semibold tracking-[-0.03em] text-stone-800 md:text-[1.7rem]">
-          {part.title}
+      <div className="space-y-2.5 border-b border-stone-200 pb-4 dark:border-white/10">
+        <h3
+          style={getPracticeTextStyle(textSize, 'heading')}
+          className="font-semibold tracking-[-0.03em] text-stone-800 dark:text-white"
+        >
+          {renderAnnotatedTextBlock({
+            as: 'span',
+            blockId: `reading-part-${part.number}-title`,
+            text: part.title,
+          })}
         </h3>
-        <p className="max-w-5xl text-base leading-7 text-stone-600">{part.scenario}</p>
+        {renderAnnotatedTextBlock({
+          as: 'p',
+          blockId: `reading-part-${part.number}-scenario`,
+          className: 'max-w-5xl text-stone-600 dark:text-white/62',
+          style: getPracticeTextStyle(textSize, 'body-compact'),
+          text: part.scenario,
+        })}
       </div>
 
       <div className="space-y-8">
@@ -109,6 +195,8 @@ export function ReadingPartPanel({
               answers={answers}
               group={group}
               onChange={onChange}
+              annotationBlockIdPrefix={`reading-part-${part.number}-group-${groupIndex}`}
+              renderAnnotatedTextBlock={renderAnnotatedTextBlock}
               showAnswer={showAnswer}
             />
           </div>
@@ -118,19 +206,19 @@ export function ReadingPartPanel({
   );
 
   return (
-    <>
+    <div ref={rootRef}>
       {/* ── Mobile / tablet: tab switcher ── */}
       <div className="flex flex-col gap-0 lg:hidden">
         {/* Tab bar */}
-        <div className="sticky top-14 z-10 flex border-b border-stone-200 bg-white">
+        <div className="sticky top-14 z-10 flex border-b border-stone-200 bg-white dark:border-white/10 dark:bg-background">
           <button
             type="button"
             onClick={() => setMobileTab('passage')}
             className={cn(
               'flex flex-1 items-center justify-center px-4 py-3 text-sm font-medium transition-colors',
               mobileTab === 'passage'
-                ? 'border-b-2 border-blue-500 text-blue-600'
-                : 'text-stone-500 hover:text-stone-700'
+                ? 'border-b-2 border-blue-500 text-blue-600 dark:border-white dark:text-white'
+                : 'text-stone-500 hover:text-stone-700 dark:text-white/52 dark:hover:text-white/78'
             )}
           >
             Passage
@@ -141,8 +229,8 @@ export function ReadingPartPanel({
             className={cn(
               'flex flex-1 items-center justify-center px-4 py-3 text-sm font-medium transition-colors',
               mobileTab === 'questions'
-                ? 'border-b-2 border-blue-500 text-blue-600'
-                : 'text-stone-500 hover:text-stone-700'
+                ? 'border-b-2 border-blue-500 text-blue-600 dark:border-white dark:text-white'
+                : 'text-stone-500 hover:text-stone-700 dark:text-white/52 dark:hover:text-white/78'
             )}
           >
             Questions
@@ -153,19 +241,34 @@ export function ReadingPartPanel({
         <div className="pt-4">
           {mobileTab === 'passage' ? (
             <PaperSurface className="overflow-hidden">
-              <div className="border-b border-[#dfdfdf] px-5 py-4 sm:px-6">
+              <div className="border-b border-[#dfdfdf] px-5 py-4 dark:border-white/10 sm:px-6">
                 <div className="space-y-2.5">
-                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-stone-500">
+                  <p
+                    style={getPracticeTextStyle(textSize, 'eyebrow')}
+                    className="font-semibold uppercase tracking-[0.18em] text-stone-500 dark:text-white/42"
+                  >
                     {part.title}
                   </p>
-                  <h2 className="text-2xl font-semibold tracking-[-0.03em] text-stone-900">
+                  <h2
+                    style={getPracticeTextStyle(textSize, 'heading-large')}
+                    className="font-semibold tracking-[-0.03em] text-stone-900 dark:text-white"
+                  >
                     Reading passage
                   </h2>
-                  <p className="text-sm leading-7 text-stone-600">{part.scenario}</p>
+                  {renderAnnotatedTextBlock({
+                    as: 'p',
+                    blockId: `reading-part-${part.number}-scenario`,
+                    className: 'text-stone-600 dark:text-white/62',
+                    style: getPracticeTextStyle(textSize, 'body-compact'),
+                    text: part.scenario,
+                  })}
                 </div>
               </div>
               <article className="px-5 py-5 sm:px-6">
-                <PassageContent part={part} />
+                <AnnotatedPassageContent
+                  part={part}
+                  renderAnnotatedTextBlock={renderAnnotatedTextBlock}
+                />
               </article>
             </PaperSurface>
           ) : (
@@ -184,7 +287,9 @@ export function ReadingPartPanel({
         <div
           className={cn(
             'pointer-events-none absolute bottom-0 w-0.5 -translate-x-1/2 transition-colors duration-150',
-            isDragging ? 'bg-blue-400/70' : 'bg-stone-200'
+            isDragging
+              ? 'bg-[linear-gradient(180deg,rgba(255,200,90,0.95)_0%,rgba(255,159,47,0.9)_55%,rgba(255,120,75,0.85)_100%)]'
+              : 'bg-stone-200 dark:bg-white/10'
           )}
           style={{
             left: `${splitPercent}%`,
@@ -199,19 +304,34 @@ export function ReadingPartPanel({
           style={{ width: `calc(${splitPercent}% - 10px)` }}
         >
           <PaperSurface className="overflow-hidden">
-            <div className="border-b border-[#dfdfdf] px-5 py-4 sm:px-6">
+            <div className="border-b border-[#dfdfdf] px-5 py-4 dark:border-white/10 sm:px-6">
               <div className="space-y-2.5">
-                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-stone-500">
+                <p
+                  style={getPracticeTextStyle(textSize, 'eyebrow')}
+                  className="font-semibold uppercase tracking-[0.18em] text-stone-500 dark:text-white/42"
+                >
                   {part.title}
                 </p>
-                <h2 className="text-2xl font-semibold tracking-[-0.03em] text-stone-900">
+                <h2
+                  style={getPracticeTextStyle(textSize, 'heading')}
+                  className="font-semibold tracking-[-0.03em] text-stone-900 dark:text-white"
+                >
                   Reading passage
                 </h2>
-                <p className="text-sm leading-7 text-stone-600">{part.scenario}</p>
+                {renderAnnotatedTextBlock({
+                  as: 'p',
+                  blockId: `reading-part-${part.number}-scenario`,
+                  className: 'text-stone-600 dark:text-white/62',
+                  style: getPracticeTextStyle(textSize, 'body-compact'),
+                  text: part.scenario,
+                })}
               </div>
             </div>
             <article className="max-h-[calc(100vh-11rem)] overflow-y-auto px-5 py-5 sm:px-6">
-              <PassageContent part={part} />
+              <AnnotatedPassageContent
+                part={part}
+                renderAnnotatedTextBlock={renderAnnotatedTextBlock}
+              />
             </article>
           </PaperSurface>
         </div>
@@ -226,10 +346,10 @@ export function ReadingPartPanel({
         >
           <div
             className={cn(
-              'relative z-10 flex flex-col items-center gap-0.75 rounded-full border bg-white px-0.75 py-2 shadow-sm transition-all duration-150',
+              'relative z-10 flex flex-col items-center gap-0.75 rounded-full border bg-white px-0.75 py-2 shadow-sm transition-all duration-150 dark:border-white/10 dark:bg-[#131313] dark:shadow-none',
               isDragging
-                ? 'border-blue-300 shadow-blue-100'
-                : 'border-stone-200 group-hover:border-stone-300 group-hover:shadow-md'
+                ? 'border-[#ffb347] shadow-[0_0_0_1px_rgba(255,179,71,0.24)] dark:border-[#ffb347] dark:shadow-none'
+                : 'border-stone-200 group-hover:border-stone-300 group-hover:shadow-md dark:group-hover:border-white/20 dark:group-hover:shadow-none'
             )}
           >
             {Array.from({ length: 5 }).map((_, i) => (
@@ -237,7 +357,9 @@ export function ReadingPartPanel({
                 key={i}
                 className={cn(
                   'h-0.75 w-0.75 rounded-full transition-colors',
-                  isDragging ? 'bg-blue-500' : 'bg-stone-400 group-hover:bg-stone-600'
+                  isDragging
+                    ? 'bg-[#ff9f2f] dark:bg-[#ffb347]'
+                    : 'bg-stone-400 group-hover:bg-stone-600 dark:bg-white/34 dark:group-hover:bg-white/68'
                 )}
               />
             ))}
@@ -249,6 +371,7 @@ export function ReadingPartPanel({
           {questionsContent}
         </div>
       </div>
-    </>
+      {floatingUi}
+    </div>
   );
 }

@@ -25,7 +25,6 @@ export type UserProfile = {
 };
 
 export type UserProfileUpdateInput = {
-  avatar?: string | null;
   country?: string | null;
   country_region_code?: string | null;
   country_region_of_residence?: string | null;
@@ -37,15 +36,6 @@ export type UserProfileUpdateInput = {
   phone?: string | null;
   phone_country_code?: string | null;
   target_band?: number | string | null;
-};
-
-type MediaUploadResponse = {
-  contentType?: string | null;
-  createdAt?: string | null;
-  filename?: string | null;
-  id: string;
-  size: number;
-  url: string;
 };
 
 const asRecord = (value: unknown): ApiRecord | null =>
@@ -96,6 +86,27 @@ const normalizeMediaUrl = (value: unknown) => {
   }
 };
 
+const extractAvatarUrl = (payload: unknown) => {
+  const root = asRecord(payload) ?? {};
+  const data = asRecord(root.data) ?? root;
+  const user = asRecord(data.user);
+  const profile = asRecord(data.profile);
+
+  return normalizeMediaUrl(
+    data.avatar ??
+      data.avatar_url ??
+      data.avatarUrl ??
+      data.url ??
+      data.path ??
+      user?.avatar ??
+      user?.avatar_url ??
+      user?.avatarUrl ??
+      profile?.avatar ??
+      profile?.avatar_url ??
+      profile?.avatarUrl
+  );
+};
+
 const normalizeUserProfile = (payload: unknown): UserProfile => {
   const data = extractProfileData(payload);
 
@@ -137,30 +148,25 @@ export async function deleteMyAccount(): Promise<void> {
   await axiosInstance.delete(endpoints.profile.delete);
 }
 
-export async function uploadProfileAvatar(file: File): Promise<MediaUploadResponse> {
+export async function updateMyAvatar(file: File): Promise<string | null> {
   const formData = new FormData();
   formData.append('file', file);
 
-  const response = await axiosInstance.post(endpoints.admin.media.upload, formData, {
+  const response = await axiosInstance.post(endpoints.profile.avatar, formData, {
     headers: {
       'Content-Type': 'multipart/form-data',
     },
   });
 
-  const data = extractProfileData(response.data);
-  const id = pickString(data.id);
-  const url = normalizeMediaUrl(data.url);
+  const avatarUrl = extractAvatarUrl(response.data) ?? (await getMyProfile()).avatar;
 
-  if (!id || !url) {
-    throw new Error('Upload response did not include a media url.');
+  if (!avatarUrl) {
+    throw new Error('Avatar response did not include an image url.');
   }
 
-  return {
-    contentType: pickNullableString(data.content_type),
-    createdAt: pickNullableString(data.created_at),
-    filename: pickNullableString(data.filename),
-    id,
-    size: pickNumber(data.size),
-    url,
-  };
+  return avatarUrl;
+}
+
+export async function removeMyAvatar(): Promise<void> {
+  await axiosInstance.delete(endpoints.profile.avatar);
 }

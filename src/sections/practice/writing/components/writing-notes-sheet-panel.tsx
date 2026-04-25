@@ -1,15 +1,18 @@
 'use client';
 
-import type {
-  SavedNoteItem,
-  AnnotationColor,
-  AnnotationBlockId,
-} from './writing-task-panel.shared';
+import type { SavedNoteItem, AnnotationColor } from './writing-task-panel.shared';
 
-import { useState } from 'react';
 import { cn } from '@/src/lib/utils';
-import { X, CheckCheck } from 'lucide-react';
 import { Button } from '@/src/components/ui/button';
+import { useRef, useMemo, useState, useEffect } from 'react';
+import { PRACTICE_HEADER_RING_CLASS } from '@/src/layouts/practice-surface-theme';
+import {
+  X,
+  Search,
+  Trash2,
+  PencilLine,
+  EllipsisVertical,
+} from 'lucide-react';
 import {
   Sheet,
   SheetTitle,
@@ -17,39 +20,20 @@ import {
   SheetContent,
 } from '@/src/components/ui/sheet';
 
-type NotesSheetView = 'all' | 'saved' | 'selected';
-
 type NotesSheetPanelProps = {
   draft: string;
+  savedNotes: SavedNoteItem[];
+  selectionNoteId?: string | null;
   selectionText?: string;
   selectionUnavailable?: boolean;
-  savedNotes: SavedNoteItem[];
+  onCancelComposer: () => void;
   onClose: () => void;
+  onDeleteSavedNote: (noteId: string) => void;
   onDraftChange: (value: string) => void;
+  onEditSavedNote: (noteId: string) => void;
   onOpenSavedNote: (noteId: string) => void;
   onSave: () => void;
 };
-
-function getBlockAvatar(blockId: AnnotationBlockId) {
-  if (blockId === 'instructions') {
-    return {
-      className: 'bg-amber-100 text-amber-700',
-      label: 'I',
-    };
-  }
-
-  if (blockId === 'model-answer') {
-    return {
-      className: 'bg-emerald-100 text-emerald-700',
-      label: 'M',
-    };
-  }
-
-  return {
-    className: 'bg-sky-100 text-sky-700',
-    label: 'P',
-  };
-}
 
 function getAnnotationColorDotClass(color: AnnotationColor) {
   if (color === 'red') return 'bg-[#ff5d5d]';
@@ -58,45 +42,87 @@ function getAnnotationColorDotClass(color: AnnotationColor) {
   return 'bg-[#ffc62b]';
 }
 
+function getSavedNoteTitle(savedNote: SavedNoteItem) {
+  const title = savedNote.selection.text.trim();
+
+  return title || `${savedNote.blockLabel} note`;
+}
+
 export function NotesSheetPanel({
   draft,
+  savedNotes,
+  selectionNoteId = null,
   selectionText,
   selectionUnavailable = false,
-  savedNotes,
+  onCancelComposer,
   onClose,
+  onDeleteSavedNote,
   onDraftChange,
+  onEditSavedNote,
   onOpenSavedNote,
   onSave,
 }: NotesSheetPanelProps) {
-  const [activeView, setActiveView] = useState<NotesSheetView>(() => {
-    if (selectionUnavailable && savedNotes.length) return 'saved';
-    if (!selectionUnavailable && !savedNotes.length) return 'selected';
-    return 'all';
-  });
+  const composerRef = useRef<HTMLDivElement>(null);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [openActionMenuId, setOpenActionMenuId] = useState<string | null>(null);
 
-  const viewOptions = [
-    {
-      badgeClassName: 'bg-stone-900 text-white',
-      count: savedNotes.length + (selectionUnavailable ? 0 : 1),
-      label: 'All',
-      value: 'all' as const,
-    },
-    {
-      badgeClassName: 'bg-sky-500/14 text-sky-700',
-      count: selectionUnavailable ? 0 : 1,
-      label: 'Selected',
-      value: 'selected' as const,
-    },
-    {
-      badgeClassName: 'bg-emerald-500/14 text-emerald-700',
-      count: savedNotes.length,
-      label: 'Saved',
-      value: 'saved' as const,
-    },
-  ];
+  const isEditingExistingNote = Boolean(
+    selectionNoteId && savedNotes.some((savedNote) => savedNote.id === selectionNoteId)
+  );
+  const hasComposer = !selectionUnavailable;
+  const shouldShowSavedNotes = !hasComposer;
+  const filteredNotes = useMemo(() => {
+    const normalizedQuery = searchQuery.trim().toLowerCase();
 
-  const showSelectionPanel = activeView !== 'saved';
-  const showSavedNotes = activeView !== 'selected';
+    if (!normalizedQuery) {
+      return savedNotes;
+    }
+
+    return savedNotes.filter((savedNote) =>
+      `${savedNote.blockLabel} ${savedNote.selection.text} ${savedNote.note}`
+        .toLowerCase()
+        .includes(normalizedQuery)
+    );
+  }, [savedNotes, searchQuery]);
+
+  useEffect(() => {
+    if (selectionNoteId) {
+      composerRef.current?.scrollIntoView({
+        behavior: 'smooth',
+        block: 'start',
+      });
+    }
+  }, [selectionNoteId]);
+
+  useEffect(() => {
+    if (!openActionMenuId) {
+      return undefined;
+    }
+
+    const handlePointerDown = (event: PointerEvent) => {
+      const target = event.target as HTMLElement | null;
+
+      if (target?.closest('[data-note-actions-menu]')) {
+        return;
+      }
+
+      setOpenActionMenuId(null);
+    };
+
+    const handleEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setOpenActionMenuId(null);
+      }
+    };
+
+    document.addEventListener('pointerdown', handlePointerDown);
+    document.addEventListener('keydown', handleEscape);
+
+    return () => {
+      document.removeEventListener('pointerdown', handlePointerDown);
+      document.removeEventListener('keydown', handleEscape);
+    };
+  }, [openActionMenuId]);
 
   return (
     <Sheet open onOpenChange={(open) => !open && onClose()}>
@@ -104,81 +130,81 @@ export function NotesSheetPanel({
         side="right"
         showCloseButton={false}
         overlayClassName="z-[94] bg-black/18"
-        className="z-[95] w-full border-l border-stone-200 bg-[#fcfcfb] p-0 sm:max-w-[26rem]"
+        className="z-[95] border-l border-stone-200 bg-[#fcfcfb] p-0 dark:border-white/10 dark:bg-[#0f0f10] sm:max-w-[26rem]"
       >
         <div className="flex h-full flex-col" data-writing-notes-sheet>
-          <SheetHeader className="gap-3 border-b border-stone-200/80 bg-[radial-gradient(circle_at_top_right,_rgba(20,184,166,0.12),transparent_36%),radial-gradient(circle_at_top_left,_rgba(56,189,248,0.08),transparent_28%),#ffffff] px-5 pb-4 pt-5 text-left">
-            <div className="flex items-start justify-between gap-3">
-              <div className="space-y-2">
-                <SheetTitle className="text-[16px] font-semibold leading-6 tracking-[-0.02em] text-stone-900">
+          <SheetHeader className="gap-3 border-b border-stone-200/80 bg-[radial-gradient(circle_at_top_right,_rgba(20,184,166,0.12),transparent_36%),radial-gradient(circle_at_top_left,_rgba(56,189,248,0.08),transparent_28%),#ffffff] px-5 pb-4 pt-5 text-left dark:border-white/10 dark:bg-[radial-gradient(circle_at_top_right,_rgba(20,184,166,0.12),transparent_36%),radial-gradient(circle_at_top_left,_rgba(56,189,248,0.08),transparent_28%),#111111]">
+            <div className="flex items-center justify-between gap-3">
+              <div className="space-y-1.5">
+                <SheetTitle className="text-[18px] font-semibold leading-6 tracking-[-0.02em] text-stone-900 dark:text-white">
                   Notes
                 </SheetTitle>
               </div>
 
-              <div className="flex items-center gap-2">
-                <div className="inline-flex h-9 items-center gap-1.5 rounded-md border border-white/70 bg-white/85 px-2.5 text-[14px] font-semibold text-stone-600 shadow-[0_8px_18px_rgba(15,23,42,0.08)]">
-                  <CheckCheck className="size-3.5 text-emerald-500" strokeWidth={2.1} />
-                  <span>{savedNotes.length}</span>
+              <div className="flex items-center">
+                <div className={cn('rounded-full p-1 shadow-lg dark:shadow-none', PRACTICE_HEADER_RING_CLASS)}>
+                  <button
+                    type="button"
+                    aria-label="Close notes"
+                    onClick={onClose}
+                    className="inline-flex size-8.5 items-center justify-center rounded-full text-stone-500 transition-colors hover:bg-stone-100 hover:text-stone-900 dark:text-white/55 dark:hover:bg-white/8 dark:hover:text-white"
+                  >
+                    <X className="size-3" strokeWidth={2.1} />
+                  </button>
                 </div>
-
-                <button
-                  type="button"
-                  aria-label="Close notes"
-                  onClick={onClose}
-                  className="inline-flex size-9 items-center justify-center rounded-md border border-stone-200 bg-white text-stone-500 shadow-[0_8px_18px_rgba(15,23,42,0.06)] transition-colors hover:text-stone-900"
-                >
-                  <X className="size-3" strokeWidth={2.1} />
-                </button>
               </div>
             </div>
           </SheetHeader>
 
-          <div className="border-b border-stone-200/80 bg-stone-50/90 px-5 py-2.5">
-            <div className="grid grid-cols-3 gap-1">
-              {viewOptions.map((option) => {
-                const isActive = activeView === option.value;
+          <div className="border-b border-stone-200/80 bg-stone-50/90 px-5 py-4 dark:border-white/10 dark:bg-white/4">
+            <div className="relative">
+              <Search
+                className="pointer-events-none absolute right-4 top-1/2 size-4.5 -translate-y-1/2 text-stone-400 dark:text-white/35"
+                strokeWidth={2}
+              />
 
-                return (
-                  <button
-                    key={option.value}
-                    type="button"
-                    onClick={() => setActiveView(option.value)}
-                    className={cn(
-                      'inline-flex items-center justify-center gap-1.5 rounded-md px-2.5 py-2 text-[14px] font-semibold leading-5 transition-all',
-                      isActive
-                        ? 'bg-white text-stone-900 shadow-[0_8px_18px_rgba(15,23,42,0.06)] ring-1 ring-stone-200/80'
-                        : 'text-stone-500 hover:text-stone-800'
-                    )}
-                  >
-                    <span>{option.label}</span>
-                    <span
-                      className={cn(
-                        'inline-flex min-w-6 items-center justify-center rounded-md px-1.5 py-0.5 text-[13px] leading-5',
-                        isActive ? option.badgeClassName : 'bg-stone-200 text-stone-600'
-                      )}
-                    >
-                      {option.count}
-                    </span>
-                  </button>
-                );
-              })}
+              <input
+                type="search"
+                value={searchQuery}
+                onChange={(event) => setSearchQuery(event.target.value)}
+                placeholder="Search your notes..."
+                className="h-12 w-full rounded-full border border-stone-200 bg-white pl-4 pr-12 text-[15px] text-stone-800 outline-none transition-colors placeholder:text-stone-400 focus:border-stone-400 focus:ring-2 focus:ring-stone-200 dark:border-white/10 dark:bg-[#111111] dark:text-white dark:placeholder:text-white/28 dark:focus:border-white/18 dark:focus:ring-white/10"
+              />
             </div>
           </div>
 
           <div className="flex-1 overflow-y-auto">
-            {showSelectionPanel ? (
-              <section className="border-b border-dashed border-stone-200 px-5 py-4">
-                <div className="rounded-[1rem] bg-stone-100 px-4 py-3 text-[14px] leading-7 text-stone-600">
-                  {selectionText || "Notes qo'shish uchun matndan kerakli joyni belgilang."}
+            {hasComposer ? (
+              <section
+                ref={composerRef}
+                className="border-b border-dashed border-stone-200 px-5 py-5 dark:border-white/10"
+              >
+                <div className="rounded-[1rem] bg-stone-100 px-4 py-3 dark:bg-white/6">
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-stone-500 dark:text-white/42">
+                    {isEditingExistingNote ? 'Editing note' : 'Selected text'}
+                  </p>
+
+                  {selectionNoteId ? (
+                    <button
+                      type="button"
+                      onClick={() => onOpenSavedNote(selectionNoteId)}
+                      className="mt-2 line-clamp-3 text-left text-[15px] font-semibold text-stone-900 underline decoration-stone-400 decoration-1 underline-offset-4 transition-colors hover:text-stone-600 dark:text-white dark:decoration-white/35 dark:hover:text-[#ffc85a]"
+                    >
+                      {selectionText}
+                    </button>
+                  ) : (
+                    <p className="mt-2 text-[15px] leading-7 text-stone-700 dark:text-white/72">
+                      {selectionText}
+                    </p>
+                  )}
                 </div>
 
                 <textarea
                   value={draft}
-                  disabled={selectionUnavailable}
                   onChange={(event) => onDraftChange(event.target.value)}
                   placeholder="Write a quick reminder, idea, or structure note..."
                   rows={5}
-                  className="mt-3 w-full resize-none rounded-[1rem] border border-stone-200 bg-white px-4 py-3 text-[14px] leading-7 text-stone-800 outline-none transition-colors placeholder:text-stone-400 focus:border-stone-400 focus:ring-2 focus:ring-stone-200 disabled:cursor-not-allowed disabled:bg-stone-50 disabled:text-stone-400"
+                  className="mt-3 w-full resize-none rounded-[1rem] border border-stone-200 bg-white px-4 py-3 text-[14px] leading-7 text-stone-800 outline-none transition-colors placeholder:text-stone-400 focus:border-stone-400 focus:ring-2 focus:ring-stone-200 dark:border-white/10 dark:bg-[#111111] dark:text-white dark:placeholder:text-white/28 dark:focus:border-white/20 dark:focus:ring-white/10"
                 />
 
                 <div className="mt-3 flex flex-wrap gap-2.5">
@@ -187,97 +213,114 @@ export function NotesSheetPanel({
                     variant="black"
                     className="h-9 rounded-md px-3.5 text-[15px]"
                     onClick={onSave}
-                    disabled={selectionUnavailable}
+                    disabled={!draft.trim()}
                   >
-                    Save note
+                    {isEditingExistingNote ? 'Save changes' : 'Save note'}
                   </Button>
                   <Button
                     type="button"
                     variant="outline"
-                    className="h-9 rounded-md border-stone-300 bg-white px-3.5 text-[15px] text-stone-700 hover:bg-stone-50"
-                    onClick={onClose}
+                    className="h-9 rounded-md border-stone-300 bg-white px-3.5 text-[15px] text-stone-700 hover:bg-stone-50 dark:border-white/12 dark:bg-white/6 dark:text-white/75 dark:hover:bg-white/10"
+                    onClick={onCancelComposer}
                   >
-                    Close
+                    Cancel
                   </Button>
                 </div>
               </section>
             ) : null}
 
-            {showSavedNotes ? (
-              savedNotes.length ? (
-                <div>
-                  {savedNotes.map((savedNote) => {
-                    const avatar = getBlockAvatar(savedNote.selection.blockId);
-
-                    return (
-                      <button
+            {shouldShowSavedNotes ? (
+              <section className="px-5 py-5">
+                {filteredNotes.length ? (
+                  <div className="space-y-3">
+                    {filteredNotes.map((savedNote) => (
+                      <article
                         key={savedNote.id}
-                        type="button"
-                        onClick={() => {
-                          setActiveView('selected');
-                          onOpenSavedNote(savedNote.id);
-                        }}
-                        className="group block w-full border-b border-dashed border-stone-200 px-5 py-4 text-left transition-colors hover:bg-stone-50/70 last:border-b-0"
+                        className="rounded-[1rem] border border-stone-200 bg-white px-4 py-3 dark:border-white/10 dark:bg-[#111111]"
                       >
-                        <div className="flex items-start gap-3.5">
-                          <div
-                            className={cn(
-                              'mt-1 flex size-10 shrink-0 items-center justify-center rounded-full text-[14px] font-semibold',
-                              avatar.className
-                            )}
-                          >
-                            {avatar.label}
-                          </div>
-
+                        <div className="flex items-center justify-between gap-3">
                           <div className="min-w-0 flex-1">
-                            <div className="flex items-start justify-between gap-3">
-                              <div className="min-w-0">
-                                <p className="text-[16px] leading-6 text-stone-900">
-                                  <span className="font-semibold">{savedNote.blockLabel}</span> note
-                                </p>
-                                <p className="mt-1 text-[14px] leading-6 text-stone-400">Saved highlight</p>
-                              </div>
-
+                            <button
+                              type="button"
+                              onClick={() => onOpenSavedNote(savedNote.id)}
+                              className="flex min-w-0 items-center gap-2 text-left text-[15px] font-semibold text-stone-900 underline decoration-stone-400 decoration-1 underline-offset-4 transition-colors hover:text-stone-600 dark:text-white dark:decoration-white/35 dark:hover:text-[#ffc85a]"
+                            >
                               <span
                                 className={cn(
-                                  'mt-2 size-2.5 shrink-0 rounded-full',
+                                  'size-2 shrink-0 rounded-full',
                                   getAnnotationColorDotClass(savedNote.color)
                                 )}
                               />
-                            </div>
-
-                            <p className="mt-3 line-clamp-2 text-[14px] leading-7 text-stone-700">
-                              {savedNote.selection.text}
-                            </p>
-
-                            <div className="mt-3 rounded-[1rem] bg-stone-100 px-4 py-3 text-[14px] leading-7 text-stone-600">
-                              {savedNote.note}
-                            </div>
-
-                            <div className="mt-3">
-                              <span className="inline-flex rounded-md bg-stone-900 px-3.5 py-1.5 text-[15px] font-semibold leading-6 text-white transition-colors group-hover:bg-stone-800">
-                                Open note
+                              <span className="line-clamp-2 min-w-0">
+                                {getSavedNoteTitle(savedNote)}
                               </span>
-                            </div>
+                            </button>
+                          </div>
+
+                          <div className="relative" data-note-actions-menu>
+                            <button
+                              type="button"
+                              aria-label="Open note actions"
+                              aria-expanded={openActionMenuId === savedNote.id}
+                              onClick={() =>
+                                setOpenActionMenuId((currentId) =>
+                                  currentId === savedNote.id ? null : savedNote.id
+                                )
+                              }
+                              className="inline-flex size-8 shrink-0 items-center justify-center rounded-md text-stone-500 transition-colors hover:bg-stone-100 hover:text-stone-900 dark:text-white/45 dark:hover:bg-white/8 dark:hover:text-white"
+                            >
+                              <EllipsisVertical className="size-4" strokeWidth={2} />
+                            </button>
+
+                            {openActionMenuId === savedNote.id ? (
+                              <div className="absolute right-0 top-10 z-[110] w-36 rounded-xl border border-stone-200 bg-white p-1.5 text-stone-900 shadow-[0_18px_32px_rgba(15,23,42,0.12)] dark:border-white/10 dark:bg-[#141414] dark:text-white dark:shadow-none">
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setOpenActionMenuId(null);
+                                    onEditSavedNote(savedNote.id);
+                                  }}
+                                  className="flex w-full items-center gap-2 rounded-lg px-2.5 py-2 text-left text-sm font-medium text-stone-900 transition-colors hover:bg-stone-100 dark:text-white dark:hover:bg-white/8"
+                                >
+                                  <PencilLine className="size-4" strokeWidth={2} />
+                                  <span>Edit</span>
+                                </button>
+
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setOpenActionMenuId(null);
+                                    onDeleteSavedNote(savedNote.id);
+                                  }}
+                                  className="mt-1 flex w-full items-center gap-2 rounded-lg bg-[#5a2a28] px-2.5 py-2 text-left text-sm font-medium text-[#ff6e6e] transition-colors hover:bg-[#69302d] dark:bg-[#5a2a28] dark:text-[#ff6e6e] dark:hover:bg-[#69302d]"
+                                >
+                                  <Trash2 className="size-4" strokeWidth={2} />
+                                  <span>Delete</span>
+                                </button>
+                              </div>
+                            ) : null}
                           </div>
                         </div>
-                      </button>
-                    );
-                  })}
-                </div>
-              ) : (
-                <div className="px-5 py-8">
-                  <div className="rounded-[1rem] border border-dashed border-stone-200 bg-white px-5 py-6 text-center">
-                    <p className="text-[16px] font-semibold leading-6 text-stone-900">
-                      No saved notes yet
+
+                        <p className="mt-1.5 whitespace-pre-wrap text-[14px] leading-6 text-stone-700 dark:text-white/72">
+                          {savedNote.note}
+                        </p>
+                      </article>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="rounded-[1rem] border border-dashed border-stone-200 bg-white px-5 py-6 text-center dark:border-white/10 dark:bg-[#111111]">
+                    <p className="text-[16px] font-semibold leading-6 text-stone-900 dark:text-white">
+                      {savedNotes.length ? 'No matching notes' : 'No saved notes yet'}
                     </p>
-                    <p className="mt-2 text-[14px] leading-7 text-stone-400">
-                      Matnni belgilang va note qo&apos;shib saqlang, keyin shu yerda
-                      ko&apos;rinadi.
+                    <p className="mt-2 text-[14px] leading-7 text-stone-400 dark:text-white/35">
+                      {savedNotes.length
+                        ? 'Try another search term or clear the current search.'
+                        : 'Select some text and save a note. It will appear here.'}
                     </p>
                   </div>
-                </div>
-              )
+                )}
+              </section>
             ) : null}
           </div>
         </div>

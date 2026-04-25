@@ -1,46 +1,32 @@
 'use client';
 
 import { cn } from '@/src/lib/utils';
-import { useState, useEffect } from 'react';
 import { Slider } from '@/src/components/ui/slider';
+import { useRef, useState, useEffect, useCallback } from 'react';
 import { TimerDisplay } from '@/src/layouts/listening/timer-display';
 import {
+  LogOut,
   Volume1,
   Volume2,
   VolumeX,
-  ChevronLeft,
-  ChevronRight,
 } from 'lucide-react';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuTrigger,
-} from '@/src/components/ui/dropdown-menu';
+import { PRACTICE_HEADER_RING_CLASS } from '@/src/layouts/practice-surface-theme';
 
 import GradualBlur from '../../components/GradualBlur';
 import { ListeningHeaderMoreMenu, ListeningHeaderFullscreenButton } from '../listening/header-more-menu';
 
 type SpeakingTestHeaderProps = {
-  isPrimaryActionDisabled?: boolean;
-  isPrevDisabled?: boolean;
-  onPrevPart: () => void;
-  onPrimaryAction: () => void;
-  prevActionLabel?: string;
-  primaryActionLabel?: string;
+  onExit: () => void;
   timeLeftSeconds: number;
 };
 
 export function SpeakingTestHeader({
-  isPrimaryActionDisabled = false,
-  isPrevDisabled = false,
-  onPrevPart,
-  onPrimaryAction,
-  prevActionLabel = 'Prev',
-  primaryActionLabel = 'Next',
+  onExit,
   timeLeftSeconds,
 }: SpeakingTestHeaderProps) {
   const [isScrolled, setIsScrolled] = useState(false);
   const [volume, setVolume] = useState(80);
+  const [isAudioExpanded, setIsAudioExpanded] = useState(false);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -56,7 +42,7 @@ export function SpeakingTestHeader({
   }, []);
 
   return (
-    <header className="sticky top-0 z-40 isolate border-stone-200 bg-linear-to-b from-white from-20% to-transparent to-80%">
+    <header className="sticky top-0 z-40 isolate border-stone-200 bg-linear-to-b from-white from-20% to-transparent to-80% dark:border-white/10 dark:bg-linear-to-b dark:from-background dark:from-20% dark:to-transparent dark:to-80%">
       <GradualBlur
         target="parent"
         position="top"
@@ -69,111 +55,91 @@ export function SpeakingTestHeader({
         zIndex={0}
       />
 
-      <div className="relative z-10 mx-auto flex w-full max-w-[1480px] items-center justify-between gap-3 px-4 py-2.5 sm:hidden">
-        <div className="flex shrink-0 items-center rounded-full border border-border/30 bg-white/95 p-1 shadow-lg">
-          <button
-            type="button"
-            onClick={onPrevPart}
-            disabled={isPrevDisabled}
-            aria-label={prevActionLabel}
-            className="inline-flex size-9 items-center justify-center rounded-full text-stone-800 transition-colors hover:bg-stone-50 disabled:cursor-not-allowed disabled:text-stone-300"
-          >
-            <ChevronLeft className="size-4.5" strokeWidth={2} />
-          </button>
+      <div className="relative z-10 flex min-h-16 w-full items-center justify-between gap-3 px-4 py-2.5 sm:hidden">
+        <ExitButton onExit={onExit} />
 
-          <span className="mx-0.5 h-6 w-px bg-stone-200" />
-
-          <button
-            type="button"
-            onClick={onPrimaryAction}
-            disabled={isPrimaryActionDisabled}
-            aria-label={primaryActionLabel}
-            className="inline-flex size-9 items-center justify-center rounded-full text-stone-800 transition-colors hover:bg-stone-50 disabled:cursor-not-allowed disabled:text-stone-300"
-          >
-            <ChevronRight className="size-4.5" strokeWidth={2} />
-          </button>
-        </div>
-
-        <div className="min-w-0 flex-1">
-          <div className="flex justify-center">
+        <div className="flex h-full min-w-0 flex-1 items-center self-center">
+          <div className="flex w-full items-center justify-center">
             <TimerDisplay isReview={false} totalSeconds={timeLeftSeconds} />
           </div>
         </div>
 
-        <div className="flex shrink-0 items-center gap-2">
-          <div className="flex items-center rounded-full border border-border/30 bg-white/95 p-1 shadow-lg">
-            <SpeakingHeaderAudioMenu volume={volume} onVolumeChange={setVolume} />
+        <div className="flex h-full shrink-0 self-center items-center gap-2">
+          <div
+            className={cn(
+              'flex items-center rounded-full p-1 shadow-lg dark:shadow-none',
+              PRACTICE_HEADER_RING_CLASS
+            )}
+          >
+            <SpeakingHeaderInlineAudioMenu
+              volume={volume}
+              onVolumeChange={setVolume}
+              onExpandedChange={setIsAudioExpanded}
+            />
 
-            <span className="mx-0.5 h-6 w-px bg-stone-200" />
+            <span
+              className={cn(
+                'mx-0.5 h-6 w-px bg-stone-200 dark:bg-white/12',
+                isAudioExpanded && 'hidden'
+              )}
+            />
 
             <ListeningHeaderFullscreenButton />
           </div>
 
-          <div className="flex items-center rounded-full border border-border/30 bg-white/95 p-1 shadow-lg">
+          <div
+            className={cn(
+              'flex items-center rounded-full p-1 shadow-lg dark:shadow-none',
+              PRACTICE_HEADER_RING_CLASS
+            )}
+          >
             <ListeningHeaderMoreMenu />
           </div>
         </div>
       </div>
 
-      <div className="relative z-10 mx-auto hidden w-full max-w-[1480px] grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-3 px-4 py-2.5 sm:grid sm:px-6">
-        <div
-          className={cn(
-            'group justify-self-start flex items-center rounded-full border border-border/40 bg-white/95 p-1 transition-shadow',
-            isScrolled
-              ? 'shadow-[0_14px_30px_rgba(15,23,42,0.16),0_4px_14px_rgba(15,23,42,0.1)]'
-              : 'shadow-lg'
-          )}
-        >
-          <button
-            type="button"
-            onClick={onPrevPart}
-            disabled={isPrevDisabled}
-            title={prevActionLabel}
-            className="inline-flex h-9 w-10 shrink-0 items-center justify-center rounded-full text-stone-800 transition-colors hover:bg-stone-100 disabled:cursor-not-allowed disabled:text-stone-300 disabled:hover:bg-transparent"
-          >
-            <ChevronLeft className="size-5" strokeWidth={1.9} />
-          </button>
-
-          <span className="mx-0.5 h-7 w-px bg-stone-200 transition-opacity group-hover:opacity-0" />
-
-          <button
-            type="button"
-            onClick={onPrimaryAction}
-            disabled={isPrimaryActionDisabled}
-            aria-label={primaryActionLabel}
-            title={primaryActionLabel}
-            className="inline-flex h-9 w-10 shrink-0 items-center justify-center rounded-full text-stone-400 transition-colors hover:bg-stone-100 hover:text-stone-700 disabled:cursor-not-allowed disabled:text-stone-300 disabled:hover:bg-transparent"
-          >
-            <ChevronRight className="size-5" strokeWidth={1.9} />
-          </button>
+      <div className="relative z-10 hidden min-h-[72px] w-full grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-3 px-4 py-2.5 sm:grid sm:px-6">
+        <div className="flex h-full -translate-y-1 items-center justify-self-start">
+          <ExitButton onExit={onExit} />
         </div>
 
-        <div className="flex justify-center">
+        <div className="flex h-full items-center self-center justify-center">
           <TimerDisplay isReview={false} totalSeconds={timeLeftSeconds} />
         </div>
 
-        <div className="flex items-center justify-self-end gap-2">
+        <div className="flex h-full -translate-y-1 self-center items-center justify-self-end gap-2">
           <div
             className={cn(
-              'group flex items-center rounded-full border border-border/20 bg-white p-1 transition-shadow',
+              'group flex items-center rounded-full p-1 transition-shadow',
+              PRACTICE_HEADER_RING_CLASS,
               isScrolled
-                ? 'shadow-[0_14px_30px_rgba(15,23,42,0.16),0_4px_14px_rgba(15,23,42,0.1)]'
-                : 'shadow-lg'
+                ? 'shadow-[0_14px_30px_rgba(15,23,42,0.16),0_4px_14px_rgba(15,23,42,0.1)] dark:shadow-none'
+                : 'shadow-lg dark:shadow-none'
             )}
           >
-            <SpeakingHeaderAudioMenu volume={volume} onVolumeChange={setVolume} />
+            <SpeakingHeaderInlineAudioMenu
+              volume={volume}
+              onVolumeChange={setVolume}
+              onExpandedChange={setIsAudioExpanded}
+            />
 
-            <span className="mx-0.5 h-7 w-px bg-stone-200 transition-opacity group-hover:opacity-0" />
+            <span
+              className={cn(
+                'mx-0.5 h-7 w-px bg-stone-200 transition-opacity group-hover:opacity-0 dark:bg-white/12',
+                isAudioExpanded && 'hidden'
+              )}
+            />
 
             <ListeningHeaderFullscreenButton />
           </div>
 
           <div
             className={cn(
-              'flex items-center rounded-full border border-border/20 bg-white p-1 transition-shadow',
+              'flex items-center rounded-full p-1 transition-shadow',
+              PRACTICE_HEADER_RING_CLASS,
               isScrolled
-                ? 'shadow-[0_14px_30px_rgba(15,23,42,0.16),0_4px_14px_rgba(15,23,42,0.1)]'
-                : 'shadow-lg'
+                ? 'shadow-[0_14px_30px_rgba(15,23,42,0.16),0_4px_14px_rgba(15,23,42,0.1)] dark:shadow-none'
+                : 'shadow-lg dark:shadow-none'
             )}
           >
             <ListeningHeaderMoreMenu />
@@ -184,86 +150,135 @@ export function SpeakingTestHeader({
   );
 }
 
-function SpeakingHeaderAudioMenu({
-  volume,
-  onVolumeChange,
-}: {
+type SpeakingHeaderInlineAudioMenuProps = {
+  onExpandedChange?: (isExpanded: boolean) => void;
   onVolumeChange: (value: number) => void;
   volume: number;
-}) {
+};
+
+function SpeakingHeaderInlineAudioMenu({
+  volume,
+  onVolumeChange,
+  onExpandedChange,
+}: SpeakingHeaderInlineAudioMenuProps) {
+  const [isExpanded, setIsExpanded] = useState(false);
+  const shellRef = useRef<HTMLDivElement | null>(null);
   const TriggerIcon = volume === 0 ? VolumeX : volume < 50 ? Volume1 : Volume2;
 
-  return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <button
-          type="button"
-          aria-label="Open audio controls"
-          className="inline-flex h-9 w-10 shrink-0 items-center justify-center rounded-full text-stone-700 transition-colors hover:bg-stone-100 hover:text-stone-900"
-        >
-          <TriggerIcon className="size-4.5" strokeWidth={2} />
-        </button>
-      </DropdownMenuTrigger>
-
-      <DropdownMenuContent
-        forceMount
-        align="end"
-        sideOffset={10}
-        className="w-72 rounded-2xl border border-stone-200 bg-white p-3 text-stone-900 shadow-[0_20px_40px_rgba(15,23,42,0.18)]"
-      >
-        <SpeakingHeaderAudioControls volume={volume} onVolumeChange={onVolumeChange} />
-      </DropdownMenuContent>
-    </DropdownMenu>
+  const updateExpandedState = useCallback(
+    (nextValue: boolean) => {
+      setIsExpanded(nextValue);
+      onExpandedChange?.(nextValue);
+    },
+    [onExpandedChange]
   );
-}
 
-function SpeakingHeaderAudioControls({
-  mobile = false,
-  volume,
-  onVolumeChange,
-}: {
-  mobile?: boolean;
-  onVolumeChange: (value: number) => void;
-  volume: number;
-}) {
-  const LeadingVolumeIcon = volume === 0 ? VolumeX : Volume1;
+  useEffect(() => {
+    if (!isExpanded) {
+      return undefined;
+    }
+
+    const handlePointerDown = (event: MouseEvent) => {
+      if (shellRef.current?.contains(event.target as Node)) {
+        return;
+      }
+
+      updateExpandedState(false);
+    };
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        updateExpandedState(false);
+      }
+    };
+
+    window.addEventListener('mousedown', handlePointerDown);
+    window.addEventListener('keydown', handleKeyDown);
+
+    return () => {
+      window.removeEventListener('mousedown', handlePointerDown);
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [isExpanded, updateExpandedState]);
+
+  useEffect(() => {
+    if (!isExpanded) {
+      return undefined;
+    }
+
+    const closeTimer = window.setTimeout(() => {
+      updateExpandedState(false);
+    }, 4000);
+
+    return () => window.clearTimeout(closeTimer);
+  }, [isExpanded, updateExpandedState, volume]);
 
   return (
-    <div className={cn('flex shrink-0 items-center', mobile ? 'w-full' : 'w-[230px]')}>
-      <div className="flex min-w-0 flex-1 items-center gap-2">
-        <button
-          type="button"
-          onClick={() => onVolumeChange(volume === 0 ? 80 : 0)}
-          className={cn(
-            'inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-stone-700 transition-colors hover:bg-stone-100 hover:text-stone-900',
-            mobile ? 'h-9 w-9' : ''
-          )}
-          aria-label={volume === 0 ? 'Unmute audio' : 'Mute audio'}
-        >
-          <LeadingVolumeIcon className={cn(mobile ? 'size-5' : 'size-4.5')} strokeWidth={2.2} />
-        </button>
+    <div
+      ref={shellRef}
+      className={cn(
+        'relative flex h-9 shrink-0 items-center overflow-hidden rounded-full transition-[width] duration-300 ease-out',
+        isExpanded ? 'w-[138px]' : 'w-10'
+      )}
+    >
+      <button
+        type="button"
+        aria-label="Open audio controls"
+        aria-expanded={isExpanded}
+        onClick={() => updateExpandedState(true)}
+        className={cn(
+          'absolute inset-0 inline-flex h-9 w-10 shrink-0 items-center justify-center rounded-full text-stone-700 transition-all duration-200 hover:bg-stone-100 hover:text-stone-900 dark:text-white/78 dark:hover:bg-white/8 dark:hover:text-white',
+          isExpanded
+            ? 'invisible pointer-events-none translate-x-2 opacity-0'
+            : 'visible opacity-100'
+        )}
+      >
+        <TriggerIcon className="size-4.5" strokeWidth={2} />
+      </button>
 
+      <div
+        className={cn(
+          'flex h-full w-full items-center gap-1 rounded-full bg-stone-100/95 pl-3 pr-1.5 text-stone-900 shadow-[inset_0_1px_0_rgba(255,255,255,0.55)] transition-all duration-200 dark:bg-white/8 dark:text-white dark:shadow-none',
+          isExpanded
+            ? 'visible translate-x-0 opacity-100'
+            : 'invisible pointer-events-none translate-x-4 opacity-0'
+        )}
+      >
         <Slider
           value={[volume]}
           max={100}
           step={1}
           onValueChange={(nextValue) => onVolumeChange(nextValue[0] ?? 0)}
           aria-label="Audio volume"
-          className="min-w-0 flex-1 [&_[data-slot=slider-range]]:bg-stone-400 [&_[data-slot=slider-thumb]]:border-stone-800 [&_[data-slot=slider-thumb]]:bg-white [&_[data-slot=slider-thumb]]:shadow-[0_8px_18px_rgba(15,23,42,0.18)] [&_[data-slot=slider-thumb]]:size-5 [&_[data-slot=slider-track]]:bg-stone-200 [&_[data-slot=slider-track]]:h-2"
+          className="w-[88px] shrink-0 [&_[data-slot=slider-range]]:bg-stone-950 [&_[data-slot=slider-thumb]]:size-0 [&_[data-slot=slider-thumb]]:border-0 [&_[data-slot=slider-thumb]]:bg-transparent [&_[data-slot=slider-thumb]]:opacity-0 [&_[data-slot=slider-thumb]]:shadow-none [&_[data-slot=slider-track]]:h-2 [&_[data-slot=slider-track]]:bg-stone-300 dark:[&_[data-slot=slider-range]]:bg-white dark:[&_[data-slot=slider-track]]:bg-white/18"
         />
 
         <button
           type="button"
-          onClick={() => onVolumeChange(100)}
-          className={cn(
-            'inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-stone-700 transition-colors hover:bg-stone-100 hover:text-stone-900',
-            mobile ? 'h-9 w-9' : ''
-          )}
-          aria-label="Set audio volume to maximum"
+          onClick={() => onVolumeChange(volume === 0 ? 80 : 0)}
+          aria-label={volume === 0 ? 'Unmute audio' : 'Mute audio'}
+          title={volume === 0 ? 'Unmute audio' : 'Mute audio'}
+          className="inline-flex size-6 shrink-0 items-center justify-center text-stone-700 transition-colors hover:text-stone-950 dark:text-white/78 dark:hover:text-white"
         >
-          <Volume2 className={cn(mobile ? 'size-5' : 'size-4.5')} strokeWidth={2.2} />
+          <TriggerIcon className="size-4.5" strokeWidth={2} />
         </button>
       </div>
+    </div>
+  );
+}
+
+function ExitButton({ onExit }: { onExit: () => void }) {
+  return (
+    <div className={cn('inline-flex w-fit shrink-0 items-center rounded-full', PRACTICE_HEADER_RING_CLASS)}>
+      <button
+        type="button"
+        onClick={onExit}
+        aria-label="Exit test"
+        className="inline-flex h-11 shrink-0 items-center gap-2 rounded-full border border-[#ef4444] bg-[linear-gradient(135deg,#ff6b6b_0%,#ef4444_52%,#dc2626_100%)] px-5 text-sm font-semibold text-white shadow-[0_12px_28px_rgba(239,68,68,0.28)] transition-all hover:brightness-105"
+      >
+        <LogOut className="size-4" strokeWidth={2} />
+        <span>Exit</span>
+      </button>
     </div>
   );
 }

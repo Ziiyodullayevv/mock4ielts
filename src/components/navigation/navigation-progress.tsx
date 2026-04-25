@@ -1,7 +1,7 @@
 'use client';
 
 import NProgress from 'nprogress';
-import { useEffect } from 'react';
+import { useEffect, useRef, useCallback } from 'react';
 import { usePathname, useSearchParams } from 'next/navigation';
 
 const isModifiedClick = (event: MouseEvent) =>
@@ -10,6 +10,32 @@ const isModifiedClick = (event: MouseEvent) =>
 export function NavigationProgress() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
+  const fallbackTimerRef = useRef<number | null>(null);
+  const lastUrlRef = useRef<string | null>(null);
+
+  const clearFallbackTimer = useCallback(() => {
+    if (fallbackTimerRef.current === null) {
+      return;
+    }
+
+    window.clearTimeout(fallbackTimerRef.current);
+    fallbackTimerRef.current = null;
+  }, []);
+
+  const finishProgress = useCallback(() => {
+    clearFallbackTimer();
+    NProgress.done();
+  }, [clearFallbackTimer]);
+
+  const startProgress = useCallback((fallbackMs = 8000) => {
+    clearFallbackTimer();
+    NProgress.start();
+
+    fallbackTimerRef.current = window.setTimeout(() => {
+      NProgress.done(true);
+      fallbackTimerRef.current = null;
+    }, fallbackMs);
+  }, [clearFallbackTimer]);
 
   useEffect(() => {
     NProgress.configure({
@@ -17,11 +43,19 @@ export function NavigationProgress() {
       showSpinner: false,
       trickleSpeed: 140,
     });
-  }, []);
+
+    lastUrlRef.current = window.location.href;
+
+    return () => {
+      clearFallbackTimer();
+      NProgress.done(true);
+    };
+  }, [clearFallbackTimer]);
 
   useEffect(() => {
-    NProgress.done();
-  }, [pathname, searchParams]);
+    lastUrlRef.current = window.location.href;
+    finishProgress();
+  }, [finishProgress, pathname, searchParams]);
 
   useEffect(() => {
     const handleDocumentClick = (event: MouseEvent) => {
@@ -64,11 +98,18 @@ export function NavigationProgress() {
         return;
       }
 
-      NProgress.start();
+      startProgress();
     };
 
     const handleHistoryNavigation = () => {
-      NProgress.start();
+      const previousUrl = lastUrlRef.current;
+      const nextUrl = window.location.href;
+
+      startProgress();
+
+      if (previousUrl === nextUrl) {
+        window.setTimeout(finishProgress, 180);
+      }
     };
 
     document.addEventListener('click', handleDocumentClick, true);
@@ -78,7 +119,7 @@ export function NavigationProgress() {
       document.removeEventListener('click', handleDocumentClick, true);
       window.removeEventListener('popstate', handleHistoryNavigation);
     };
-  }, []);
+  }, [finishProgress, startProgress]);
 
   return null;
 }

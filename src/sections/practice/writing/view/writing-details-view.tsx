@@ -3,7 +3,7 @@
 import type { WritingAnswers } from '../types';
 
 import { paths } from '@/src/routes/paths';
-import { useState, useEffect } from 'react';
+import { useRef, useState, useEffect } from 'react';
 import { buildLoginHref } from '@/src/auth/utils/return-to';
 import { useRouter, useSearchParams } from '@/src/routes/hooks';
 import { useAuthSession } from '@/src/auth/hooks/use-auth-session';
@@ -34,6 +34,7 @@ export function WritingDetailsView({ sectionId }: WritingDetailsViewProps) {
   const shouldRestoreResult = view === 'result';
   const { isAuthenticated, isHydrated } = useAuthSession();
   const canLoad = isHydrated && isAuthenticated;
+  const hasAutoStartedRef = useRef(false);
   const [countdownValue, setCountdownValue] = useState<number | null>(null);
   const [pendingAttemptId, setPendingAttemptId] = useState<string | null>(null);
 
@@ -112,6 +113,39 @@ export function WritingDetailsView({ sectionId }: WritingDetailsViewProps) {
     }
   };
 
+  const retryBeginAttempt = async () => {
+    hasAutoStartedRef.current = false;
+    await beginAttempt();
+  };
+
+  useEffect(() => {
+    if (
+      !canLoad ||
+      !data ||
+      attemptId ||
+      shouldRestoreResult ||
+      pendingAttemptId ||
+      countdownValue !== null ||
+      startAttemptMutation.isPending ||
+      startAttemptMutation.error instanceof Error ||
+      hasAutoStartedRef.current
+    ) {
+      return;
+    }
+
+    hasAutoStartedRef.current = true;
+    void beginAttempt();
+  }, [
+    attemptId,
+    canLoad,
+    countdownValue,
+    data,
+    pendingAttemptId,
+    shouldRestoreResult,
+    startAttemptMutation.error,
+    startAttemptMutation.isPending,
+  ]);
+
   const countdownOverlay =
     countdownValue !== null ? <PracticeCountdownOverlay value={countdownValue} /> : null;
 
@@ -171,19 +205,23 @@ export function WritingDetailsView({ sectionId }: WritingDetailsViewProps) {
   }
 
   if (!attemptId) {
+    if (startAttemptMutation.error instanceof Error) {
+      return (
+        <>
+          <PracticePageState
+            actionLabel="Try again"
+            description={startAttemptMutation.error.message}
+            label="We couldn't start this writing test."
+            onAction={() => void retryBeginAttempt()}
+          />
+          {countdownOverlay}
+        </>
+      );
+    }
+
     return (
       <>
-        <PracticePageState
-          actionLabel={startAttemptMutation.isPending ? 'Starting...' : 'Start Practice'}
-          description={
-            startAttemptMutation.error instanceof Error
-              ? startAttemptMutation.error.message
-              : data.description
-          }
-          icon="play"
-          label={data.title}
-          onAction={startAttemptMutation.isPending ? undefined : beginAttempt}
-        />
+        <PracticePageState icon="spinner" label="Starting writing test..." />
         {countdownOverlay}
       </>
     );

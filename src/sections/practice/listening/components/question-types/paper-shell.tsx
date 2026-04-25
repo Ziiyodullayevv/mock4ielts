@@ -1,15 +1,18 @@
 'use client';
 
+import type { ReactNode, ElementType, CSSProperties } from 'react';
+
 import { cn } from '@/src/lib/utils';
 import { Squircle } from '@/src/components/squircle/squircle';
+import { usePracticeTextSize, getPracticeTextStyle } from '@/src/sections/practice/shared/practice-text-size';
 
 export const PAPER_PANEL_CLASS_NAME =
-  'relative overflow-hidden bg-[#f7f7f7] shadow-[0_10px_24px_rgba(15,23,42,0.05),0_2px_8px_rgba(15,23,42,0.035)]';
+  'relative overflow-hidden bg-[#f7f7f7] shadow-lg dark:bg-[#131313] dark:shadow-[0_18px_40px_rgba(0,0,0,0.32)]';
 
 export const PAPER_DIVIDER_CLASS_NAME =
-  "[&>*+*]:relative [&>*+*]:before:absolute [&>*+*]:before:top-0 [&>*+*]:before:left-5 [&>*+*]:before:right-5 sm:[&>*+*]:before:left-8 sm:[&>*+*]:before:right-8 [&>*+*]:before:h-px [&>*+*]:before:bg-[#dfdfdf] [&>*+*]:before:content-['']";
+  "[&>*+*]:relative [&>*+*]:before:absolute [&>*+*]:before:top-0 [&>*+*]:before:left-5 [&>*+*]:before:right-5 sm:[&>*+*]:before:left-8 sm:[&>*+*]:before:right-8 [&>*+*]:before:h-px [&>*+*]:before:bg-[#dfdfdf] dark:[&>*+*]:before:bg-white/10 [&>*+*]:before:content-['']";
 
-export const PAPER_ROW_CLASS_NAME = 'px-5 py-4 text-stone-800 sm:px-8 sm:py-6';
+export const PAPER_ROW_CLASS_NAME = 'px-5 py-4 text-stone-800 dark:text-white/84 sm:px-8 sm:py-6';
 
 const INSTRUCTION_EMPHASIS_PATTERNS = [
   {
@@ -107,7 +110,10 @@ function renderInstruction(instruction: string) {
     }
 
     nodes.push(
-      <strong key={`${range.start}-${range.end}-${index}`} className="font-semibold text-stone-900">
+      <strong
+        key={`${range.start}-${range.end}-${index}`}
+        className="font-semibold text-stone-900 dark:text-white"
+      >
         {instruction.slice(range.start, range.end)}
       </strong>
     );
@@ -123,8 +129,17 @@ function renderInstruction(instruction: string) {
 }
 
 type QuestionGroupIntroProps = {
+  annotationBlockId?: string;
   instruction: string;
+  renderAnnotatedTextBlock?: (args: {
+    as?: ElementType;
+    blockId: string;
+    className?: string;
+    style?: CSSProperties;
+    text: string;
+  }) => ReactNode;
   title: string;
+  titleAnnotationBlockId?: string;
 };
 
 type QuestionNumberBadgeProps = {
@@ -134,15 +149,49 @@ type QuestionNumberBadgeProps = {
   size?: 'md' | 'sm' | 'xs';
 };
 
-export function QuestionGroupIntro({ instruction, title }: QuestionGroupIntroProps) {
+export function QuestionGroupIntro({
+  annotationBlockId,
+  instruction,
+  renderAnnotatedTextBlock,
+  title,
+  titleAnnotationBlockId,
+}: QuestionGroupIntroProps) {
+  const textSize = usePracticeTextSize();
+
   return (
     <div className="space-y-3">
-      <h3 className="text-[1.2rem] font-semibold tracking-[-0.03em] text-stone-800 md:text-[1.35rem]">
-        {title}
-      </h3>
-      <p className="max-w-5xl text-base leading-7 text-stone-700">
-        {renderInstruction(instruction)}
-      </p>
+      {titleAnnotationBlockId && renderAnnotatedTextBlock ? (
+        renderAnnotatedTextBlock({
+          as: 'h3',
+          blockId: titleAnnotationBlockId,
+          className: 'font-semibold tracking-[-0.03em] text-stone-800 dark:text-white',
+          style: getPracticeTextStyle(textSize, 'heading'),
+          text: title,
+        })
+      ) : (
+        <h3
+          style={getPracticeTextStyle(textSize, 'heading')}
+          className="font-semibold tracking-[-0.03em] text-stone-800 dark:text-white"
+        >
+          {title}
+        </h3>
+      )}
+      {annotationBlockId && renderAnnotatedTextBlock ? (
+        renderAnnotatedTextBlock({
+          as: 'p',
+          blockId: annotationBlockId,
+          className: 'max-w-5xl text-stone-700 dark:text-white/72',
+          style: getPracticeTextStyle(textSize, 'body-compact'),
+          text: instruction,
+        })
+      ) : (
+        <p
+          style={getPracticeTextStyle(textSize, 'body-compact')}
+          className="max-w-5xl text-stone-700 dark:text-white/72"
+        >
+          {renderInstruction(instruction)}
+        </p>
+      )}
     </div>
   );
 }
@@ -156,7 +205,9 @@ export function QuestionNumberBadge({
     <span
       className={cn(
         'inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-[0.92rem] font-semibold tabular-nums tracking-[-0.03em] align-middle transition-colors',
-        isActive ? 'bg-blue-600 text-white' : 'bg-[#e8e8ec] text-stone-800',
+        isActive
+          ? 'border border-[#ffb347] bg-[linear-gradient(135deg,#ffc85a_0%,#ff9f2f_55%,#ff784b_100%)] text-white'
+          : 'bg-[#e8e8ec] text-stone-800 dark:bg-white/10 dark:text-white/74',
         className
       )}
     >
@@ -171,16 +222,19 @@ type PaperPanelProps = {
   className?: string;
   title?: string;
   titleClassName?: string;
+  titleContent?: React.ReactNode;
 };
 
 type PaperSurfaceProps = {
   children: React.ReactNode;
   className?: string;
+  n?: number;
+  radius?: number;
 };
 
-export function PaperSurface({ children, className }: PaperSurfaceProps) {
+export function PaperSurface({ children, className, n = 4, radius = 38 }: PaperSurfaceProps) {
   return (
-    <Squircle n={4} radius={38} className={cn(PAPER_PANEL_CLASS_NAME, className)}>
+    <Squircle n={n} radius={radius} className={cn(PAPER_PANEL_CLASS_NAME, className)}>
       {children}
     </Squircle>
   );
@@ -192,17 +246,21 @@ export function PaperPanel({
   className,
   title,
   titleClassName,
+  titleContent,
 }: PaperPanelProps) {
+  const textSize = usePracticeTextSize();
+
   return (
     <PaperSurface className={className}>
-      {title ? (
+      {title || titleContent ? (
         <div
+          style={getPracticeTextStyle(textSize, 'body')}
           className={cn(
-            'border-b border-[#dfdfdf] px-5 py-4 text-[1.05rem] font-semibold tracking-[-0.02em] text-stone-900 sm:px-8 sm:py-6',
+            'border-b border-[#dfdfdf] px-5 py-4 font-semibold tracking-[-0.02em] text-stone-900 dark:border-white/10 dark:text-white sm:px-8 sm:py-6',
             titleClassName
           )}
         >
-          {title}
+          {titleContent ?? title}
         </div>
       ) : null}
       <div className={bodyClassName}>{children}</div>

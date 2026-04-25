@@ -16,6 +16,7 @@ type FileUploadSpecial1Props = {
   fallback?: string;
   hintClassName?: string;
   hintText?: string;
+  maxSize?: number;
   onFileChange?: (file: File | null) => void;
   overlayClassName?: string;
   triggerClassName?: string;
@@ -29,6 +30,7 @@ export function FileUploadSpecial1({
   fallback = 'CN',
   hintClassName,
   hintText = 'Click to change avatar',
+  maxSize = 2 * 1024 * 1024,
   onFileChange,
   overlayClassName,
   triggerClassName,
@@ -68,7 +70,7 @@ export function FileUploadSpecial1({
         value={files}
         onValueChange={handleValueChange}
         accept="image/*"
-        maxSize={2 * 1024 * 1024}
+        maxSize={maxSize}
       >
         <FileUploadTrigger asChild>
           <button

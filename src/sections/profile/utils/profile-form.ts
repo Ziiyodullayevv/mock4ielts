@@ -97,7 +97,6 @@ export const buildUpdatePayload = (formState: ProfileFormState): UserProfileUpda
   const phone = trimToNull(formState.phone);
 
   return {
-    avatar: trimToNull(formState.avatar),
     country: trimToNull(formState.country) ?? trimToNull(formState.countryRegionOfResidence),
     country_region_code: trimToNull(formState.countryRegionCode),
     country_region_of_residence: trimToNull(formState.countryRegionOfResidence),

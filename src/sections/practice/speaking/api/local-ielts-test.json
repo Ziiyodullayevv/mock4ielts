@@ -1,0 +1,120 @@
+{
+  "section_type": "speaking",
+  "exam_type": "academic",
+  "title": "Speaking - Practice Test 1",
+  "agent_config": {
+    "ai_role": "IELTS Speaking Examiner",
+    "language": "en",
+    "system_prompt": "You are a professional IELTS Speaking Examiner named James. You are friendly but professional. Follow the IELTS speaking test protocol exactly.\n\nRULES:\n- Speak clearly at a moderate pace\n- Do NOT help the candidate with answers or correct grammar during the test\n- Do NOT give feedback during the test\n- Use natural transitions: 'Right', 'OK', 'Now let me ask you about...'\n- Keep answers focused on the topic",
+    "opening_script": "Good morning. My name is James and I'm your IELTS speaking examiner today. Before we begin, could you please tell me your full name?",
+    "closing_script": "Thank you very much. That is the end of the speaking test. Thank you for your time today.",
+    "part_behaviors": {
+      "part1": {
+        "interruption_allowed": true,
+        "silence_before_advance_ms": 3000,
+        "min_answer_words": 10,
+        "follow_up_on_short_answer": true,
+        "follow_up_prompt": "Could you tell me a bit more about that?",
+        "max_follow_ups_per_question": 1
+      },
+      "part2": {
+        "interruption_allowed": false,
+        "preparation_announcement": "Now I'm going to give you a topic and I'd like you to talk about it for one to two minutes. Before you talk, you'll have one minute to think about what you're going to say. You can make some notes if you wish. Here is your topic.",
+        "start_speaking_prompt": "All right. Remember, you have one to two minutes for this. Please begin speaking now.",
+        "time_warning_prompt": "You have about 30 seconds left.",
+        "stop_prompt": "Thank you. Can you stop speaking now, please."
+      },
+      "part3": {
+        "interruption_allowed": true,
+        "silence_before_advance_ms": 4000,
+        "can_probe_deeper": true,
+        "probe_prompts": ["Why do you think that is?", "Can you give me an example?"],
+        "max_probes_per_question": 1
+      }
+    }
+  },
+  "parts": [
+    {
+      "title": "Part 1: Introduction and Interview",
+      "instructions": "General questions about familiar topics. 4-5 minutes.",
+      "part_key": "part1",
+      "total_seconds": 300,
+      "questions": [
+        {
+          "order": 1,
+          "text": "What kind of place is your home town or village?",
+          "metadata": { "ai_read_text": "Let's talk about your home town or village. What kind of place is it?" }
+        },
+        {
+          "order": 2,
+          "text": "What's the most interesting part of your town or village?",
+          "metadata": { "ai_read_text": "What's the most interesting part of your town or village?" }
+        },
+        {
+          "order": 3,
+          "text": "Would you say it's a good place to live? Why?",
+          "metadata": { "ai_read_text": "Would you say it's a good place to live? Why?" }
+        },
+        {
+          "order": 4,
+          "text": "Tell me about the kind of accommodation you live in.",
+          "metadata": { "ai_read_text": "Now let's talk about your accommodation. Tell me about the kind of accommodation you live in." }
+        },
+        {
+          "order": 5,
+          "text": "What do you like about living there?",
+          "metadata": { "ai_read_text": "What do you like about living there?" }
+        }
+      ]
+    },
+    {
+      "title": "Part 2: Individual Long Turn",
+      "instructions": "Speak for 1-2 minutes on the given topic. 3-4 minutes total.",
+      "part_key": "part2",
+      "questions": [
+        {
+          "order": 6,
+          "text": "Describe something you own which is very important to you.",
+          "metadata": {
+            "ai_read_text": "Now, I'm going to give you a topic and I'd like you to talk about it for one to two minutes. Before you talk, you'll have one minute to think about what you're going to say. Here is your topic: Describe something you own which is very important to you. You should say: where you got it from, how long you have had it, what you use it for, and explain why it is important to you.",
+            "cue_card_display": {
+              "title": "Describe something you own which is very important to you.",
+              "points": [
+                "You should say:",
+                "where you got it from",
+                "how long you have had it",
+                "what you use it for",
+                "and explain why it is important to you."
+              ]
+            },
+            "preparation_seconds": 60,
+            "speaking_max_seconds": 120,
+            "rounding_off_questions": ["Is it valuable in terms of money?"]
+          }
+        }
+      ]
+    },
+    {
+      "title": "Part 3: Two-way Discussion",
+      "instructions": "Abstract discussion connected to Part 2 topic. 4-5 minutes.",
+      "part_key": "part3",
+      "questions": [
+        {
+          "order": 7,
+          "text": "What kind of things give status to people in your country?",
+          "metadata": { "ai_read_text": "We've been talking about something important that you own. Now I'd like to discuss some more general questions. What kind of things give status to people in your country?" }
+        },
+        {
+          "order": 8,
+          "text": "Have things changed since your parents' time?",
+          "metadata": { "ai_read_text": "Have things changed since your parents' time?" }
+        },
+        {
+          "order": 9,
+          "text": "Do you think advertising influences what people buy?",
+          "metadata": { "ai_read_text": "Now let's talk about advertising. Do you think advertising influences what people buy?" }
+        }
+      ]
+    }
+  ]
+}

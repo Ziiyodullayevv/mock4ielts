@@ -12,6 +12,9 @@
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
+    "@react-three/drei": "^10.7.7",
+    "@react-three/fiber": "^9.6.0",
+    "@rive-app/react-webgl2": "^4.28.1",
     "@tanstack/react-query": "^5.95.2",
     "axios": "^1.14.0",
     "class-variance-authority": "^0.7.1",
@@ -21,9 +24,10 @@
     "date-fns": "^4.1.0",
     "ldrs": "^1.1.9",
     "lucide-react": "^0.576.0",
+    "maath": "^0.10.8",
     "mathjs": "^14.9.1",
     "minimal-shared": "^1.1.5",
-    "motion": "^12.34.5",
+    "motion": "^12.23.12",
     "next": "16.1.6",
     "next-themes": "^0.4.6",
     "nprogress": "^0.2.0",
@@ -38,6 +42,7 @@
     "sonner": "^2.0.7",
     "swiper": "^12.1.2",
     "tailwind-merge": "^3.5.0",
+    "three": "^0.167.1",
     "zod": "^4.3.6"
   },
   "devDependencies": {

@@ -1,9 +1,17 @@
-export type WritingQuestionType = 'graph_description' | 'essay';
-export type WritingTextSize = number;
+import type { PracticeTextSize } from '../shared/practice-text-size';
 
-export const WRITING_TEXT_SIZE_MIN = 13;
-export const WRITING_TEXT_SIZE_MAX = 20;
-export const WRITING_TEXT_SIZE_DEFAULT = 16;
+import {
+  PRACTICE_TEXT_SIZE_MIN,
+  PRACTICE_TEXT_SIZE_MAX,
+  PRACTICE_TEXT_SIZE_DEFAULT,
+} from '../shared/practice-text-size';
+
+export type WritingQuestionType = 'graph_description' | 'essay';
+export type WritingTextSize = PracticeTextSize;
+
+export const WRITING_TEXT_SIZE_MIN = PRACTICE_TEXT_SIZE_MIN;
+export const WRITING_TEXT_SIZE_MAX = PRACTICE_TEXT_SIZE_MAX;
+export const WRITING_TEXT_SIZE_DEFAULT = PRACTICE_TEXT_SIZE_DEFAULT;
 export const WRITING_OPEN_NOTES_EVENT = 'mock4ielts:writing-open-notes';
 
 export type WritingTask = {

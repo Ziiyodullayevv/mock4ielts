@@ -11,6 +11,8 @@ import {
   PRACTICE_FOOTER_TOP_BAR_CLASS,
   PRACTICE_FOOTER_ACTIVE_BUTTON_CLASS,
   PRACTICE_FOOTER_ACTIVE_SURFACE_CLASS,
+  PRACTICE_FOOTER_INACTIVE_SURFACE_CLASS,
+  PRACTICE_FOOTER_DARK_BUTTON_RING_CLASS,
 } from '@/src/layouts/practice-footer-theme';
 
 type ReadingTestFooterProps = {
@@ -72,14 +74,22 @@ export function ReadingTestFooter({
             type="button"
             onClick={handlePrevAction}
             disabled={isPrevDisabled}
-            className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-border/60 bg-white text-stone-700 shadow-sm transition-colors hover:bg-stone-50 disabled:cursor-not-allowed disabled:text-stone-300 disabled:hover:bg-white"
+            className={cn(
+              'inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-stone-700 shadow-[0_8px_20px_rgba(15,23,42,0.06)] transition-colors hover:bg-stone-50 disabled:cursor-not-allowed disabled:text-stone-300 dark:text-white/78 dark:shadow-none dark:hover:bg-white/12 dark:disabled:text-white/28 dark:disabled:hover:bg-white/8',
+              PRACTICE_FOOTER_DARK_BUTTON_RING_CLASS
+            )}
             aria-label={prevActionLabel}
           >
             <ChevronLeft className="size-5" strokeWidth={1.9} />
           </button>
 
           {activePartEntry ? (
-            <section className="min-w-0 flex h-11 flex-1 items-center overflow-hidden rounded-xl border border-border/60 bg-white px-1.5 shadow-sm">
+            <section
+              className={cn(
+                'min-w-0 flex h-11 flex-1 items-center overflow-hidden rounded-xl px-1.5',
+                PRACTICE_FOOTER_INACTIVE_SURFACE_CLASS
+              )}
+            >
               <div className="w-full overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
                 <div className="flex min-w-max items-center gap-1">
                   {activePartQuestions.map((question) => {
@@ -92,16 +102,16 @@ export function ReadingTestFooter({
                         type="button"
                         onClick={() => onQuestionSelect(activePartEntry.number, question.id)}
                         className={cn(
-                          'flex h-7 w-7 shrink-0 items-center justify-center rounded-md border text-[11px] font-semibold transition-colors',
+                          'flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-[11px] font-semibold transition-colors',
                           isCurrentQuestion
                             ? PRACTICE_FOOTER_ACTIVE_BUTTON_CLASS
                             : isAnswered
-                              ? 'border-stone-900 bg-stone-900 text-white'
-                              : 'border-stone-300 bg-stone-200 text-stone-700 hover:bg-stone-300'
+                              ? 'border-none bg-black text-white hover:bg-black dark:bg-black dark:text-white dark:hover:bg-black'
+                              : cn('border border-stone-300 bg-stone-200 text-stone-700 hover:bg-stone-300 dark:text-white/78 dark:hover:bg-transparent', PRACTICE_FOOTER_DARK_BUTTON_RING_CLASS)
                         )}
                         aria-current={isCurrentQuestion ? 'step' : undefined}
                       >
-                        {question.number}
+                        <span>{question.number}</span>
                       </button>
                     );
                   })}
@@ -114,7 +124,10 @@ export function ReadingTestFooter({
             type="button"
             onClick={handlePrimaryAction}
             disabled={isPrimaryActionDisabled}
-            className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-border/60 bg-white text-stone-700 shadow-sm transition-colors hover:bg-stone-50 disabled:cursor-not-allowed disabled:text-stone-300 disabled:hover:bg-white"
+            className={cn(
+              'inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-stone-700 shadow-[0_8px_20px_rgba(15,23,42,0.06)] transition-colors hover:bg-stone-50 disabled:cursor-not-allowed disabled:text-stone-300 dark:text-white/78 dark:shadow-none dark:hover:bg-white/12 dark:disabled:text-white/28 dark:disabled:hover:bg-white/8',
+              PRACTICE_FOOTER_DARK_BUTTON_RING_CLASS
+            )}
             aria-label={primaryActionLabel}
           >
             <ChevronRight className="size-5" strokeWidth={1.9} />
@@ -138,17 +151,17 @@ export function ReadingTestFooter({
                     type="button"
                     onClick={() => handlePartSelect(part.number)}
                     className={cn(
-                      'flex shrink-0 flex-col rounded-xl border px-3 py-2 text-left transition-colors',
+                      'flex shrink-0 flex-col rounded-xl px-3 py-2 text-left transition-colors',
                       isActive
                         ? PRACTICE_FOOTER_ACTIVE_SURFACE_CLASS
-                        : 'border-border/60 bg-white hover:bg-stone-50'
+                        : PRACTICE_FOOTER_INACTIVE_SURFACE_CLASS
                     )}
                     aria-current={isActive ? 'step' : undefined}
                   >
-                    <span className="text-xs font-semibold uppercase tracking-[0.12em] text-stone-500">
+                    <span className="text-xs font-semibold uppercase tracking-[0.12em] text-stone-500 dark:text-white/48">
                       Part {part.number}
                     </span>
-                    <span className="mt-1 text-sm font-medium text-stone-900">
+                    <span className="mt-1 text-sm font-medium text-stone-900 dark:text-white">
                       {answeredCount}/{questions.length}
                     </span>
                   </button>
@@ -173,13 +186,13 @@ export function ReadingTestFooter({
                   key={part.number}
                   type="button"
                   onClick={() => handlePartSelect(part.number)}
-                  className="flex min-w-0 flex-[0.9] items-center rounded-xl border border-border/50 bg-white px-3 py-2 text-left shadow-md/5 transition-colors hover:cursor-pointer hover:bg-stone-50"
+                  className={cn('flex min-w-0 flex-[0.9] items-center rounded-xl px-3 py-2 text-left transition-colors', PRACTICE_FOOTER_INACTIVE_SURFACE_CLASS)}
                 >
                   <div className="flex min-w-0 items-baseline gap-2 text-sm">
-                    <span className="shrink-0 font-semibold text-stone-900">
+                    <span className="shrink-0 font-semibold text-stone-900 dark:text-white">
                       Part {part.number}:
                     </span>
-                    <span className="truncate text-stone-600">
+                    <span className="truncate text-stone-600 dark:text-white/62">
                       {answeredCount} of {questions.length} questions
                     </span>
                   </div>
@@ -191,7 +204,7 @@ export function ReadingTestFooter({
               <section
                 key={part.number}
                 className={cn(
-                  'flex shrink-0 items-center gap-3 rounded-xl border-2 px-3 py-2.5',
+                  'flex shrink-0 items-center gap-3 rounded-xl px-3 py-2.5',
                   PRACTICE_FOOTER_ACTIVE_SURFACE_CLASS
                 )}
               >
@@ -201,7 +214,7 @@ export function ReadingTestFooter({
                   className="shrink-0 text-left"
                   aria-current={hasActiveQuestion ? 'step' : undefined}
                 >
-                  <span className="text-sm font-semibold text-stone-900">Part {part.number}</span>
+                  <span className="text-sm font-semibold text-stone-900 dark:text-white">Part {part.number}</span>
                 </button>
 
                 <div className="flex items-center gap-1">
@@ -218,18 +231,18 @@ export function ReadingTestFooter({
                           onQuestionSelect(part.number, question.id);
                         }}
                         className={cn(
-                          'flex h-7 w-7 shrink-0 items-center justify-center rounded-md border text-[11px] font-semibold transition-colors',
+                          'flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-[11px] font-semibold transition-colors',
                           isCurrentQuestion
                             ? PRACTICE_FOOTER_ACTIVE_BUTTON_CLASS
                             : isAnswered
-                              ? 'border-stone-900 bg-stone-900 text-white'
+                              ? 'border-none bg-black text-white hover:bg-black dark:bg-black dark:text-white dark:hover:bg-black'
                               : isActive
-                                ? 'border-stone-300 bg-stone-200 text-stone-700 hover:bg-stone-300'
-                                : 'border-stone-200 bg-stone-100 text-stone-600 hover:bg-stone-200'
+                                ? cn('border border-stone-300 bg-stone-200 text-stone-700 hover:bg-stone-300 dark:text-white/78 dark:hover:bg-transparent', PRACTICE_FOOTER_DARK_BUTTON_RING_CLASS)
+                                : cn('border border-stone-200 bg-stone-100 text-stone-600 hover:bg-stone-200 dark:text-white/58 dark:hover:bg-transparent', PRACTICE_FOOTER_DARK_BUTTON_RING_CLASS)
                         )}
                         aria-current={isCurrentQuestion ? 'step' : undefined}
                       >
-                        {question.number}
+                        <span>{question.number}</span>
                       </button>
                     );
                   })}

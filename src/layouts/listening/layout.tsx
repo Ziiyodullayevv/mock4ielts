@@ -2,6 +2,9 @@
 
 import type { ListeningTestLayoutProps } from './types';
 
+import {
+  PracticeShell } from '@/src/layouts/practice';
+
 import { ListeningTestFooter } from './footer';
 import { ListeningTestHeader } from './header';
 
@@ -14,14 +17,17 @@ export function ListeningTestLayout({
   isPrimaryActionDisabled,
   isPrevDisabled,
   isReview = false,
+  isSubmitAction,
   onLogoClick,
   onPartChange,
   onPrevPart,
   onPrimaryAction,
   onQuestionSelect,
+  onTextSizeChange,
   primaryActionLabelOverride,
   prevActionLabel,
   test,
+  textSize,
   timeLeftSeconds,
 }: ListeningTestLayoutProps) {
   const isLastPart = activePart === test.parts.length;
@@ -30,36 +36,43 @@ export function ListeningTestLayout({
   const resolvedIsPrevDisabled = isPrevDisabled ?? activePart === 1;
 
   return (
-    <div className="min-h-screen bg-white text-stone-950">
-      <ListeningTestHeader
-        audioUrl={audioUrl}
-        isPrimaryActionDisabled={isPrimaryActionDisabled}
-        isPrevDisabled={resolvedIsPrevDisabled}
-        isReview={isReview}
-        onLogoClick={onLogoClick}
-        onPrevPart={onPrevPart}
-        onPrimaryAction={onPrimaryAction}
-        prevActionLabel={prevActionLabel}
-        primaryActionLabel={primaryActionLabel}
-        timeLeftSeconds={timeLeftSeconds}
-      />
-
-      <main className="mx-auto max-w-[1000px] px-4 py-6 pb-32 md:pb-28">{children}</main>
-
-      <ListeningTestFooter
-        activePart={activePart}
-        activeQuestionId={activeQuestionId}
-        answers={answers}
-        isPrimaryActionDisabled={isPrimaryActionDisabled}
-        isPrevDisabled={resolvedIsPrevDisabled}
-        onPrimaryAction={onPrimaryAction}
-        onPartChange={onPartChange}
-        onPrevPart={onPrevPart}
-        onQuestionSelect={onQuestionSelect}
-        prevActionLabel={prevActionLabel}
-        primaryActionLabel={primaryActionLabel}
-        test={test}
-      />
-    </div>
+    <PracticeShell
+      mainClassName="max-w-[1000px]"
+      header={
+        <ListeningTestHeader
+          audioUrl={audioUrl}
+          isPrimaryActionDisabled={isPrimaryActionDisabled}
+          isPrevDisabled={resolvedIsPrevDisabled}
+          isReview={isReview}
+          isSubmitAction={isSubmitAction ?? (!isReview && isLastPart)}
+          onLogoClick={onLogoClick}
+          onPrevPart={onPrevPart}
+          onPrimaryAction={onPrimaryAction}
+          onTextSizeChange={onTextSizeChange}
+          prevActionLabel={prevActionLabel}
+          primaryActionLabel={primaryActionLabel}
+          textSize={textSize}
+          timeLeftSeconds={timeLeftSeconds}
+        />
+      }
+      footer={
+        <ListeningTestFooter
+          activePart={activePart}
+          activeQuestionId={activeQuestionId}
+          answers={answers}
+          isPrimaryActionDisabled={isPrimaryActionDisabled}
+          isPrevDisabled={resolvedIsPrevDisabled}
+          onPrimaryAction={onPrimaryAction}
+          onPartChange={onPartChange}
+          onPrevPart={onPrevPart}
+          onQuestionSelect={onQuestionSelect}
+          prevActionLabel={prevActionLabel}
+          primaryActionLabel={primaryActionLabel}
+          test={test}
+        />
+      }
+    >
+      {children}
+    </PracticeShell>
   );
 }

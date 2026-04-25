@@ -8,6 +8,16 @@ import {
   DialogContent,
   DialogDescription,
 } from '@/src/components/ui/dialog';
+import {
+  APP_CONFIRM_DIALOG_CONTENT_CLASS,
+  APP_CONFIRM_DIALOG_DESCRIPTION_CLASS,
+  APP_CONFIRM_DIALOG_FOOTER_CLASS,
+  APP_CONFIRM_DIALOG_HEADER_CLASS,
+  APP_CONFIRM_DIALOG_OVERLAY_CLASS,
+  APP_CONFIRM_DIALOG_PRIMARY_BUTTON_CLASS,
+  APP_CONFIRM_DIALOG_SECONDARY_BUTTON_CLASS,
+  APP_CONFIRM_DIALOG_TITLE_CLASS,
+} from '@/src/components/ui/dialog-theme';
 
 type ProfileDeleteDialogProps = {
   isPending: boolean;
@@ -25,24 +35,31 @@ export function ProfileDeleteDialog({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
+        overlayClassName={APP_CONFIRM_DIALOG_OVERLAY_CLASS}
         showCloseButton={false}
-        className="border border-white/10 bg-[#111111] text-white sm:max-w-md"
+        className={APP_CONFIRM_DIALOG_CONTENT_CLASS}
       >
-        <DialogHeader className="space-y-2 text-left">
-          <DialogTitle className="text-xl font-semibold text-white">
-            Delete your account?
-          </DialogTitle>
-          <DialogDescription className="text-sm leading-7 text-white/68">
+        <DialogHeader className={APP_CONFIRM_DIALOG_HEADER_CLASS}>
+          <DialogTitle className={APP_CONFIRM_DIALOG_TITLE_CLASS}>Delete your account?</DialogTitle>
+          <DialogDescription className={APP_CONFIRM_DIALOG_DESCRIPTION_CLASS}>
             This will soft-delete your account and you will lose access to it from this profile.
             Practice history is preserved on the backend, but the account itself will no longer be
             available to you.
           </DialogDescription>
         </DialogHeader>
-        <DialogFooter className="mt-2 sm:justify-start">
+        <DialogFooter className={APP_CONFIRM_DIALOG_FOOTER_CLASS}>
           <Button
             type="button"
-            variant="orange"
-            className="rounded-full"
+            variant="outline"
+            className={APP_CONFIRM_DIALOG_SECONDARY_BUTTON_CLASS}
+            onClick={() => onOpenChange(false)}
+          >
+            Cancel
+          </Button>
+          <Button
+            type="button"
+            variant="black"
+            className={APP_CONFIRM_DIALOG_PRIMARY_BUTTON_CLASS}
             disabled={isPending}
             onClick={onConfirm}
           >
@@ -52,14 +69,6 @@ export function ProfileDeleteDialog({
               <Trash2 className="size-4" />
             )}
             {isPending ? 'Deleting...' : 'Delete account'}
-          </Button>
-          <Button
-            type="button"
-            variant="black"
-            className="rounded-full border-white/14 bg-white/6 hover:bg-white/10"
-            onClick={() => onOpenChange(false)}
-          >
-            Cancel
           </Button>
         </DialogFooter>
       </DialogContent>

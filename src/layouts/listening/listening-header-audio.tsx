@@ -31,7 +31,7 @@ export function ListeningHeaderAudio({
           type="button"
           onClick={handleToggleMute}
           className={cn(
-            'inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-stone-700 transition-colors hover:bg-stone-100 hover:text-stone-900',
+            'inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-stone-700 transition-colors hover:bg-stone-100 hover:text-stone-900 dark:text-white/78 dark:hover:bg-white/8 dark:hover:text-white',
             isMobileVariant ? 'h-9 w-9' : ''
           )}
           aria-label={volume === 0 ? 'Unmute audio' : 'Mute audio'}
@@ -50,7 +50,7 @@ export function ListeningHeaderAudio({
           onValueChange={(nextValue) => handleVolumeChange(nextValue[0] ?? 0)}
           aria-label="Audio volume"
           className={cn(
-            'min-w-0 flex-1 [&_[data-slot=slider-range]]:bg-stone-400 [&_[data-slot=slider-thumb]]:border-stone-800 [&_[data-slot=slider-thumb]]:bg-white [&_[data-slot=slider-thumb]]:shadow-[0_8px_18px_rgba(15,23,42,0.18)] [&_[data-slot=slider-track]]:bg-stone-200',
+            'min-w-0 flex-1 [&_[data-slot=slider-range]]:bg-stone-400 [&_[data-slot=slider-thumb]]:border-stone-800 [&_[data-slot=slider-thumb]]:bg-white [&_[data-slot=slider-thumb]]:shadow-[0_8px_18px_rgba(15,23,42,0.18)] [&_[data-slot=slider-track]]:bg-stone-200 dark:[&_[data-slot=slider-range]]:bg-white/68 dark:[&_[data-slot=slider-thumb]]:border-white/20 dark:[&_[data-slot=slider-thumb]]:bg-white dark:[&_[data-slot=slider-thumb]]:shadow-none dark:[&_[data-slot=slider-track]]:bg-white/14',
             isMobileVariant
               ? '[&_[data-slot=slider-thumb]]:size-5 [&_[data-slot=slider-track]]:h-2'
               : '[&_[data-slot=slider-thumb]]:size-5 [&_[data-slot=slider-track]]:h-2'
@@ -61,7 +61,7 @@ export function ListeningHeaderAudio({
           type="button"
           onClick={() => handleVolumeChange(100)}
           className={cn(
-            'inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-stone-700 transition-colors hover:bg-stone-100 hover:text-stone-900',
+            'inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-stone-700 transition-colors hover:bg-stone-100 hover:text-stone-900 dark:text-white/78 dark:hover:bg-white/8 dark:hover:text-white',
             isMobileVariant ? 'h-9 w-9' : ''
           )}
           aria-label="Set audio volume to maximum"

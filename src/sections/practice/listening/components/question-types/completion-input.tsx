@@ -1,17 +1,29 @@
 'use client';
 
 import type { BlankField } from '../../types';
+import type { QuestionTypeAnnotationProps } from './annotation-blocks';
+
+import { usePracticeTextSize, getPracticeTextStyle } from '@/src/sections/practice/shared/practice-text-size';
 
 import { isAnswerCorrect, getPrimaryAnswer } from '../../utils';
+import { renderQuestionText, getQuestionAnnotationBlockId } from './annotation-blocks';
 
-interface CompletionInputProps {
+interface CompletionInputProps extends QuestionTypeAnnotationProps {
   field: BlankField;
   value: string;
   onChange: (id: string, value: string) => void;
   showAnswer?: boolean;
 }
 
-export function CompletionInput({ field, value, onChange, showAnswer }: CompletionInputProps) {
+export function CompletionInput({
+  annotationBlockIdPrefix,
+  field,
+  renderAnnotatedTextBlock,
+  value,
+  onChange,
+  showAnswer,
+}: CompletionInputProps) {
+  const textSize = usePracticeTextSize();
   const isCorrect = showAnswer ? isAnswerCorrect(value, field.answer) : undefined;
 
   const inputWidth = Math.max(92, field.answerLength * 12 + 18);
@@ -19,9 +31,19 @@ export function CompletionInput({ field, value, onChange, showAnswer }: Completi
   return (
     <span className="inline-flex items-center gap-1.5 align-middle">
       {field.label && (
-        <span className="whitespace-nowrap text-[1.05rem] text-stone-700">
-          {field.label}
-        </span>
+        renderQuestionText({
+          as: 'span',
+          blockId: getQuestionAnnotationBlockId(
+            annotationBlockIdPrefix,
+            'field',
+            field.id,
+            'label'
+          ),
+          className: 'whitespace-nowrap text-stone-700 dark:text-white/72',
+          renderAnnotatedTextBlock,
+          style: getPracticeTextStyle(textSize, 'body'),
+          text: field.label,
+        })
       )}
       <span className="inline-flex flex-col items-start">
         <input
@@ -36,14 +58,17 @@ export function CompletionInput({ field, value, onChange, showAnswer }: Completi
           autoCorrect="off"
           autoCapitalize="off"
           spellCheck={false}
-          style={{ width: inputWidth }}
+          style={{
+            ...getPracticeTextStyle(textSize, 'body-soft'),
+            width: inputWidth,
+          }}
           className={[
-            'border-b-2 border-dotted bg-transparent px-1 pb-0.5 text-[1.02rem] text-stone-900 outline-none transition-[border-color,border-style] placeholder:text-stone-500/70 focus:border-solid focus-visible:border-solid',
+            'border-b-2 border-dotted bg-transparent px-1 pb-0.5 text-stone-900 outline-none transition-[border-color,border-style] placeholder:text-stone-500/70 focus:border-solid focus-visible:border-solid dark:text-white dark:placeholder:text-white/32',
             showAnswer
               ? isCorrect
                 ? 'border-green-600 text-green-700'
                 : 'border-red-500 text-red-600'
-              : 'border-stone-500 focus:border-stone-900',
+              : 'border-stone-500 focus:border-stone-900 dark:border-white/34 dark:focus:border-white',
           ].join(' ')}
         />
         {showAnswer && !isCorrect && (
@@ -53,9 +78,19 @@ export function CompletionInput({ field, value, onChange, showAnswer }: Completi
         )}
       </span>
       {field.suffix && (
-        <span className="whitespace-nowrap text-[1.05rem] text-stone-700">
-          {field.suffix}
-        </span>
+        renderQuestionText({
+          as: 'span',
+          blockId: getQuestionAnnotationBlockId(
+            annotationBlockIdPrefix,
+            'field',
+            field.id,
+            'suffix'
+          ),
+          className: 'whitespace-nowrap text-stone-700 dark:text-white/72',
+          renderAnnotatedTextBlock,
+          style: getPracticeTextStyle(textSize, 'body'),
+          text: field.suffix,
+        })
       )}
     </span>
   );

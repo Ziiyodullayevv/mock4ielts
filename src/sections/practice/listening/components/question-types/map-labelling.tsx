@@ -1,14 +1,16 @@
 'use client';
 
 import type { MapData } from '../../types';
+import type { QuestionTypeAnnotationProps } from './annotation-blocks';
 
 import { useState } from 'react';
 
 import { PaperPanel, PaperSurface } from './paper-shell';
 import { useDragAutoScroll } from './use-drag-auto-scroll';
+import { renderQuestionText, getQuestionAnnotationBlockId } from './annotation-blocks';
 import { isAnswerCorrect, getPrimaryAnswer, getListeningQuestionAnchorId } from '../../utils';
 
-interface Props {
+interface Props extends QuestionTypeAnnotationProps {
   activeQuestionId?: string | null;
   data: MapData;
   answers: Record<string, string>;
@@ -16,7 +18,15 @@ interface Props {
   showAnswer?: boolean;
 }
 
-export function MapLabelling({ activeQuestionId, data, answers, onChange, showAnswer }: Props) {
+export function MapLabelling({
+  activeQuestionId,
+  annotationBlockIdPrefix,
+  data,
+  answers,
+  onChange,
+  renderAnnotatedTextBlock,
+  showAnswer,
+}: Props) {
   const [dragging, setDragging] = useState<string | null>(null);
   const hasWordBank = data.wordBank.length > 0;
   const hasImage = Boolean(data.imageUrl);
@@ -47,9 +57,13 @@ export function MapLabelling({ activeQuestionId, data, answers, onChange, showAn
 
   const legendPanel = hasLegendOptions ? (
     <PaperSurface className="p-4 sm:p-5">
-      <p className="mb-3 text-xs font-semibold uppercase tracking-[0.2em] text-stone-500">
-        Location key
-      </p>
+      {renderQuestionText({
+        as: 'p',
+        blockId: getQuestionAnnotationBlockId(annotationBlockIdPrefix, 'legend-title'),
+        className: 'mb-3 text-xs font-semibold uppercase tracking-[0.2em] text-stone-500',
+        renderAnnotatedTextBlock,
+        text: 'Location key',
+      })}
       <div className="flex flex-wrap gap-3">
         {data.legendOptions!.map((option) => (
           <button
@@ -72,7 +86,18 @@ export function MapLabelling({ activeQuestionId, data, answers, onChange, showAn
             <span className={`font-semibold ${usedWords.includes(option.value) ? 'text-inherit' : ''}`}>
               {option.value}
             </span>
-            <span className="whitespace-nowrap">{option.text}</span>
+            <span className="whitespace-nowrap">
+              {renderQuestionText({
+                as: 'span',
+                blockId: getQuestionAnnotationBlockId(
+                  annotationBlockIdPrefix,
+                  'legend-option',
+                  option.value
+                ),
+                renderAnnotatedTextBlock,
+                text: option.text,
+              })}
+            </span>
           </button>
         ))}
       </div>
@@ -80,7 +105,19 @@ export function MapLabelling({ activeQuestionId, data, answers, onChange, showAn
   ) : null;
 
   const mapPanel = (
-    <PaperPanel title={data.panelTitle === undefined ? 'Map' : data.panelTitle ?? undefined}>
+    <PaperPanel
+      title={data.panelTitle === undefined ? 'Map' : data.panelTitle ?? undefined}
+      titleContent={
+        data.panelTitle === null
+          ? undefined
+          : renderQuestionText({
+              as: 'span',
+              blockId: getQuestionAnnotationBlockId(annotationBlockIdPrefix, 'title'),
+              renderAnnotatedTextBlock,
+              text: data.panelTitle === undefined ? 'Map' : data.panelTitle,
+            })
+      }
+    >
       <div className="relative w-full overflow-hidden bg-[#f7f7f7]">
         {hasImage ? (
           <img
@@ -274,11 +311,15 @@ export function MapLabelling({ activeQuestionId, data, answers, onChange, showAn
       <div className="min-w-0 space-y-5">
         {hasWordBank && !showAnswer && !hasLegendOptions && (
           <PaperSurface className="p-4 sm:p-5">
-          <p className="mb-3 text-xs font-semibold uppercase tracking-[0.2em] text-stone-500">
-            Word bank — drag labels onto the map
-          </p>
+          {renderQuestionText({
+            as: 'p',
+            blockId: getQuestionAnnotationBlockId(annotationBlockIdPrefix, 'word-bank-inline-title'),
+            className: 'mb-3 text-xs font-semibold uppercase tracking-[0.2em] text-stone-500',
+            renderAnnotatedTextBlock,
+            text: 'Word bank — drag labels onto the map',
+          })}
           <div className="flex flex-wrap gap-2">
-            {data.wordBank.map((word) => (
+            {data.wordBank.map((word, wordIndex) => (
               <button
                 key={word}
                 type="button"
@@ -293,7 +334,16 @@ export function MapLabelling({ activeQuestionId, data, answers, onChange, showAn
                       : 'cursor-grab bg-white/55 text-stone-700 hover:bg-white'
                 }`}
               >
-                {word}
+                {renderQuestionText({
+                  as: 'span',
+                  blockId: getQuestionAnnotationBlockId(
+                    annotationBlockIdPrefix,
+                    'word-bank-word',
+                    wordIndex
+                  ),
+                  renderAnnotatedTextBlock,
+                  text: word,
+                })}
               </button>
             ))}
           </div>

@@ -6,8 +6,10 @@ import type {
 } from '@/src/sections/profile/types/profile-form';
 
 import { Button } from '@/src/components/ui/button';
-import { CheckCircle2, LoaderCircle } from 'lucide-react';
+import { cn } from '@/src/lib/utils';
+import { CheckCircle2, LoaderCircle, Trash2 } from 'lucide-react';
 import { FileUploadSpecial1 } from '@/src/components/file-upload-special-1';
+import { PRACTICE_FOOTER_ACTIVE_BUTTON_CLASS } from '@/src/layouts/practice-footer-theme';
 import { profilePageBackgroundClassName } from '@/src/sections/profile/constants/profile-form';
 
 import { ProfileDeleteDialog } from './profile-delete-dialog';
@@ -26,6 +28,7 @@ type ProfileFormProps = {
   hasProfile: boolean;
   isBusy: boolean;
   isDeletingAccount: boolean;
+  isRemovingAvatar: boolean;
   isSavingProfile: boolean;
   isUploadingAvatar: boolean;
   onAvatarChange: (file: File | null) => void;
@@ -38,6 +41,7 @@ type ProfileFormProps = {
   onOpenDeleteDialog: () => void;
   onPhoneChange: (value?: string) => void;
   onPhoneCountryChange: (countryCode: string) => void;
+  onRemoveAvatar: () => void;
   onSaveProfile: () => void;
 };
 
@@ -48,6 +52,7 @@ export function ProfileForm({
   hasProfile,
   isBusy,
   isDeletingAccount,
+  isRemovingAvatar,
   isSavingProfile,
   isUploadingAvatar,
   onAvatarChange,
@@ -60,8 +65,11 @@ export function ProfileForm({
   onOpenDeleteDialog,
   onPhoneChange,
   onPhoneCountryChange,
+  onRemoveAvatar,
   onSaveProfile,
 }: ProfileFormProps) {
+  const avatarActionDisabled = isUploadingAvatar || isRemovingAvatar || isDeletingAccount;
+
   return (
     <>
       <main className={`${profilePageBackgroundClassName} pb-14 pt-24`}>
@@ -70,15 +78,39 @@ export function ProfileForm({
             <aside className="flex flex-col items-center lg:items-start">
               <FileUploadSpecial1
                 defaultImage={formState.avatar || undefined}
-                disabled={isUploadingAvatar || isDeletingAccount}
+                disabled={avatarActionDisabled}
                 fallback={avatarFallback}
+                maxSize={10 * 1024 * 1024}
                 onFileChange={onAvatarChange}
                 className="items-center gap-5 lg:items-start"
-                avatarClassName="size-[132px] border border-white/10 [&_[data-slot=avatar-fallback]]:text-[48px] [&_[data-slot=avatar-fallback]]:font-semibold"
-                hintClassName="text-center text-[14px] text-white/42 lg:text-left"
-                hintText={isUploadingAvatar ? 'Uploading avatar...' : 'Click to change avatar'}
+                avatarClassName="size-[132px] border border-stone-200 bg-[#f2f2f2] shadow-[0_14px_28px_rgba(15,23,42,0.08)] [&_[data-slot=avatar-fallback]]:bg-[#f2f2f2] [&_[data-slot=avatar-fallback]]:text-[48px] [&_[data-slot=avatar-fallback]]:font-semibold [&_[data-slot=avatar-fallback]]:text-stone-500 dark:border-white/10 dark:bg-transparent dark:shadow-none dark:[&_[data-slot=avatar-fallback]]:bg-white/5 dark:[&_[data-slot=avatar-fallback]]:text-white"
+                hintClassName="text-center text-[14px] text-stone-500 lg:text-left dark:text-white/42"
+                hintText={
+                  isUploadingAvatar
+                    ? 'Uploading avatar...'
+                    : isRemovingAvatar
+                      ? 'Removing avatar...'
+                      : 'Click to change avatar'
+                }
                 triggerClassName="rounded-full"
               />
+
+              {formState.avatar ? (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  disabled={avatarActionDisabled}
+                  onClick={onRemoveAvatar}
+                  className="mt-3 h-9 rounded-full px-3 text-[13px] font-medium text-stone-500 hover:bg-stone-100 hover:text-stone-900 disabled:cursor-not-allowed disabled:opacity-60 dark:text-white/55 dark:hover:bg-white/8 dark:hover:text-white"
+                >
+                  {isRemovingAvatar ? (
+                    <LoaderCircle className="size-4 animate-spin" />
+                  ) : (
+                    <Trash2 className="size-4" strokeWidth={1.9} />
+                  )}
+                  {isRemovingAvatar ? 'Removing...' : 'Remove avatar'}
+                </Button>
+              ) : null}
             </aside>
 
             <section className="grid gap-x-7 gap-y-7 md:grid-cols-2">
@@ -139,13 +171,16 @@ export function ProfileForm({
             </section>
           </div>
 
-          <div className="border-t border-white/10 px-1 py-7 lg:px-4">
+          <div className="border-t border-stone-200 px-1 py-7 lg:px-4 dark:border-white/10">
             <div className="flex justify-end">
               <Button
                 type="button"
-                variant="orange"
+                variant="black"
                 disabled={isBusy || !hasProfile}
-                className="h-12 min-w-[180px] rounded-full px-5 text-[15px] font-semibold sm:h-[52px] sm:min-w-[200px] sm:px-6 sm:text-[16px]"
+                className={cn(
+                  'h-11 min-w-[164px] rounded-full border px-4 text-[15px] font-semibold shadow-[0_12px_28px_rgba(255,120,75,0.24)] transition-all hover:brightness-105 disabled:cursor-not-allowed disabled:border-stone-300 disabled:bg-none disabled:bg-stone-300 disabled:text-white/80 disabled:shadow-none dark:disabled:border-white/20 dark:disabled:bg-white/20 dark:disabled:text-white/50',
+                  PRACTICE_FOOTER_ACTIVE_BUTTON_CLASS
+                )}
                 onClick={onSaveProfile}
               >
                 {isSavingProfile ? (

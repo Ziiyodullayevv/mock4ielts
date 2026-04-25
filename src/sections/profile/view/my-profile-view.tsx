@@ -7,6 +7,10 @@ import { useProfileViewModel } from '@/src/sections/profile/hooks/use-profile-vi
 export function MyProfileView() {
   const profile = useProfileViewModel();
 
+  if (!profile.isHydrated) {
+    return <ProfileState label="Loading your profile..." />;
+  }
+
   if (!profile.isAuthenticated) {
     return <ProfileState label="Redirecting to login..." />;
   }
@@ -34,6 +38,7 @@ export function MyProfileView() {
       hasProfile={profile.hasProfile}
       isBusy={profile.isBusy}
       isDeletingAccount={profile.isDeletingAccount}
+      isRemovingAvatar={profile.isRemovingAvatar}
       isSavingProfile={profile.isSavingProfile}
       isUploadingAvatar={profile.isUploadingAvatar}
       onAvatarChange={profile.handleAvatarChange}
@@ -46,6 +51,7 @@ export function MyProfileView() {
       onOpenDeleteDialog={() => profile.setDeleteDialogOpen(true)}
       onPhoneChange={profile.handlePhoneChange}
       onPhoneCountryChange={profile.handlePhoneCountryChange}
+      onRemoveAvatar={profile.handleRemoveAvatar}
       onSaveProfile={profile.handleSaveProfile}
     />
   );

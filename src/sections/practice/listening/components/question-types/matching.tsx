@@ -1,11 +1,14 @@
 'use client';
 
 import type { MatchingData } from '../../types';
+import type { QuestionTypeAnnotationProps } from './annotation-blocks';
 
 import { useState } from 'react';
+import { usePracticeTextSize, getPracticeTextStyle } from '@/src/sections/practice/shared/practice-text-size';
 
 import { useDragAutoScroll } from './use-drag-auto-scroll';
 import { getListeningQuestionAnchorId } from '../../utils';
+import { renderQuestionText, getQuestionAnnotationBlockId } from './annotation-blocks';
 import {
   PaperPanel,
   PaperSurface,
@@ -14,7 +17,7 @@ import {
   PAPER_DIVIDER_CLASS_NAME,
 } from './paper-shell';
 
-interface Props {
+interface Props extends QuestionTypeAnnotationProps {
   activeQuestionId?: string | null;
   data: MatchingData;
   answers: Record<string, string>;
@@ -24,11 +27,14 @@ interface Props {
 
 export function Matching({
   activeQuestionId,
+  annotationBlockIdPrefix,
   data,
   answers,
   onChange,
+  renderAnnotatedTextBlock,
   showAnswer,
 }: Props) {
+  const textSize = usePracticeTextSize();
   const [dragging, setDragging] = useState<string | null>(null);
 
   useDragAutoScroll(Boolean(dragging) && !showAnswer);
@@ -59,25 +65,47 @@ export function Matching({
                 draggable={!showAnswer}
                 onDragStart={() => setDragging(opt.value)}
                 onDragEnd={() => setDragging(null)}
+                style={getPracticeTextStyle(textSize, 'option')}
                 className={`inline-flex items-center gap-2 rounded-full px-3.5 py-2 text-[0.95rem] leading-5 transition-all ${
                   showAnswer
-                    ? 'bg-white text-stone-700'
+                    ? 'bg-white text-stone-700 dark:bg-white/8 dark:text-white/78'
                     : dragging === opt.value
                       ? 'cursor-grabbing bg-stone-900 text-white opacity-60'
-                      : 'cursor-grab bg-white text-stone-700'
+                      : 'cursor-grab bg-white text-stone-700 dark:bg-white/8 dark:text-white/78'
                 }`}
               >
                 <span className="font-semibold">
                   {value}
                 </span>
-                <span className="whitespace-nowrap">{labelParts.join(' ')}</span>
+                <span className="whitespace-nowrap">
+                  {renderQuestionText({
+                    as: 'span',
+                    blockId: getQuestionAnnotationBlockId(
+                      annotationBlockIdPrefix,
+                      'option',
+                      opt.value,
+                      'label'
+                    ),
+                    renderAnnotatedTextBlock,
+                    text: labelParts.join(' '),
+                  })}
+                </span>
               </button>
             );
           })}
         </div>
       </PaperSurface>
 
-      <PaperPanel title="Questions" titleClassName="px-5 py-4 text-base sm:px-6">
+      <PaperPanel
+        title="Questions"
+        titleClassName="px-5 py-4 sm:px-6"
+        titleContent={renderQuestionText({
+          as: 'span',
+          blockId: getQuestionAnnotationBlockId(annotationBlockIdPrefix, 'title'),
+          renderAnnotatedTextBlock,
+          text: 'Questions',
+        })}
+      >
         <div className={PAPER_DIVIDER_CLASS_NAME}>
           {data.pairs.map((pair) => {
             const val = answers[pair.id] ?? '';
@@ -94,7 +122,7 @@ export function Matching({
             } else if (val) {
               dropChipClassName = isActiveQuestion
                 ? 'inline-flex min-h-8 items-center gap-2 rounded-sm border border-sky-400 bg-sky-50 px-2.5 py-1 text-xs font-medium whitespace-nowrap text-sky-700 shadow-[0_0_0_1px_rgba(56,189,248,0.12)] transition-colors'
-                : 'inline-flex min-h-8 items-center gap-2 rounded-sm border border-stone-300 bg-[#f7f7f7] px-2.5 py-1 text-xs font-medium whitespace-nowrap text-stone-800 transition-colors';
+                : 'inline-flex min-h-8 items-center gap-2 rounded-sm border border-stone-300 bg-[#f7f7f7] px-2.5 py-1 text-xs font-medium whitespace-nowrap text-stone-800 transition-colors dark:border-white/10 dark:bg-white/8 dark:text-white/78';
             } else if (isActiveQuestion) {
               dropChipClassName =
                 'inline-flex min-h-9 items-center justify-center gap-1.5 rounded-md border border-dashed border-sky-500 bg-sky-200 px-3 py-1.5 text-[11px] font-semibold tracking-[0.14em] text-sky-900 whitespace-nowrap shadow-[0_0_0_1px_rgba(56,189,248,0.16)] transition-colors';
@@ -111,9 +139,23 @@ export function Matching({
                 id={getListeningQuestionAnchorId(pair.id)}
                 className={`${PAPER_ROW_CLASS_NAME} scroll-mt-28 flex flex-col gap-3 px-5 py-4 sm:px-6 lg:flex-row lg:items-center lg:justify-between`}
               >
-                <div className="flex max-w-3xl items-start gap-3 text-[0.98rem] leading-8 text-stone-800">
+                <div
+                  style={getPracticeTextStyle(textSize, 'body')}
+                  className="flex max-w-3xl items-start gap-3 text-stone-800 dark:text-white/84"
+                >
                   <QuestionNumberBadge isActive={isActiveQuestion} number={pair.number} />
-                  <span className="min-w-0 flex-1">{pair.text}</span>
+                  {renderQuestionText({
+                    as: 'span',
+                    blockId: getQuestionAnnotationBlockId(
+                      annotationBlockIdPrefix,
+                      'pair',
+                      pair.id,
+                      'text'
+                    ),
+                    className: 'min-w-0 flex-1',
+                    renderAnnotatedTextBlock,
+                    text: pair.text,
+                  })}
                 </div>
 
                 <div className="w-full max-w-sm space-y-1.5 lg:flex lg:flex-col lg:items-end">
@@ -131,7 +173,7 @@ export function Matching({
                           <button
                             type="button"
                             onClick={() => handleRemove(pair.id)}
-                            className="text-stone-400 transition-colors hover:text-red-500"
+                            className="text-stone-400 transition-colors hover:text-red-500 dark:text-white/34"
                           >
                             ✕
                           </button>

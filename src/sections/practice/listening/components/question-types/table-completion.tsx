@@ -1,12 +1,16 @@
 'use client';
 
 import type { TableCell, TableData } from '../../types';
+import type { QuestionTypeAnnotationProps } from './annotation-blocks';
+
+import { usePracticeTextSize, getPracticeTextStyle } from '@/src/sections/practice/shared/practice-text-size';
 
 import { CompletionInput } from './completion-input';
 import { getListeningQuestionAnchorId } from '../../utils';
 import { PaperSurface, QuestionNumberBadge } from './paper-shell';
+import { renderQuestionText, getQuestionAnnotationBlockId } from './annotation-blocks';
 
-interface Props {
+interface Props extends QuestionTypeAnnotationProps {
   activeQuestionId?: string | null;
   tableTitle?: string;
   data: TableData;
@@ -17,19 +21,25 @@ interface Props {
 
 export function TableCompletion({
   activeQuestionId,
+  annotationBlockIdPrefix,
   tableTitle,
   data,
   answers,
   onChange,
+  renderAnnotatedTextBlock,
   showAnswer,
 }: Props) {
+  const textSize = usePracticeTextSize();
   const rows = data.rows ?? [];
   const sections = data.sections ?? [];
 
   return (
     <PaperSurface>
       <div className="overflow-x-auto">
-        <table className="w-full border-collapse text-[0.98rem] text-stone-800">
+        <table
+          style={getPracticeTextStyle(textSize, 'body-soft')}
+          className="w-full border-collapse text-stone-800 dark:text-white/84"
+        >
           <thead>
             {tableTitle ? (
               <tr className="bg-[#414042]">
@@ -37,7 +47,14 @@ export function TableCompletion({
                   colSpan={data.headers.length}
                   className="border-b border-white/80 px-4 py-3 text-left text-base font-semibold tracking-[-0.02em] text-white sm:px-6 sm:py-4"
                 >
-                  {tableTitle}
+                  {tableTitle
+                    ? renderQuestionText({
+                        as: 'span',
+                        blockId: getQuestionAnnotationBlockId(annotationBlockIdPrefix, 'title'),
+                        renderAnnotatedTextBlock,
+                        text: tableTitle,
+                      })
+                    : null}
                 </th>
               </tr>
             ) : null}
@@ -50,24 +67,33 @@ export function TableCompletion({
                     i < data.headers.length - 1 ? 'border-r border-white/80' : ''
                   }`}
                 >
-                  {h}
+                  {renderQuestionText({
+                    as: 'span',
+                    blockId: getQuestionAnnotationBlockId(annotationBlockIdPrefix, 'header', i),
+                    renderAnnotatedTextBlock,
+                    text: h,
+                  })}
                 </th>
               ))}
             </tr>
           </thead>
           <tbody>
             {rows.map((row, rowIndex) => (
-              <tr key={`row-${rowIndex}`} className="bg-[#f7f7f7] align-top">
+              <tr key={`row-${rowIndex}`} className="bg-[#f7f7f7] align-top dark:bg-[#131313]">
                 {row.map((cell, cellIndex) => (
-                  <TableContentCell
-                    key={`row-${rowIndex}-cell-${cellIndex}`}
-                    activeQuestionId={activeQuestionId}
-                    answers={answers}
-                    cell={cell}
-                    isLastCell={cellIndex === row.length - 1}
-                    onChange={onChange}
-                    showAnswer={showAnswer}
-                  />
+                    <TableContentCell
+                      key={`row-${rowIndex}-cell-${cellIndex}`}
+                      activeQuestionId={activeQuestionId}
+                      answers={answers}
+                      annotationBlockIdPrefix={annotationBlockIdPrefix}
+                      cell={cell}
+                      cellIndex={cellIndex}
+                      isLastCell={cellIndex === row.length - 1}
+                      onChange={onChange}
+                      renderAnnotatedTextBlock={renderAnnotatedTextBlock}
+                      rowIndex={rowIndex}
+                      showAnswer={showAnswer}
+                    />
                 ))}
               </tr>
             ))}
@@ -76,14 +102,24 @@ export function TableCompletion({
               section.rows.map((row, rowIndex) => (
                 <tr
                   key={`section-${section.title}-${sectionIndex}-row-${rowIndex}`}
-                  className="bg-[#f7f7f7] align-top"
+                  className="bg-[#f7f7f7] align-top dark:bg-[#131313]"
                 >
                   {rowIndex === 0 ? (
                     <td
                       rowSpan={section.rows.length}
-                      className="border-b border-r border-white/80 px-4 py-3 align-middle text-[0.96rem] font-semibold text-stone-900 sm:px-6 sm:py-4"
+                      className="border-b border-r border-white/80 px-4 py-3 align-middle text-[0.96rem] font-semibold text-stone-900 dark:border-white/10 dark:text-white sm:px-6 sm:py-4"
                     >
-                      {section.title}
+                      {renderQuestionText({
+                        as: 'span',
+                        blockId: getQuestionAnnotationBlockId(
+                          annotationBlockIdPrefix,
+                          'section',
+                          sectionIndex,
+                          'title'
+                        ),
+                        renderAnnotatedTextBlock,
+                        text: section.title,
+                      })}
                     </td>
                   ) : null}
 
@@ -92,9 +128,14 @@ export function TableCompletion({
                       key={`section-${section.title}-${sectionIndex}-row-${rowIndex}-cell-${cellIndex}`}
                       activeQuestionId={activeQuestionId}
                       answers={answers}
+                      annotationBlockIdPrefix={annotationBlockIdPrefix}
                       cell={cell}
+                      cellIndex={cellIndex}
                       isLastCell={cellIndex === row.length - 1}
                       onChange={onChange}
+                      renderAnnotatedTextBlock={renderAnnotatedTextBlock}
+                      rowIndex={rowIndex}
+                      sectionIndex={sectionIndex}
                       showAnswer={showAnswer}
                     />
                   ))}
@@ -111,31 +152,55 @@ export function TableCompletion({
 type TableContentCellProps = {
   activeQuestionId?: string | null;
   answers: Record<string, string>;
+  annotationBlockIdPrefix?: string;
   cell: TableCell;
+  cellIndex: number;
   isLastCell: boolean;
   onChange: (id: string, value: string) => void;
+  renderAnnotatedTextBlock?: QuestionTypeAnnotationProps['renderAnnotatedTextBlock'];
+  rowIndex: number;
+  sectionIndex?: number;
   showAnswer?: boolean;
 };
 
 function TableContentCell({
   activeQuestionId,
   answers,
+  annotationBlockIdPrefix,
   cell,
+  cellIndex,
   isLastCell,
   onChange,
+  renderAnnotatedTextBlock,
+  rowIndex,
+  sectionIndex,
   showAnswer,
 }: TableContentCellProps) {
   return (
     <td
-      className={`border-b border-white/80 px-4 py-3 leading-8 text-stone-800 sm:px-6 sm:py-4 ${
-        isLastCell ? '' : 'border-r border-white/80'
+      className={`border-b border-white/80 px-4 py-3 leading-8 text-stone-800 dark:border-white/10 dark:text-white/84 sm:px-6 sm:py-4 ${
+        isLastCell ? '' : 'border-r border-white/80 dark:border-white/10'
       }`}
     >
       {cell.segments?.length ? (
         <div className="inline-flex flex-wrap items-center gap-1">
           {cell.segments.map((segment, segmentIndex) =>
             segment.type === 'text' ? (
-              <span key={`text-${segmentIndex}`}>{segment.content}</span>
+              <span key={`text-${segmentIndex}`}>
+                {renderQuestionText({
+                  as: 'span',
+                  blockId: getQuestionAnnotationBlockId(
+                    annotationBlockIdPrefix,
+                    ...(typeof sectionIndex === 'number'
+                      ? ['section', sectionIndex, 'row', rowIndex, 'cell', cellIndex]
+                      : ['row', rowIndex, 'cell', cellIndex]),
+                    'segment',
+                    segmentIndex
+                  ),
+                  renderAnnotatedTextBlock,
+                  text: segment.content,
+                })}
+              </span>
             ) : (
               <span
                 key={segment.field.id}
@@ -148,9 +213,11 @@ function TableContentCell({
                   size="xs"
                 />
                 <CompletionInput
+                  annotationBlockIdPrefix={annotationBlockIdPrefix}
                   field={segment.field}
                   value={answers[segment.field.id] ?? ''}
                   onChange={onChange}
+                  renderAnnotatedTextBlock={renderAnnotatedTextBlock}
                   showAnswer={showAnswer}
                 />
               </span>
@@ -168,6 +235,7 @@ function TableContentCell({
             size="xs"
           />
           <CompletionInput
+            annotationBlockIdPrefix={annotationBlockIdPrefix}
             field={{
               id: cell.id!,
               number: cell.number!,
@@ -177,11 +245,23 @@ function TableContentCell({
             }}
             value={answers[cell.id!] ?? ''}
             onChange={onChange}
+            renderAnnotatedTextBlock={renderAnnotatedTextBlock}
             showAnswer={showAnswer}
           />
         </div>
       ) : (
-        cell.content
+        renderQuestionText({
+          as: 'span',
+          blockId: getQuestionAnnotationBlockId(
+            annotationBlockIdPrefix,
+            ...(typeof sectionIndex === 'number'
+              ? ['section', sectionIndex, 'row', rowIndex, 'cell', cellIndex]
+              : ['row', rowIndex, 'cell', cellIndex]),
+            'text'
+          ),
+          renderAnnotatedTextBlock,
+          text: cell.content ?? '',
+        })
       )}
     </td>
   );

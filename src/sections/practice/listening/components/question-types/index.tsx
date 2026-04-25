@@ -1,12 +1,12 @@
 'use client';
 
 import type { QuestionGroup } from '../../types';
+import type { QuestionTypeAnnotationProps } from './annotation-blocks';
 
 import { Matching } from './matching';
 import { FlowChart } from './flow-chart';
 import { ShortAnswer } from './short-answer';
 import { MapLabelling } from './map-labelling';
-import { getGroupQuestions } from '../../utils';
 import { MultipleChoice } from './multiple-choice';
 import { FormCompletion } from './form-completion';
 import { NoteCompletion } from './note-completion';
@@ -15,8 +15,9 @@ import { TableCompletion } from './table-completion';
 import { DiagramCompletion } from './diagram-completion';
 import { SummaryCompletion } from './summary-completion';
 import { SentenceCompletion } from './sentence-completion';
+import { getQuestionGroupTitle } from './annotation-blocks';
 
-interface Props {
+interface Props extends QuestionTypeAnnotationProps {
   activeQuestionId?: string | null;
   group: QuestionGroup;
   answers: Record<string, string>;
@@ -29,28 +30,30 @@ export function QuestionGroupRenderer({
   group,
   answers,
   onChange,
+  annotationBlockIdPrefix,
+  renderAnnotatedTextBlock,
   showAnswer,
 }: Props) {
-  const questions = getGroupQuestions(group);
-  const firstQuestion = questions[0];
-  const lastQuestion = questions.at(-1);
-  const groupTitle =
-    firstQuestion && lastQuestion
-      ? firstQuestion.number === lastQuestion.number
-        ? `Question ${firstQuestion.number}`
-        : `Questions ${firstQuestion.number}-${lastQuestion.number}`
-      : 'Questions';
+  const groupTitle = getQuestionGroupTitle(group);
 
   return (
     <div className="space-y-5">
-      <QuestionGroupIntro title={groupTitle} instruction={group.instructions} />
+      <QuestionGroupIntro
+        title={groupTitle}
+        titleAnnotationBlockId={annotationBlockIdPrefix ? `${annotationBlockIdPrefix}-intro-title` : undefined}
+        instruction={group.instructions}
+        annotationBlockId={annotationBlockIdPrefix ? `${annotationBlockIdPrefix}-instructions` : undefined}
+        renderAnnotatedTextBlock={renderAnnotatedTextBlock}
+      />
 
       {group.type === 'multiple-choice' && (
         <MultipleChoice
           activeQuestionId={activeQuestionId}
           questions={group.questions}
           answers={answers}
+          annotationBlockIdPrefix={annotationBlockIdPrefix}
           onChange={onChange}
+          renderAnnotatedTextBlock={renderAnnotatedTextBlock}
           showAnswer={showAnswer}
         />
       )}
@@ -60,7 +63,9 @@ export function QuestionGroupRenderer({
           activeQuestionId={activeQuestionId}
           data={group.data}
           answers={answers}
+          annotationBlockIdPrefix={annotationBlockIdPrefix}
           onChange={onChange}
+          renderAnnotatedTextBlock={renderAnnotatedTextBlock}
           showAnswer={showAnswer}
         />
       )}
@@ -71,7 +76,9 @@ export function QuestionGroupRenderer({
           formTitle={group.formTitle}
           sections={group.sections}
           answers={answers}
+          annotationBlockIdPrefix={annotationBlockIdPrefix}
           onChange={onChange}
+          renderAnnotatedTextBlock={renderAnnotatedTextBlock}
           showAnswer={showAnswer}
         />
       )}
@@ -82,7 +89,9 @@ export function QuestionGroupRenderer({
           noteTitle={group.noteTitle}
           sections={group.sections}
           answers={answers}
+          annotationBlockIdPrefix={annotationBlockIdPrefix}
           onChange={onChange}
+          renderAnnotatedTextBlock={renderAnnotatedTextBlock}
           showAnswer={showAnswer}
         />
       )}
@@ -93,7 +102,9 @@ export function QuestionGroupRenderer({
           tableTitle={group.tableTitle}
           data={group.data}
           answers={answers}
+          annotationBlockIdPrefix={annotationBlockIdPrefix}
           onChange={onChange}
+          renderAnnotatedTextBlock={renderAnnotatedTextBlock}
           showAnswer={showAnswer}
         />
       )}
@@ -104,7 +115,9 @@ export function QuestionGroupRenderer({
           chartTitle={group.chartTitle}
           steps={group.steps}
           answers={answers}
+          annotationBlockIdPrefix={annotationBlockIdPrefix}
           onChange={onChange}
+          renderAnnotatedTextBlock={renderAnnotatedTextBlock}
           showAnswer={showAnswer}
         />
       )}
@@ -114,7 +127,9 @@ export function QuestionGroupRenderer({
           activeQuestionId={activeQuestionId}
           questions={group.questions}
           answers={answers}
+          annotationBlockIdPrefix={annotationBlockIdPrefix}
           onChange={onChange}
+          renderAnnotatedTextBlock={renderAnnotatedTextBlock}
           showAnswer={showAnswer}
         />
       )}
@@ -124,7 +139,9 @@ export function QuestionGroupRenderer({
           activeQuestionId={activeQuestionId}
           questions={group.questions}
           answers={answers}
+          annotationBlockIdPrefix={annotationBlockIdPrefix}
           onChange={onChange}
+          renderAnnotatedTextBlock={renderAnnotatedTextBlock}
           showAnswer={showAnswer}
         />
       )}
@@ -134,7 +151,9 @@ export function QuestionGroupRenderer({
           activeQuestionId={activeQuestionId}
           data={group.data}
           answers={answers}
+          annotationBlockIdPrefix={annotationBlockIdPrefix}
           onChange={onChange}
+          renderAnnotatedTextBlock={renderAnnotatedTextBlock}
           showAnswer={showAnswer}
         />
       )}
@@ -143,8 +162,10 @@ export function QuestionGroupRenderer({
         <DiagramCompletion
           activeQuestionId={activeQuestionId}
           answers={answers}
+          annotationBlockIdPrefix={annotationBlockIdPrefix}
           data={group.data}
           onChange={onChange}
+          renderAnnotatedTextBlock={renderAnnotatedTextBlock}
           showAnswer={showAnswer}
         />
       )}
@@ -156,7 +177,9 @@ export function QuestionGroupRenderer({
           summaryTitle={group.summaryTitle}
           wordBank={group.wordBank}
           answers={answers}
+          annotationBlockIdPrefix={annotationBlockIdPrefix}
           onChange={onChange}
+          renderAnnotatedTextBlock={renderAnnotatedTextBlock}
           showAnswer={showAnswer}
         />
       )}

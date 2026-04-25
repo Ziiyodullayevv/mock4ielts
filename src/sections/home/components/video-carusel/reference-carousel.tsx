@@ -19,7 +19,7 @@ export function ReferenceCarousel({ slides }: ReferenceCarouselProps) {
   const swiperRef = useRef<SwiperType | null>(null);
 
   return (
-    <div className="reference-carousel relative pb-4">
+    <div className="reference-carousel relative pb-8 md:pb-10">
       <Swiper
         loop
         speed={700}
@@ -43,7 +43,7 @@ export function ReferenceCarousel({ slides }: ReferenceCarouselProps) {
         className="reference-carousel__swiper overflow-hidden"
       >
         {slides.map((slide, index) => (
-          <SwiperSlide key={slide.id} className="px-0 pb-8 md:pb-10">
+          <SwiperSlide key={slide.id} className="px-0">
             <VideoCard isActive={index === activeIndex} slide={slide} />
           </SwiperSlide>
         ))}

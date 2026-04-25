@@ -28,14 +28,14 @@ export function VideoCard({ isActive, slide }: VideoCardProps) {
 
   return (
     <div className="relative">
-      <div className="relative overflow-hidden bg-[#0b0b0b] shadow-[0_30px_120px_rgba(0,0,0,0.75)]">
+      <div className="relative overflow-hidden rounded-lg border border-stone-200 bg-white shadow-[0_26px_70px_rgba(15,23,42,0.12)] dark:border-white/8 dark:bg-[#0b0b0b] dark:shadow-[0_30px_120px_rgba(0,0,0,0.75)]">
         <div className="relative aspect-video w-full">
           <Image
             fill
             src={slide.poster}
             alt={slide.previewVideoAlt}
             sizes="(min-width: 1280px) 1100px, (min-width: 768px) 90vw, 100vw"
-            className="absolute inset-0 h-full w-full object-cover"
+            className="absolute inset-0 h-full w-full scale-[1.04] object-cover"
           />
 
           <video
@@ -45,16 +45,13 @@ export function VideoCard({ isActive, slide }: VideoCardProps) {
             playsInline
             preload={isActive ? 'auto' : 'metadata'}
             poster={slide.poster}
-            className="absolute inset-0 h-full w-full object-cover"
+            className="absolute inset-0 h-full w-full scale-[1.04] object-cover"
             aria-label={slide.previewVideoAlt}
           >
             <source src={slide.previewVideo} type="video/mp4" />
           </video>
-          <div className="pointer-events-none absolute inset-x-0 bottom-0 h-26 bg-linear-to-t from-black/65 to-transparent" />
         </div>
       </div>
-
-      <div className="pointer-events-none mx-auto mt-2 h-8 w-[72%] rounded-full bg-[#7f4517]/35 blur-2xl md:mt-5 md:h-12" />
     </div>
   );
 }

@@ -6,7 +6,7 @@ import { cn } from '@/src/lib/utils';
 import { useRef, useEffect } from 'react';
 
 import { countWords } from '../utils';
-import { getWritingTextStyle } from './writing-task-panel.shared';
+import { getWritingTextStyle, getWritingUITextStyle } from './writing-task-panel.shared';
 
 type WritingResponsePanelProps = {
   isReview?: boolean;
@@ -51,9 +51,10 @@ function AutoResizeTextarea({
       rows={20}
       style={getWritingTextStyle(textSize, 'response')}
       className={cn(
-        'w-full resize-none overflow-hidden rounded-xl border border-stone-200 bg-white px-5 py-4 text-stone-800 outline-none transition-colors placeholder:text-stone-400',
-        'focus:border-blue-400 focus:ring-2 focus:ring-blue-100',
-        disabled && 'cursor-default bg-stone-50 text-stone-600'
+        'w-full resize-none overflow-hidden rounded-xl border border-stone-200 bg-white px-5 py-4 text-stone-800 outline-none transition-colors placeholder:text-stone-400 dark:border-white/10 dark:bg-[#111111] dark:text-white dark:placeholder:text-white/28',
+        'focus:border-[#ffb347] focus:ring-2 focus:ring-[#ffb347]/18 dark:focus:border-[#ffb347] dark:focus:ring-[#ffb347]/20',
+        disabled &&
+          'cursor-default bg-stone-50 text-stone-600 dark:bg-white/4 dark:text-white/55'
       )}
     />
   );
@@ -72,12 +73,29 @@ export function WritingResponsePanel({
   return (
     <div className="space-y-3">
       <div className="space-y-2">
-        <h3 className="text-xl font-semibold tracking-[-0.03em] text-stone-800">Your response</h3>
+        <h3
+          style={getWritingUITextStyle(textSize, 'heading')}
+          className="font-semibold tracking-[-0.03em] text-stone-800 dark:text-white"
+        >
+          Your response
+        </h3>
         {isReview ? (
-          <p className="text-sm text-stone-500">Review your submitted essay below.</p>
+          <p
+            style={getWritingUITextStyle(textSize, 'helper')}
+            className="text-stone-500 dark:text-white/55"
+          >
+            Review your submitted essay below.
+          </p>
         ) : (
-          <p className="text-sm text-stone-500">
-            Write at least <span className="font-semibold text-stone-700">{task.wordLimitMin} words</span>.
+          <p
+            style={getWritingUITextStyle(textSize, 'helper')}
+            className="text-stone-500 dark:text-white/55"
+          >
+            Write at least{' '}
+            <span className="font-semibold text-stone-700 dark:text-white/82">
+              {task.wordLimitMin} words
+            </span>
+            .
             {task.timeRecommendedMinutes
               ? ` Recommended time: ${task.timeRecommendedMinutes} minutes.`
               : ''}
@@ -95,14 +113,24 @@ export function WritingResponsePanel({
 
       <div className="flex items-center justify-between px-1">
         <span
+          style={getWritingUITextStyle(textSize, 'meta')}
           className={cn(
-            'text-sm font-medium tabular-nums transition-colors',
-            words === 0 ? 'text-stone-400' : meetsMinimum ? 'text-emerald-600' : 'text-amber-600'
+            'font-medium tabular-nums transition-colors',
+            words === 0
+              ? 'text-stone-400 dark:text-white/35'
+              : meetsMinimum
+                ? 'text-emerald-600 dark:text-emerald-400'
+                : 'text-amber-600 dark:text-amber-400'
           )}
         >
           {words} word{words !== 1 ? 's' : ''}
         </span>
-        <span className="text-sm text-stone-400">Minimum: {task.wordLimitMin} words</span>
+        <span
+          style={getWritingUITextStyle(textSize, 'meta')}
+          className="text-stone-400 dark:text-white/35"
+        >
+          Minimum: {task.wordLimitMin} words
+        </span>
       </div>
     </div>
   );

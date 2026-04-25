@@ -12,6 +12,8 @@ import {
   PRACTICE_FOOTER_ACTIVE_BADGE_CLASS,
   PRACTICE_FOOTER_ACTIVE_BUTTON_CLASS,
   PRACTICE_FOOTER_ACTIVE_SURFACE_CLASS,
+  PRACTICE_FOOTER_INACTIVE_SURFACE_CLASS,
+  PRACTICE_FOOTER_DARK_BUTTON_RING_CLASS,
 } from '@/src/layouts/practice-footer-theme';
 
 type WritingTestFooterProps = {
@@ -64,13 +66,21 @@ export function WritingTestFooter({
             type="button"
             onClick={handlePrevAction}
             disabled={isPrevDisabled}
-            className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-border/60 bg-white text-stone-700 shadow-sm transition-colors hover:bg-stone-50 disabled:cursor-not-allowed disabled:text-stone-300 disabled:hover:bg-white"
+            className={cn(
+              'inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-stone-700 shadow-[0_8px_20px_rgba(15,23,42,0.06)] transition-colors hover:bg-stone-50 disabled:cursor-not-allowed disabled:text-stone-300 dark:text-white/78 dark:shadow-none dark:hover:bg-white/12 dark:disabled:text-white/28 dark:disabled:hover:bg-white/8',
+              PRACTICE_FOOTER_DARK_BUTTON_RING_CLASS
+            )}
             aria-label={prevActionLabel}
           >
             <ChevronLeft className="size-5" strokeWidth={1.9} />
           </button>
 
-          <div className="flex h-11 min-w-0 flex-1 items-center gap-1 rounded-xl border border-border/60 bg-white px-1.5 shadow-sm">
+          <div
+            className={cn(
+              'flex h-11 min-w-0 flex-1 items-center gap-1 rounded-xl px-1.5',
+              PRACTICE_FOOTER_INACTIVE_SURFACE_CLASS
+            )}
+          >
             {test.parts.map((part) => {
               const words = countWords(answers[part.task.id] ?? '');
               const isActive = activePart === part.number;
@@ -84,7 +94,7 @@ export function WritingTestFooter({
                     'flex h-8 flex-1 items-center justify-center gap-1.5 rounded-lg border text-xs font-semibold transition-colors',
                     isActive
                       ? PRACTICE_FOOTER_ACTIVE_BUTTON_CLASS
-                      : 'border-stone-300 bg-stone-100 text-stone-700 hover:bg-stone-200'
+                      : cn('border-stone-300 bg-stone-100 text-stone-700 hover:bg-stone-200 dark:text-white/78 dark:hover:bg-transparent', PRACTICE_FOOTER_DARK_BUTTON_RING_CLASS)
                   )}
                 >
                   <span>{part.title}</span>
@@ -100,7 +110,10 @@ export function WritingTestFooter({
             type="button"
             onClick={handlePrimaryAction}
             disabled={isPrimaryActionDisabled}
-            className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-border/60 bg-white text-stone-700 shadow-sm transition-colors hover:bg-stone-50 disabled:cursor-not-allowed disabled:text-stone-300 disabled:hover:bg-white"
+            className={cn(
+              'inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-stone-700 shadow-[0_8px_20px_rgba(15,23,42,0.06)] transition-colors hover:bg-stone-50 disabled:cursor-not-allowed disabled:text-stone-300 dark:text-white/78 dark:shadow-none dark:hover:bg-white/12 dark:disabled:text-white/28 dark:disabled:hover:bg-white/8',
+              PRACTICE_FOOTER_DARK_BUTTON_RING_CLASS
+            )}
             aria-label={primaryActionLabel}
           >
             <ChevronRight className="size-5" strokeWidth={1.9} />
@@ -120,14 +133,14 @@ export function WritingTestFooter({
                   key={part.number}
                   type="button"
                   onClick={() => handlePartSelect(part.number)}
-                  className="flex shrink-0 items-center rounded-xl border border-border/50 bg-white px-3 py-2 text-left shadow-md/5 transition-colors hover:cursor-pointer hover:bg-stone-50"
+                  className={cn('flex shrink-0 items-center rounded-xl px-3 py-2 text-left transition-colors', PRACTICE_FOOTER_INACTIVE_SURFACE_CLASS)}
                 >
                   <div className="flex items-baseline gap-2 text-sm whitespace-nowrap">
-                    <span className="shrink-0 font-semibold text-stone-900">{part.title}:</span>
+                    <span className="shrink-0 font-semibold text-stone-900 dark:text-white">{part.title}:</span>
                     <span
                       className={cn(
                         'whitespace-nowrap',
-                        meetsMinimum ? 'text-emerald-600' : 'text-stone-500'
+                        meetsMinimum ? 'text-emerald-600 dark:text-emerald-400' : 'text-stone-500 dark:text-white/55'
                       )}
                     >
                       {words} / {part.task.wordLimitMin} words
@@ -141,7 +154,7 @@ export function WritingTestFooter({
               <section
                 key={part.number}
                 className={cn(
-                  'flex shrink-0 items-center gap-3 rounded-xl border-2 px-3 py-2.5',
+                  'flex shrink-0 items-center gap-3 rounded-xl px-3 py-2.5',
                   PRACTICE_FOOTER_ACTIVE_SURFACE_CLASS
                 )}
               >
@@ -150,7 +163,7 @@ export function WritingTestFooter({
                   onClick={() => handlePartSelect(part.number)}
                   className="shrink-0 text-left"
                 >
-                  <span className="text-sm font-semibold text-stone-900">{part.title}</span>
+                  <span className="text-sm font-semibold text-stone-900 dark:text-white">{part.title}</span>
                 </button>
 
                 <div
@@ -158,7 +171,7 @@ export function WritingTestFooter({
                     'flex items-center gap-1.5 rounded-lg px-2 py-1 text-xs font-semibold tabular-nums',
                     meetsMinimum
                       ? PRACTICE_FOOTER_ACTIVE_BADGE_CLASS
-                      : 'bg-stone-200 text-stone-600'
+                      : 'bg-stone-200 text-stone-600 dark:bg-white/12 dark:text-white/65'
                   )}
                 >
                   <span>{words}</span>

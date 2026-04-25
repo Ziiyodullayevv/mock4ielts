@@ -28,7 +28,6 @@ export function SpeakingDetailsView({ sectionId }: SpeakingDetailsViewProps) {
   const { isAuthenticated, isHydrated } = useAuthSession();
   const canLoad = isHydrated && isAuthenticated;
   const [countdownValue, setCountdownValue] = useState<number | null>(null);
-  const [isPreflightOpen, setIsPreflightOpen] = useState(false);
   const [pendingAttemptId, setPendingAttemptId] = useState<string | null>(null);
 
   const { data, error, isLoading } = useSpeakingSectionDetailQuery(sectionId, canLoad);
@@ -84,35 +83,14 @@ export function SpeakingDetailsView({ sectionId }: SpeakingDetailsViewProps) {
   }, [attemptId, pendingAttemptId]);
 
   const beginAttempt = async () => {
-    if (startAttemptMutation.isPending) {
-      return;
-    }
-
-    try {
-      const response = await startAttemptMutation.mutateAsync(sectionId);
-      setPendingAttemptId(response.attemptId);
-      setCountdownValue(3);
-    } catch {
-      // handled by mutation state
-    }
+    // LOCAL TEST MODE — backend o'rniga local attemptId
+    const localAttemptId = `local-test-${Date.now()}`;
+    setPendingAttemptId(localAttemptId);
+    setCountdownValue(3);
   };
 
   const countdownOverlay =
     countdownValue !== null ? <PracticeCountdownOverlay value={countdownValue} /> : null;
-
-  const openPreflight = () => {
-    startAttemptMutation.reset();
-    setIsPreflightOpen(true);
-  };
-
-  const closePreflight = () => {
-    if (startAttemptMutation.isPending) {
-      return;
-    }
-
-    startAttemptMutation.reset();
-    setIsPreflightOpen(false);
-  };
 
   if (!isHydrated) {
     return (
@@ -172,26 +150,12 @@ export function SpeakingDetailsView({ sectionId }: SpeakingDetailsViewProps) {
   if (!attemptId) {
     return (
       <>
-        {isPreflightOpen ? (
-          <SpeakingPreflightCheck
-            isStarting={startAttemptMutation.isPending}
-            onBack={closePreflight}
-            onContinue={beginAttempt}
-            startError={
-              startAttemptMutation.error instanceof Error
-                ? startAttemptMutation.error.message
-                : null
-            }
-          />
-        ) : (
-          <PracticePageState
-            actionLabel="Start Practice"
-            description={data.description}
-            icon="play"
-            label={data.title}
-            onAction={openPreflight}
-          />
-        )}
+        <SpeakingPreflightCheck
+          isStarting={false}
+          onBack={() => router.push(paths.practice.speaking.root)}
+          onContinue={beginAttempt}
+          startError={null}
+        />
         {countdownOverlay}
       </>
     );
