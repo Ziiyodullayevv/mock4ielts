@@ -63,10 +63,14 @@ export function WritingTestView({
   const currentPart = test.parts.find((part) => part.number === activePart)!;
 
   useEffect(() => {
-    if (!attemptId || !initialResult) return;
-    setAnswers(initialResult.answers);
-    setResult(initialResult);
-    setStage('submitted');
+    if (!attemptId || !initialResult) return undefined;
+    const timer = window.setTimeout(() => {
+      setAnswers(initialResult.answers);
+      setResult(initialResult);
+      setStage('submitted');
+    }, 0);
+
+    return () => window.clearTimeout(timer);
   }, [attemptId, initialResult]);
 
   useEffect(() => {

@@ -214,19 +214,29 @@ export function SpeakingTestView({
   // Mark current part as completed when user reaches the last question
   useEffect(() => {
     if (activePart && isCurrentPartCompleted) {
-      setCompletedPartKeys((prev) => {
-        if (prev.has(activePart.partKey)) return prev;
-        const next = new Set(prev);
-        next.add(activePart.partKey);
-        return next;
-      });
+      const timer = window.setTimeout(() => {
+        setCompletedPartKeys((prev) => {
+          if (prev.has(activePart.partKey)) return prev;
+          const next = new Set(prev);
+          next.add(activePart.partKey);
+          return next;
+        });
+      }, 0);
+
+      return () => window.clearTimeout(timer);
     }
+
+    return undefined;
   }, [activePart, isCurrentPartCompleted]);
 
   useEffect(() => {
-    setActivePartKey(test.parts[0]?.partKey ?? null);
-    setQuestionIndexesByPart(buildInitialQuestionIndexes(test));
-    setCompletedPartKeys(new Set());
+    const timer = window.setTimeout(() => {
+      setActivePartKey(test.parts[0]?.partKey ?? null);
+      setQuestionIndexesByPart(buildInitialQuestionIndexes(test));
+      setCompletedPartKeys(new Set());
+    }, 0);
+
+    return () => window.clearTimeout(timer);
   }, [test, test.parts]);
 
   useEffect(() => {

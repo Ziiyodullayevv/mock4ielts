@@ -123,19 +123,29 @@ export function ReadingTestView({
 
   useEffect(() => {
     if (stage === 'test') {
-      setDisplayTest(test);
+      const timer = window.setTimeout(() => {
+        setDisplayTest(test);
+      }, 0);
+
+      return () => window.clearTimeout(timer);
     }
+
+    return undefined;
   }, [stage, test]);
 
   useEffect(() => {
     if (!attemptId || !initialResult) {
-      return;
+      return undefined;
     }
 
-    setAnswers(initialResult.answers);
-    setDisplayTest(initialReviewTest ?? test);
-    setResult(initialResult);
-    setStage('submitted');
+    const timer = window.setTimeout(() => {
+      setAnswers(initialResult.answers);
+      setDisplayTest(initialReviewTest ?? test);
+      setResult(initialResult);
+      setStage('submitted');
+    }, 0);
+
+    return () => window.clearTimeout(timer);
   }, [attemptId, initialResult, initialReviewTest, test]);
 
   useEffect(() => {

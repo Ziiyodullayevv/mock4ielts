@@ -62,18 +62,16 @@ const CountryDropdownComponent = (
   const [selectedCountry, setSelectedCountry] = useState<Country | undefined>(undefined);
 
   useEffect(() => {
-    if (defaultValue) {
-      const initialCountry = options.find((country) => country.alpha3 === defaultValue);
-      if (initialCountry) {
+    const timer = window.setTimeout(() => {
+      if (defaultValue) {
+        const initialCountry = options.find((country) => country.alpha3 === defaultValue);
         setSelectedCountry(initialCountry);
       } else {
-        // Reset selected country if defaultValue is not found
         setSelectedCountry(undefined);
       }
-    } else {
-      // Reset selected country if defaultValue is undefined or null
-      setSelectedCountry(undefined);
-    }
+    }, 0);
+
+    return () => window.clearTimeout(timer);
   }, [defaultValue, options]);
 
   const handleSelect = useCallback(

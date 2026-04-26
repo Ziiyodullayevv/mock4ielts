@@ -38,16 +38,11 @@ export const SpeechInput = ({
 }: SpeechInputProps) => {
   const [isListening, setIsListening] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
-  const [mode, setMode] = useState<SpeechInputMode>('none');
+  const [mode] = useState<SpeechInputMode>(() => detectSpeechInputMode());
 
   const recognitionRef = useRef<any>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
-
-  // detect mode
-  useEffect(() => {
-    setMode(detectSpeechInputMode());
-  }, []);
 
   // SpeechRecognition setup (Chrome, Edge)
   useEffect(() => {

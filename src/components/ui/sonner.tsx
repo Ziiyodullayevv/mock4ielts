@@ -98,13 +98,7 @@ function showContestToast(kind: ToastKind, message: React.ReactNode, data?: Exte
 
 export function Toaster(props: ToasterProps) {
   const { resolvedTheme } = useTheme();
-  const [mounted, setMounted] = React.useState(false);
-
-  React.useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  const isDark = mounted ? resolvedTheme === 'dark' : true;
+  const isDark = resolvedTheme !== 'light';
 
   return (
     <Sonner

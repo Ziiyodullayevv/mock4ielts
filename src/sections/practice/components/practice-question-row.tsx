@@ -269,16 +269,20 @@ export function PracticeQuestionRow({
 
   useEffect(() => {
     if (!shouldOpenInfo || openRequestId <= 0) {
-      return;
+      return undefined;
     }
 
-    if (sectionType === 'mock-exam') {
-      void handleStartPractice();
-      return;
-    }
+    const timer = window.setTimeout(() => {
+      if (sectionType === 'mock-exam') {
+        void handleStartPractice();
+        return;
+      }
 
-    setStartError(null);
-    setIsInfoOpen(true);
+      setStartError(null);
+      setIsInfoOpen(true);
+    }, 0);
+
+    return () => window.clearTimeout(timer);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [openRequestId, shouldOpenInfo]);
 
@@ -312,7 +316,7 @@ export function PracticeQuestionRow({
     return () => window.clearTimeout(timer);
   }, [countdownValue, isAttemptPrepared, router, targetHref]);
 
-  const handleStartPractice = async () => {
+  async function handleStartPractice() {
     if (!isStartAvailable) {
       return;
     }
@@ -393,7 +397,7 @@ export function PracticeQuestionRow({
           : `Unable to start this ${content.sectionLabel.toLowerCase()} test.`
       );
     }
-  };
+  }
 
   const handleToggleFavorite = async () => {
     if (!item.remoteId) {

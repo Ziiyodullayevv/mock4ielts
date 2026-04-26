@@ -5,14 +5,12 @@ import { useState, useEffect } from 'react';
 import { buildLoginHref } from '@/src/auth/utils/return-to';
 import { useRouter, useSearchParams } from '@/src/routes/hooks';
 import { useAuthSession } from '@/src/auth/hooks/use-auth-session';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   PracticePageState,
   PracticeCountdownOverlay,
 } from '@/src/sections/practice/components';
 
 import { SpeakingTestView } from '../components/speaking-test-view';
-import { startSpeakingSectionAttempt } from '../api/speaking-session-api';
 import { SpeakingPreflightCheck } from '../components/speaking-preflight-check';
 import { useSpeakingSectionDetailQuery } from '../hooks/use-speaking-section-detail-query';
 
@@ -22,7 +20,6 @@ type SpeakingDetailsViewProps = {
 
 export function SpeakingDetailsView({ sectionId }: SpeakingDetailsViewProps) {
   const router = useRouter();
-  const queryClient = useQueryClient();
   const searchParams = useSearchParams();
   const attemptId = searchParams.get('attemptId');
   const { isAuthenticated, isHydrated } = useAuthSession();
@@ -31,13 +28,6 @@ export function SpeakingDetailsView({ sectionId }: SpeakingDetailsViewProps) {
   const [pendingAttemptId, setPendingAttemptId] = useState<string | null>(null);
 
   const { data, error, isLoading } = useSpeakingSectionDetailQuery(sectionId, canLoad);
-
-  const startAttemptMutation = useMutation({
-    mutationFn: startSpeakingSectionAttempt,
-    onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: ['auth', 'me'] });
-    },
-  });
 
   useEffect(() => {
     if (!isHydrated) return;

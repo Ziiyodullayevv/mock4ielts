@@ -211,7 +211,6 @@ const toPart = (value: unknown, partIndex: number, sectionId: string): SpeakingP
 export async function getSpeakingSectionDetail(sectionId: string): Promise<SpeakingTest> {
   // LOCAL TEST MODE — backend o'rniga local ielts_test.json ishlatiladi
   const data = localTestData as unknown as ApiRecord;
-  const root = data;
   const agentConfigRecord = asRecord(data.agent_config ?? data.agentConfig) ?? {};
   const gradingConfigRecord = asRecord(data.grading_config ?? data.gradingConfig) ?? {};
   const partBehaviorsRecord =

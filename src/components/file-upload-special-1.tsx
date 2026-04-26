@@ -39,8 +39,12 @@ export function FileUploadSpecial1({
   const [avatarPreview, setAvatarPreview] = React.useState(defaultImage);
 
   React.useEffect(() => {
-    setAvatarPreview(defaultImage);
-    setFiles([]);
+    const timer = window.setTimeout(() => {
+      setAvatarPreview(defaultImage);
+      setFiles([]);
+    }, 0);
+
+    return () => window.clearTimeout(timer);
   }, [defaultImage]);
 
   const handleValueChange = React.useCallback((nextFiles: File[]) => {
@@ -52,17 +56,19 @@ export function FileUploadSpecial1({
 
   React.useEffect(() => {
     if (!files.length) {
-      setAvatarPreview(defaultImage);
       return undefined;
     }
 
     const objectUrl = URL.createObjectURL(files[0]);
-    setAvatarPreview(objectUrl);
+    const timer = window.setTimeout(() => {
+      setAvatarPreview(objectUrl);
+    }, 0);
 
     return () => {
+      window.clearTimeout(timer);
       URL.revokeObjectURL(objectUrl);
     };
-  }, [defaultImage, files]);
+  }, [files]);
 
   return (
     <div className={cn('flex flex-col items-center gap-4', className)}>

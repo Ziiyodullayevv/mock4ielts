@@ -371,7 +371,7 @@ function SpeakingStagePoster({
   onExaminerSpeakingChange?: (isSpeaking: boolean) => void;
   sendDataRef?: SendDataRef;
 }) {
-  const [examinerAudioSpectrum, setExaminerAudioSpectrum] = useState<number[]>(() =>
+  const [, setExaminerAudioSpectrum] = useState<number[]>(() =>
     createSilentVoiceSpectrum()
   );
   const [isExaminerSpeaking, setIsExaminerSpeaking] = useState(false);
@@ -508,5 +508,4 @@ function SpeakingStagePoster({
     </div>
   );
 }
-
 
