@@ -17,7 +17,9 @@ jobs:
       LIVEKIT_AGENT_NAME: ${{ secrets.LIVEKIT_AGENT_NAME }}
       NEXT_PUBLIC_LIVEKIT_URL: ${{ secrets.NEXT_PUBLIC_LIVEKIT_URL }}
       NEXT_PUBLIC_SERVER_URL: ${{ secrets.NEXT_PUBLIC_SERVER_URL }}
+      NEXT_PUBLIC_ASSETS_DIR: ${{ secrets.NEXT_PUBLIC_ASSETS_DIR }}
       NEXT_PUBLIC_GOOGLE_CLIENT_ID: ${{ secrets.NEXT_PUBLIC_GOOGLE_CLIENT_ID }}
+      NEXT_PUBLIC_SPEAKING_USE_LOCAL_TOKEN_ROUTE: ${{ secrets.NEXT_PUBLIC_SPEAKING_USE_LOCAL_TOKEN_ROUTE }}
     steps:
       - name: Deploy to VPS
         uses: appleboy/ssh-action@v1
@@ -25,7 +27,7 @@ jobs:
           host: ${{ secrets.VPS_HOST || secrets.SSH_HOST }}
           username: ${{ secrets.VPS_USER || secrets.SSH_USERNAME }}
           key: ${{ secrets.VPS_SSH_KEY || secrets.SSH_PRIVATE_KEY }}
-          envs: LIVEKIT_URL,LIVEKIT_API_KEY,LIVEKIT_API_SECRET,LIVEKIT_AGENT_NAME,NEXT_PUBLIC_LIVEKIT_URL,NEXT_PUBLIC_SERVER_URL,NEXT_PUBLIC_GOOGLE_CLIENT_ID
+          envs: LIVEKIT_URL,LIVEKIT_API_KEY,LIVEKIT_API_SECRET,LIVEKIT_AGENT_NAME,NEXT_PUBLIC_LIVEKIT_URL,NEXT_PUBLIC_SERVER_URL,NEXT_PUBLIC_ASSETS_DIR,NEXT_PUBLIC_GOOGLE_CLIENT_ID,NEXT_PUBLIC_SPEAKING_USE_LOCAL_TOKEN_ROUTE
           script: |
             cd /opt/mock4ielts-frontend
             {
@@ -35,7 +37,9 @@ jobs:
               echo "LIVEKIT_AGENT_NAME=$LIVEKIT_AGENT_NAME"
               echo "NEXT_PUBLIC_LIVEKIT_URL=$NEXT_PUBLIC_LIVEKIT_URL"
               echo "NEXT_PUBLIC_SERVER_URL=$NEXT_PUBLIC_SERVER_URL"
+              echo "NEXT_PUBLIC_ASSETS_DIR=$NEXT_PUBLIC_ASSETS_DIR"
               echo "NEXT_PUBLIC_GOOGLE_CLIENT_ID=$NEXT_PUBLIC_GOOGLE_CLIENT_ID"
+              echo "NEXT_PUBLIC_SPEAKING_USE_LOCAL_TOKEN_ROUTE=$NEXT_PUBLIC_SPEAKING_USE_LOCAL_TOKEN_ROUTE"
             } > .env
             docker compose pull
             docker compose up -d --force-recreate
