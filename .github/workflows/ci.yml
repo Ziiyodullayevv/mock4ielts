@@ -23,7 +23,9 @@ jobs:
         env:
           NEXT_PUBLIC_LIVEKIT_URL: ${{ secrets.NEXT_PUBLIC_LIVEKIT_URL }}
           NEXT_PUBLIC_SERVER_URL: ${{ secrets.NEXT_PUBLIC_SERVER_URL }}
+          NEXT_PUBLIC_ASSETS_DIR: ${{ secrets.NEXT_PUBLIC_ASSETS_DIR }}
           NEXT_PUBLIC_GOOGLE_CLIENT_ID: ${{ secrets.NEXT_PUBLIC_GOOGLE_CLIENT_ID }}
+          NEXT_PUBLIC_SPEAKING_USE_LOCAL_TOKEN_ROUTE: ${{ secrets.NEXT_PUBLIC_SPEAKING_USE_LOCAL_TOKEN_ROUTE }}
 
   docker:
     needs: lint-and-build
@@ -48,7 +50,9 @@ jobs:
           build-args: |
             NEXT_PUBLIC_LIVEKIT_URL=${{ secrets.NEXT_PUBLIC_LIVEKIT_URL }}
             NEXT_PUBLIC_SERVER_URL=${{ secrets.NEXT_PUBLIC_SERVER_URL }}
+            NEXT_PUBLIC_ASSETS_DIR=${{ secrets.NEXT_PUBLIC_ASSETS_DIR }}
             NEXT_PUBLIC_GOOGLE_CLIENT_ID=${{ secrets.NEXT_PUBLIC_GOOGLE_CLIENT_ID }}
+            NEXT_PUBLIC_SPEAKING_USE_LOCAL_TOKEN_ROUTE=${{ secrets.NEXT_PUBLIC_SPEAKING_USE_LOCAL_TOKEN_ROUTE }}
           tags: |
             ghcr.io/ziiyodullayevv/mock4ielts:latest
             ghcr.io/ziiyodullayevv/mock4ielts:${{ github.sha }}
