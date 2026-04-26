@@ -61,7 +61,11 @@ const PhoneInput: React.ForwardRefExoticComponent<PhoneInputProps> = React.forwa
     );
 
     React.useEffect(() => {
-      setSelectedCountry(defaultCountry);
+      const timer = window.setTimeout(() => {
+        setSelectedCountry(defaultCountry);
+      }, 0);
+
+      return () => window.clearTimeout(timer);
     }, [defaultCountry]);
 
     const resolvedPlaceholder = React.useMemo(

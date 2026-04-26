@@ -774,6 +774,7 @@ function FileUploadDropzone(props: FileUploadDropzoneProps) {
     [store, propsRef],
   );
 
+  /* eslint-disable react-hooks/immutability */
   const onDrop = React.useCallback(
     (event: React.DragEvent<HTMLDivElement>) => {
       propsRef.current.onDrop?.(event);
@@ -792,7 +793,6 @@ function FileUploadDropzone(props: FileUploadDropzoneProps) {
         dataTransfer.items.add(file);
       }
 
-      // eslint-disable-next-line react-hooks/immutability
       inputElement.files = dataTransfer.files;
       inputElement.dispatchEvent(new Event("change", { bubbles: true }));
     },
@@ -832,12 +832,12 @@ function FileUploadDropzone(props: FileUploadDropzoneProps) {
         dataTransfer.items.add(file);
       }
 
-      // eslint-disable-next-line react-hooks/immutability
       inputElement.files = dataTransfer.files;
       inputElement.dispatchEvent(new Event("change", { bubbles: true }));
     },
     [store, context.inputRef, propsRef],
   );
+  /* eslint-enable react-hooks/immutability */
 
   const onKeyDown = React.useCallback(
     (event: React.KeyboardEvent<HTMLDivElement>) => {

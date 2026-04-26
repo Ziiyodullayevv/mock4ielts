@@ -627,15 +627,19 @@ export function MockExamRunnerPage({
   }, [completedSectionTypes]);
 
   useEffect(() => {
-    setActiveSectionType(null);
-    setSelectedSectionType(null);
-    setPendingSectionType(null);
-    setViewMode('overview');
-    setCompletedSectionTypes(new Set());
-    completedSectionTypesRef.current = new Set();
-    setFinalResult(null);
-    setFinalError(null);
-    setIsFinishing(false);
+    const timer = window.setTimeout(() => {
+      setActiveSectionType(null);
+      setSelectedSectionType(null);
+      setPendingSectionType(null);
+      setViewMode('overview');
+      setCompletedSectionTypes(new Set());
+      completedSectionTypesRef.current = new Set();
+      setFinalResult(null);
+      setFinalError(null);
+      setIsFinishing(false);
+    }, 0);
+
+    return () => window.clearTimeout(timer);
   }, [attemptId, examId]);
 
   const orderedSections = useMemo(() => detailQuery.data?.sections ?? [], [detailQuery.data?.sections]);
@@ -647,32 +651,36 @@ export function MockExamRunnerPage({
       ) as Partial<Record<MockExamSection['type'], MockExamSection>>,
     [orderedSections]
   );
+  const listeningSection = sectionsByType.listening;
+  const readingSection = sectionsByType.reading;
+  const writingSection = sectionsByType.writing;
+  const speakingSection = sectionsByType.speaking;
 
   const listeningQuery = useQuery({
-    enabled: isHydrated && isAuthenticated && Boolean(sectionsByType.listening?.id),
-    queryFn: () => getListeningSectionDetail(sectionsByType.listening?.id ?? ''),
-    queryKey: ['mock-exams', 'section-detail', 'listening', sectionsByType.listening?.id],
+    enabled: isHydrated && isAuthenticated && Boolean(listeningSection?.id),
+    queryFn: () => getListeningSectionDetail(listeningSection?.id ?? ''),
+    queryKey: ['mock-exams', 'section-detail', 'listening', listeningSection?.id],
     staleTime: 1000 * 60,
   });
 
   const readingQuery = useQuery({
-    enabled: isHydrated && isAuthenticated && Boolean(sectionsByType.reading?.id),
-    queryFn: () => getReadingSectionDetail(sectionsByType.reading?.id ?? ''),
-    queryKey: ['mock-exams', 'section-detail', 'reading', sectionsByType.reading?.id],
+    enabled: isHydrated && isAuthenticated && Boolean(readingSection?.id),
+    queryFn: () => getReadingSectionDetail(readingSection?.id ?? ''),
+    queryKey: ['mock-exams', 'section-detail', 'reading', readingSection?.id],
     staleTime: 1000 * 60,
   });
 
   const writingQuery = useQuery({
-    enabled: isHydrated && isAuthenticated && Boolean(sectionsByType.writing?.id),
-    queryFn: () => getWritingSectionDetail(sectionsByType.writing?.id ?? ''),
-    queryKey: ['mock-exams', 'section-detail', 'writing', sectionsByType.writing?.id],
+    enabled: isHydrated && isAuthenticated && Boolean(writingSection?.id),
+    queryFn: () => getWritingSectionDetail(writingSection?.id ?? ''),
+    queryKey: ['mock-exams', 'section-detail', 'writing', writingSection?.id],
     staleTime: 1000 * 60,
   });
 
   const speakingQuery = useQuery({
-    enabled: isHydrated && isAuthenticated && Boolean(sectionsByType.speaking?.id),
-    queryFn: () => getSpeakingSectionDetail(sectionsByType.speaking?.id ?? ''),
-    queryKey: ['mock-exams', 'section-detail', 'speaking', sectionsByType.speaking?.id],
+    enabled: isHydrated && isAuthenticated && Boolean(speakingSection?.id),
+    queryFn: () => getSpeakingSectionDetail(speakingSection?.id ?? ''),
+    queryKey: ['mock-exams', 'section-detail', 'speaking', speakingSection?.id],
     staleTime: 1000 * 60,
   });
 
@@ -748,7 +756,7 @@ export function MockExamRunnerPage({
 
   const handleListeningSubmit = useCallback(
     async (answers: ListeningAnswers) => {
-      if (!attemptId || !examId || !sectionsByType.listening?.id || !listeningQuery.data) {
+      if (!attemptId || !examId || !listeningSection?.id || !listeningQuery.data) {
         throw new Error('Listening section is not ready yet.');
       }
 
@@ -762,7 +770,7 @@ export function MockExamRunnerPage({
         answers: payload.answers,
         attemptId,
         examId,
-        sectionId: sectionsByType.listening.id,
+        sectionId: listeningSection.id,
       });
 
       return {
@@ -774,12 +782,12 @@ export function MockExamRunnerPage({
         reviewTest: listeningQuery.data,
       };
     },
-    [attemptId, examId, listeningQuery.data, sectionsByType.listening?.id]
+    [attemptId, examId, listeningQuery.data, listeningSection]
   );
 
   const handleReadingSubmit = useCallback(
     async (answers: ListeningAnswers) => {
-      if (!attemptId || !examId || !sectionsByType.reading?.id || !readingQuery.data) {
+      if (!attemptId || !examId || !readingSection?.id || !readingQuery.data) {
         throw new Error('Reading section is not ready yet.');
       }
 
@@ -793,7 +801,7 @@ export function MockExamRunnerPage({
         answers: payload.answers,
         attemptId,
         examId,
-        sectionId: sectionsByType.reading.id,
+        sectionId: readingSection.id,
       });
 
       return {
@@ -805,12 +813,12 @@ export function MockExamRunnerPage({
         reviewTest: readingQuery.data as ReadingTest,
       };
     },
-    [attemptId, examId, readingQuery.data, sectionsByType.reading?.id]
+    [attemptId, examId, readingQuery.data, readingSection]
   );
 
   const handleWritingSubmit = useCallback(
     async (answers: WritingAnswers) => {
-      if (!attemptId || !examId || !sectionsByType.writing?.id || !writingQuery.data) {
+      if (!attemptId || !examId || !writingSection?.id || !writingQuery.data) {
         throw new Error('Writing section is not ready yet.');
       }
 
@@ -821,18 +829,18 @@ export function MockExamRunnerPage({
         })),
         attemptId,
         examId,
-        sectionId: sectionsByType.writing.id,
+        sectionId: writingSection.id,
       });
 
       return {
         result: buildWritingMockResult(answers),
       };
     },
-    [attemptId, examId, sectionsByType.writing?.id, writingQuery.data]
+    [attemptId, examId, writingQuery.data, writingSection]
   );
 
   const handleSpeakingComplete = useCallback(async () => {
-    if (!attemptId || !examId || !sectionsByType.speaking?.id || !speakingQuery.data) {
+    if (!attemptId || !examId || !speakingSection?.id || !speakingQuery.data) {
       throw new Error('Speaking section is not ready yet.');
     }
 
@@ -840,11 +848,11 @@ export function MockExamRunnerPage({
       answers: buildSpeakingPlaceholderAnswers(speakingQuery.data),
       attemptId,
       examId,
-      sectionId: sectionsByType.speaking.id,
+      sectionId: speakingSection.id,
     });
 
     await completeSection('speaking');
-  }, [attemptId, completeSection, examId, sectionsByType.speaking?.id, speakingQuery.data]);
+  }, [attemptId, completeSection, examId, speakingQuery.data, speakingSection]);
 
   const handleSectionSelect = useCallback(
     (sectionType: MockExamSection['type']) => {
