@@ -2,11 +2,10 @@
 
 import type { LucideIcon } from 'lucide-react';
 
-import { useEffect, useState } from 'react';
-import { MonitorCog, MoonStar, SunMedium } from 'lucide-react';
-import { useTheme } from 'next-themes';
-
 import { cn } from '@/src/lib/utils';
+import { useTheme } from 'next-themes';
+import { useState, useEffect } from 'react';
+import { MoonStar, SunMedium, MonitorCog } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuItem,
@@ -84,6 +83,7 @@ function useMountedTheme() {
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setMounted(true);
   }, []);
 
@@ -196,11 +196,7 @@ export function ThemeDropdown({
 }: ThemeDropdownProps) {
   const { activeTheme, resolvedTheme } = useMountedTheme();
   const ResolvedTriggerIcon =
-    activeTheme === 'system'
-      ? MonitorCog
-      : resolvedTheme === 'dark'
-        ? MoonStar
-        : SunMedium;
+    activeTheme === 'system' ? MonitorCog : resolvedTheme === 'dark' ? MoonStar : SunMedium;
   const TriggerIcon = CustomTriggerIcon ?? ResolvedTriggerIcon;
 
   return (

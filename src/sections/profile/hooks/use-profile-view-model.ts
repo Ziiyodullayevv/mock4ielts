@@ -15,11 +15,11 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useMyProfileQuery } from '@/src/auth/hooks/use-my-profile-query';
 import { EMPTY_FORM_STATE } from '@/src/sections/profile/constants/profile-form';
 import {
-  type UserProfile,
-  deleteMyAccount,
   removeMyAvatar,
-  updateMyProfile,
   updateMyAvatar,
+  deleteMyAccount,
+  updateMyProfile,
+  type UserProfile,
 } from '@/src/auth/api/profile-api';
 import {
   toFormState,

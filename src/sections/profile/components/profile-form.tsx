@@ -5,9 +5,9 @@ import type {
   ProfileInputChangeFactory,
 } from '@/src/sections/profile/types/profile-form';
 
-import { Button } from '@/src/components/ui/button';
 import { cn } from '@/src/lib/utils';
-import { CheckCircle2, LoaderCircle, Trash2 } from 'lucide-react';
+import { Button } from '@/src/components/ui/button';
+import { Trash2, CheckCircle2, LoaderCircle } from 'lucide-react';
 import { FileUploadSpecial1 } from '@/src/components/file-upload-special-1';
 import { PRACTICE_FOOTER_ACTIVE_BUTTON_CLASS } from '@/src/layouts/practice-footer-theme';
 import { profilePageBackgroundClassName } from '@/src/sections/profile/constants/profile-form';

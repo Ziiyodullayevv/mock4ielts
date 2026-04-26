@@ -1,8 +1,9 @@
 'use client';
 
+import type { SubscriptionFaq as SubscriptionFaqItem } from '@/src/sections/subscription/types/subscription';
+
 import { cn } from '@/src/lib/utils';
 import { subscriptionCardClassName } from '@/src/sections/subscription/constants/subscription';
-import type { SubscriptionFaq as SubscriptionFaqItem } from '@/src/sections/subscription/types/subscription';
 
 type SubscriptionFaqProps = {
   items: SubscriptionFaqItem[];

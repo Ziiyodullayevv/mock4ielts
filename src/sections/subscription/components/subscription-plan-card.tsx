@@ -1,14 +1,14 @@
 'use client';
 
-import { Check, Sparkles } from 'lucide-react';
-
-import { Button } from '@/src/components/ui/button';
-import { cn } from '@/src/lib/utils';
-import { subscriptionCardClassName } from '@/src/sections/subscription/constants/subscription';
 import type {
-  SubscriptionPeriod,
   SubscriptionPlan,
+  SubscriptionPeriod,
 } from '@/src/sections/subscription/types/subscription';
+
+import { cn } from '@/src/lib/utils';
+import { Check, Sparkles } from 'lucide-react';
+import { Button } from '@/src/components/ui/button';
+import { subscriptionCardClassName } from '@/src/sections/subscription/constants/subscription';
 
 type SubscriptionPlanCardProps = {
   period: SubscriptionPeriod;

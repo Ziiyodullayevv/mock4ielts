@@ -8,10 +8,7 @@ import { buildLoginHref } from '@/src/auth/utils/return-to';
 import { useRouter, useSearchParams } from '@/src/routes/hooks';
 import { useAuthSession } from '@/src/auth/hooks/use-auth-session';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import {
-  PracticePageState,
-  PracticeCountdownOverlay,
-} from '@/src/sections/practice/components';
+import { PracticePageState, PracticeCountdownOverlay } from '@/src/sections/practice/components';
 import {
   startWritingSectionAttempt,
   submitWritingSectionAttempt,
@@ -43,11 +40,7 @@ export function WritingDetailsView({ sectionId }: WritingDetailsViewProps) {
     data: attemptResult,
     error: attemptResultError,
     isLoading: isAttemptResultLoading,
-  } = useWritingSectionResultQuery(
-    sectionId,
-    attemptId,
-    canLoad && shouldRestoreResult
-  );
+  } = useWritingSectionResultQuery(sectionId, attemptId, canLoad && shouldRestoreResult);
 
   const startAttemptMutation = useMutation({
     mutationFn: startWritingSectionAttempt,
@@ -134,7 +127,9 @@ export function WritingDetailsView({ sectionId }: WritingDetailsViewProps) {
     }
 
     hasAutoStartedRef.current = true;
+
     void beginAttempt();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     attemptId,
     canLoad,

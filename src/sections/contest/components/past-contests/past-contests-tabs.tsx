@@ -1,13 +1,14 @@
 'use client';
 
+import type { PastContestTab } from '../../types';
+
 import { cn } from '@/src/lib/utils';
+
 import {
-  contestSegmentActiveClassName,
   contestSegmentedClassName,
+  contestSegmentActiveClassName,
   contestSegmentInactiveClassName,
 } from '../contest-theme';
-
-import type { PastContestTab } from '../../types';
 
 type PastContestsTabsProps = {
   active: PastContestTab;

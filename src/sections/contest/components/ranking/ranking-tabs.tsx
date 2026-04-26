@@ -1,13 +1,14 @@
 'use client';
 
+import type { RankingTab } from '../../types';
+
 import { cn } from '@/src/lib/utils';
+
 import {
-  contestSegmentActiveClassName,
   contestSegmentedClassName,
+  contestSegmentActiveClassName,
   contestSegmentInactiveClassName,
 } from '../contest-theme';
-
-import type { RankingTab } from '../../types';
 
 type RankingTabsProps = {
   active: RankingTab;

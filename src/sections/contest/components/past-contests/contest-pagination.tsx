@@ -1,8 +1,8 @@
 'use client';
 
+import { cn } from '@/src/lib/utils';
 import { ChevronLeft, ChevronRight, MoreHorizontal } from 'lucide-react';
 
-import { cn } from '@/src/lib/utils';
 import {
   contestButtonClassName,
   contestPrimaryButtonClassName,

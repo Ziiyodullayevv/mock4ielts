@@ -1,10 +1,9 @@
 'use client';
 
-import { BadgePlus, Crown } from 'lucide-react';
-
-import { TokenIcon } from '@/src/components/icons/token-icon';
-import { Avatar, AvatarFallback, AvatarImage } from '@/src/components/ui/avatar';
 import { cn } from '@/src/lib/utils';
+import { Crown, BadgePlus } from 'lucide-react';
+import { TokenIcon } from '@/src/components/icons/token-icon';
+import { Avatar, AvatarImage, AvatarFallback } from '@/src/components/ui/avatar';
 import {
   subscriptionCardClassName,
   subscriptionMutedTextClassName,

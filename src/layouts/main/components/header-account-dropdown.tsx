@@ -10,9 +10,9 @@ import {
   PRACTICE_MENU_PANEL_RING_CLASS,
 } from '@/src/layouts/practice-surface-theme';
 import {
+  Sun,
   Star,
   Moon,
-  Sun,
   LogOut,
   UserRound,
   BadgePlus,
@@ -25,12 +25,12 @@ import {
   DropdownMenuSub,
   DropdownMenuItem,
   DropdownMenuLabel,
-  DropdownMenuCheckboxItem,
   DropdownMenuContent,
   DropdownMenuTrigger,
   DropdownMenuSeparator,
   DropdownMenuSubContent,
   DropdownMenuSubTrigger,
+  DropdownMenuCheckboxItem,
 } from '@/src/components/ui/dropdown-menu';
 
 type ThemeMode = 'dark' | 'light' | 'system';

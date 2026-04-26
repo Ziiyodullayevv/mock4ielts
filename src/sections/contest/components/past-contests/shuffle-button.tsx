@@ -1,7 +1,8 @@
 'use client';
 
-import { Shuffle } from 'lucide-react';
 import { cn } from '@/src/lib/utils';
+import { Shuffle } from 'lucide-react';
+
 import { contestPrimaryButtonClassName } from '../contest-theme';
 
 type ShuffleButtonProps = {

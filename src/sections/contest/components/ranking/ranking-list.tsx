@@ -1,8 +1,9 @@
+import type { RankingUser } from '../../types';
+
 import Link from 'next/link';
 import { cn } from '@/src/lib/utils';
-import { contestInsetCardClassName } from '../contest-theme';
 
-import type { RankingUser } from '../../types';
+import { contestInsetCardClassName } from '../contest-theme';
 
 type RankingListProps = {
   users: RankingUser[];
@@ -32,12 +33,11 @@ function RankingListItem({ user, delayMs }: { user: RankingUser; delayMs: number
         {user.rank}
       </div>
 
-      {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
         src={user.avatarUrl}
         alt={`${user.displayName} avatar`}
         loading="lazy"
-        className="h-7 w-7 shrink-0 rounded-full outline outline-1 -outline-offset-[0.5px] outline-[rgba(226,232,240,0.8)] dark:outline-white/5"
+        className="h-7 w-7 shrink-0 rounded-full outline-1 -outline-offset-[0.5px] outline-[rgba(226,232,240,0.8)] dark:outline-white/5"
       />
 
       <div className="flex min-w-0 flex-1 items-center justify-between overflow-hidden">
@@ -45,9 +45,7 @@ function RankingListItem({ user, delayMs }: { user: RankingUser; delayMs: number
           <div className="line-clamp-1 truncate text-sm font-medium leading-5 text-[#0f172a] dark:text-white">
             {user.displayName}
           </div>
-          {user.countryFlag ? (
-            <div className="flex-none text-sm">{user.countryFlag}</div>
-          ) : null}
+          {user.countryFlag ? <div className="flex-none text-sm">{user.countryFlag}</div> : null}
         </div>
 
         <div className="ml-3 inline-flex h-10 shrink-0 flex-col items-end justify-center text-xs">
@@ -59,9 +57,7 @@ function RankingListItem({ user, delayMs }: { user: RankingUser; delayMs: number
           </div>
           <div className="inline-flex items-center gap-0.5">
             <span className="leading-4 text-[#64748b] dark:text-[#a1a1aa]">Attended:</span>
-            <span className="leading-4 text-[#334155] dark:text-white/80">
-              {user.attended}
-            </span>
+            <span className="leading-4 text-[#334155] dark:text-white/80">{user.attended}</span>
           </div>
         </div>
       </div>

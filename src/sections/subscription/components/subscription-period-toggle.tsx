@@ -1,11 +1,12 @@
 'use client';
 
+import type { SubscriptionPeriod } from '@/src/sections/subscription/types/subscription';
+
 import { cn } from '@/src/lib/utils';
 import {
   SUBSCRIPTION_PERIOD_OPTIONS,
   subscriptionSurfaceClassName,
 } from '@/src/sections/subscription/constants/subscription';
-import type { SubscriptionPeriod } from '@/src/sections/subscription/types/subscription';
 
 type SubscriptionPeriodToggleProps = {
   period: SubscriptionPeriod;

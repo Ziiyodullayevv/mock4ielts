@@ -1,6 +1,7 @@
-import { useRef, useState, type MouseEvent, type ReactNode } from 'react';
-import { motion, useMotionValue, useSpring } from 'motion/react';
 import './TiltedCard.css';
+
+import { motion, useSpring, useMotionValue } from 'motion/react';
+import { useRef, useState, type ReactNode, type MouseEvent } from 'react';
 
 const springValues = {
   damping: 30,

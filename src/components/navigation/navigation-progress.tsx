@@ -1,7 +1,7 @@
 'use client';
 
 import NProgress from 'nprogress';
-import { useEffect, useRef, useCallback } from 'react';
+import { useRef, useEffect, useCallback } from 'react';
 import { usePathname, useSearchParams } from 'next/navigation';
 
 const isModifiedClick = (event: MouseEvent) =>

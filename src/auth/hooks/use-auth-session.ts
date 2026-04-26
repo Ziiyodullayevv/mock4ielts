@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState, useEffect } from 'react';
 import { getAccessToken, AUTH_STATE_CHANGE_EVENT } from '@/src/lib/axios';
 
 export function useAuthSession() {

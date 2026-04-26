@@ -69,7 +69,7 @@ export function PromptContent({
     return promptRoot.offsetParent !== null || promptRoot.getClientRects().length > 0;
   }, []);
 
-  const textByBlock = useMemo(
+  const textByBlock = useMemo<Record<string, string>>(
     () => ({
       instructions: task.instructions,
       'model-answer': task.modelAnswer ?? '',

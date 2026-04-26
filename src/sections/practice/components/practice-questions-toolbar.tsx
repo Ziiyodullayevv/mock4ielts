@@ -3,8 +3,8 @@
 import type { PracticeStatusFilter } from './practice-workspace';
 
 import { cn } from '@/src/lib/utils';
-import { PRACTICE_HEADER_RING_CLASS } from '@/src/layouts/practice-surface-theme';
 import { Check, Funnel, Search, Shuffle } from 'lucide-react';
+import { PRACTICE_HEADER_RING_CLASS } from '@/src/layouts/practice-surface-theme';
 import {
   DropdownMenu,
   DropdownMenuItem,

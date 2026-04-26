@@ -6,11 +6,11 @@ import type {
   PracticeQuestionItem,
 } from '@/src/sections/practice/types';
 
-import { useQueries } from '@tanstack/react-query';
 import { useMemo, useEffect } from 'react';
 import { paths } from '@/src/routes/paths';
-import { endpoints, axiosInstance } from '@/src/lib/axios';
 import { useRouter } from '@/src/routes/hooks';
+import { useQueries } from '@tanstack/react-query';
+import { endpoints, axiosInstance } from '@/src/lib/axios';
 import { buildLoginHref } from '@/src/auth/utils/return-to';
 import { useAuthSession } from '@/src/auth/hooks/use-auth-session';
 import { PracticeWorkspace } from '@/src/sections/practice/components';
@@ -65,7 +65,9 @@ function pickString(...values: unknown[]) {
 }
 
 function pickNumber(...values: unknown[]) {
-  return values.find((value): value is number => typeof value === 'number' && Number.isFinite(value));
+  return values.find(
+    (value): value is number => typeof value === 'number' && Number.isFinite(value)
+  );
 }
 
 function toSkillSectionType(value: unknown): SkillSectionType | null {
@@ -91,8 +93,8 @@ function getPracticeHref(sectionType: SkillSectionType, sectionId: string) {
   }
 }
 
-function countQuestions(partsValue: unknown) {
-  return asArray(partsValue).reduce((total, part) => {
+function countQuestions(partsValue: unknown): number {
+  return asArray(partsValue).reduce<number>((total, part) => {
     const partRecord = asRecord(part);
 
     return total + asArray(partRecord?.questions).length;
@@ -201,7 +203,12 @@ export function FavoritesView() {
         title: item.title,
       })),
     ],
-    [listeningQuery.data?.items, readingQuery.data?.items, speakingQuery.data?.items, writingQuery.data?.items]
+    [
+      listeningQuery.data?.items,
+      readingQuery.data?.items,
+      speakingQuery.data?.items,
+      writingQuery.data?.items,
+    ]
   );
 
   const knownSectionIds = useMemo(
@@ -233,7 +240,8 @@ export function FavoritesView() {
   );
 
   const sectionItemsById = useMemo(
-    () => new Map([...allSectionItems, ...fallbackSectionItems].map((item) => [item.remoteId, item])),
+    () =>
+      new Map([...allSectionItems, ...fallbackSectionItems].map((item) => [item.remoteId, item])),
     [allSectionItems, fallbackSectionItems]
   );
 

@@ -1,4 +1,5 @@
 import type { SubscriptionPeriod } from '@/src/sections/subscription/types/subscription';
+
 import { PRACTICE_MENU_PANEL_RING_CLASS } from '@/src/layouts/practice-surface-theme';
 
 export const DEFAULT_SUBSCRIPTION_PERIOD: SubscriptionPeriod = 'subscription_yearly';

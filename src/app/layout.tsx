@@ -6,11 +6,11 @@ import { Suspense } from 'react';
 import { Geist, Geist_Mono } from 'next/font/google';
 import { Toaster } from '@/src/components/ui/sonner';
 import { CONFIG, getAssetUrl } from '@/src/global-config';
-import { metadataBase, defaultMetadataImage, metadataDomain } from '@/src/lib/metadata';
 import { TooltipProvider } from '@/src/components/ui/tooltip';
 import { QueryProvider } from '@/src/components/providers/query-provider';
 import { ThemeProvider } from '@/src/components/providers/theme-provider';
 import { NavigationProgress } from '@/src/components/navigation/navigation-progress';
+import { metadataBase, metadataDomain, defaultMetadataImage } from '@/src/lib/metadata';
 
 const geistSans = Geist({
   variable: '--font-geist-sans',

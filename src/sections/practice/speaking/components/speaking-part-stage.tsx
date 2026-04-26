@@ -3,14 +3,13 @@
 import type { SpeakingPart, SpeakingQuestion } from '../types';
 
 import { cn } from '@/src/lib/utils';
-import { useRef, useState, useEffect, useCallback } from 'react';
 import { AlertCircle, ChevronRight } from 'lucide-react';
 import { Squircle } from '@/src/components/squircle/squircle';
-
+import { Persona } from '@/src/components/ai-elements/persona';
+import { useRef, useState, useEffect, useCallback } from 'react';
 import { PRACTICE_FOOTER_CARD_RING_CLASS } from '@/src/layouts/practice-surface-theme';
 import { PRACTICE_FOOTER_ACTIVE_BUTTON_CLASS } from '@/src/layouts/practice-footer-theme';
 import { PaperSurface } from '@/src/sections/practice/listening/components/question-types/paper-shell';
-import { Persona } from '@/src/components/ai-elements/persona';
 
 import { SpeakingAvatarRoom } from './speaking-avatar-room';
 

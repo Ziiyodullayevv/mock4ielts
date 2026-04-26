@@ -18,6 +18,10 @@ type RoomStatus = 'connecting' | 'connected' | 'waiting' | 'error';
 
 type DynamicImport = (specifier: string) => Promise<unknown>;
 
+type AudioContextConstructor = new (
+  contextOptions?: AudioContextOptions
+) => AudioContext;
+
 type LiveKitTrackLike = {
   attach: () => Element | Element[];
   detach: () => Element[];
@@ -148,12 +152,12 @@ export function SpeakingAvatarRoom({
   const activeAudioElementRef = useRef<HTMLMediaElement | null>(null);
   const analyserRef = useRef<AnalyserNode | null>(null);
   const audioContextRef = useRef<AudioContext | null>(null);
-  const frequencyDataRef = useRef<Uint8Array | null>(null);
+  const frequencyDataRef = useRef<Uint8Array<ArrayBuffer> | null>(null);
   const sourceNodeRef = useRef<MediaElementAudioSourceNode | null>(null);
   const spectrumFrameRef = useRef<number | null>(null);
   const lastSpectrumEmitRef = useRef(0);
   const microphoneAnalyserRef = useRef<AnalyserNode | null>(null);
-  const microphoneFrequencyDataRef = useRef<Uint8Array | null>(null);
+  const microphoneFrequencyDataRef = useRef<Uint8Array<ArrayBuffer> | null>(null);
   const microphoneSourceNodeRef = useRef<MediaStreamAudioSourceNode | null>(null);
   const microphoneSpectrumFrameRef = useRef<number | null>(null);
   const microphoneStreamRef = useRef<MediaStream | null>(null);
@@ -182,7 +186,10 @@ export function SpeakingAvatarRoom({
     };
 
     const resolveAudioContext = () => {
-      const audioWindow = window as Window & { webkitAudioContext?: typeof AudioContext };
+      const audioWindow = window as Window & {
+        AudioContext?: AudioContextConstructor;
+        webkitAudioContext?: AudioContextConstructor;
+      };
       const AudioContextClass = audioWindow.AudioContext ?? audioWindow.webkitAudioContext;
 
       if (!AudioContextClass) {
@@ -199,7 +206,7 @@ export function SpeakingAvatarRoom({
       return audioContext;
     };
 
-    const buildSpectrum = (values: Uint8Array) => {
+    const buildSpectrum = (values: Uint8Array<ArrayBuffer>) => {
       const bucketSize = values.length / AUDIO_SPECTRUM_BAND_COUNT;
 
       return Array.from({ length: AUDIO_SPECTRUM_BAND_COUNT }, (_, index) => {

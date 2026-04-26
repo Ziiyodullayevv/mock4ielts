@@ -3,8 +3,8 @@
 import type { SpeakingTest } from '@/src/sections/practice/speaking/types';
 
 import React from 'react';
-import { Check, Lock } from 'lucide-react';
 import { cn } from '@/src/lib/utils';
+import { Lock, Check } from 'lucide-react';
 import GradualBlur from '@/src/components/GradualBlur';
 import { PRACTICE_HEADER_RING_CLASS } from '@/src/layouts/practice-surface-theme';
 

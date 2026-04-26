@@ -6,8 +6,8 @@ import { useRef, useMemo, useState, useEffect, useCallback } from 'react';
 
 import { PracticeOverviewCard } from './practice-overview-card';
 import { PracticeQuestionsList } from './practice-questions-list';
-import { PracticeQuestionsListLoading } from './practice-questions-list-loading';
 import { PracticeQuestionsToolbar } from './practice-questions-toolbar';
+import { PracticeQuestionsListLoading } from './practice-questions-list-loading';
 
 export type PracticeStatusFilter = 'all' | 'completed' | 'uncompleted';
 
@@ -34,6 +34,8 @@ export function PracticeWorkspace({
 }: PracticeWorkspaceProps) {
   const [rowsAnimationSeed, setRowsAnimationSeed] = useState(0);
   const [isRowsAnimationActive, setIsRowsAnimationActive] = useState(false);
+  const [openItemHref, setOpenItemHref] = useState<string | null>(null);
+  const [openRequestId, setOpenRequestId] = useState(0);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<PracticeStatusFilter>('all');
   const rowsAnimationTimerRef = useRef<number | null>(null);
@@ -102,16 +104,25 @@ export function PracticeWorkspace({
     });
   }, [questions, searchTerm, statusFilter]);
 
-  const currentQuestionLabel = useMemo(() => {
+  const currentQuestion = useMemo(() => {
     const nextUncompletedQuestion = questions.find((item) => !item.isCompleted);
-    const currentQuestion = nextUncompletedQuestion ?? questions[0];
+    return nextUncompletedQuestion ?? questions[0] ?? null;
+  }, [questions]);
 
+  const currentQuestionLabel = currentQuestion
+    ? `${currentQuestion.id}.${currentQuestion.title}`
+    : null;
+
+  const handleOpenCurrentQuestion = () => {
     if (!currentQuestion) {
-      return null;
+      return;
     }
 
-    return `${currentQuestion.id}.${currentQuestion.title}`;
-  }, [questions]);
+    setSearchTerm('');
+    setStatusFilter('all');
+    setOpenItemHref(currentQuestion.href);
+    setOpenRequestId((currentRequestId) => currentRequestId + 1);
+  };
 
   const isInitialLoading = !errorMessage && isLoading && !questions.length;
 
@@ -121,7 +132,9 @@ export function PracticeWorkspace({
         <div className="grid items-start gap-5 md:grid-cols-[21rem_minmax(0,1fr)] lg:grid-cols-[22.5rem_minmax(0,1fr)] xl:grid-cols-[24rem_minmax(0,1fr)]">
           <PracticeOverviewCard
             className="justify-self-start md:sticky md:top-28 md:self-start"
+            currentQuestion={currentQuestion}
             currentQuestionLabel={currentQuestionLabel}
+            onPracticeClick={handleOpenCurrentQuestion}
             overview={overview}
           />
 
@@ -153,6 +166,8 @@ export function PracticeWorkspace({
                 items={filteredQuestions}
                 animateRows={isRowsAnimationActive}
                 animationSeed={rowsAnimationSeed}
+                openItemHref={openItemHref}
+                openRequestId={openRequestId}
               />
             ) : null}
           </section>

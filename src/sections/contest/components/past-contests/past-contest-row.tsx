@@ -1,11 +1,9 @@
+import type { PastContestEntry } from '../../types';
+
 import Link from 'next/link';
 import { cn } from '@/src/lib/utils';
-import {
-  contestButtonClassName,
-  contestPrimaryButtonClassName,
-} from '../contest-theme';
 
-import type { PastContestEntry } from '../../types';
+import { contestButtonClassName, contestPrimaryButtonClassName } from '../contest-theme';
 
 type PastContestRowProps = {
   entry: PastContestEntry;
@@ -18,7 +16,6 @@ export function PastContestRow({ entry }: PastContestRowProps) {
       className="flex w-full items-center gap-3 rounded-2xl bg-transparent sm:gap-4"
     >
       <div className="flex min-w-0 flex-1 items-center gap-4 lg:w-[346px] lg:flex-none">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src={entry.bannerUrl}
           alt={`${entry.title} banner`}

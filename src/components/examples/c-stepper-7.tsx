@@ -2,20 +2,19 @@
 
 import { useState } from "react"
 import { Badge } from "@/src/components/reui/badge"
+import { Button } from "@/src/components/ui/button"
+import { LockIcon, CheckIcon, BookUserIcon, CreditCardIcon, LoaderCircleIcon } from "lucide-react"
 import {
   Stepper,
-  StepperContent,
-  StepperIndicator,
-  StepperItem,
   StepperNav,
+  StepperItem,
   StepperPanel,
-  StepperSeparator,
   StepperTitle,
+  StepperContent,
   StepperTrigger,
+  StepperIndicator,
+  StepperSeparator,
 } from "@/src/components/reui/stepper"
-
-import { Button } from "@/src/components/ui/button"
-import { BookUserIcon, CreditCardIcon, LockIcon, CheckIcon, LoaderCircleIcon } from "lucide-react"
 
 const steps = [
   {

@@ -1,15 +1,15 @@
 'use client';
 
+import type { RankingTab, RankingUser } from '../../types';
+
 import Link from 'next/link';
 import { useState } from 'react';
 import { cn } from '@/src/lib/utils';
 
-import type { RankingTab, RankingUser } from '../../types';
-import { contestButtonClassName } from '../contest-theme';
-
 import { RankingList } from './ranking-list';
-import { RankingPodium } from './ranking-podium';
 import { RankingTabs } from './ranking-tabs';
+import { RankingPodium } from './ranking-podium';
+import { contestButtonClassName } from '../contest-theme';
 
 type RankingPanelProps = {
   podium: RankingUser[];

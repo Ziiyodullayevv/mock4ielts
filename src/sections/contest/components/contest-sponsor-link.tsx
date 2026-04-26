@@ -1,5 +1,6 @@
-import { HeartHandshake } from 'lucide-react';
 import { cn } from '@/src/lib/utils';
+import { HeartHandshake } from 'lucide-react';
+
 import { contestButtonClassName } from './contest-theme';
 
 export function ContestSponsorLink() {

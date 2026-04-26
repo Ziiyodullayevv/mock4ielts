@@ -2,6 +2,7 @@
 
 import { cn } from '@/src/lib/utils';
 import { AlarmClock } from 'lucide-react';
+
 import { contestIconButtonClassName } from './contest-theme';
 
 type ContestCardFooterProps = {

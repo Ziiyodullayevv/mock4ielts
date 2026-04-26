@@ -1,11 +1,11 @@
 'use client';
 
-import { ArrowRight, BadgePercent, Sparkles } from 'lucide-react';
-
-import { Button } from '@/src/components/ui/button';
-import { cn } from '@/src/lib/utils';
-import { subscriptionMutedTextClassName } from '@/src/sections/subscription/constants/subscription';
 import type { SubscriptionPeriod } from '@/src/sections/subscription/types/subscription';
+
+import { cn } from '@/src/lib/utils';
+import { Button } from '@/src/components/ui/button';
+import { Sparkles, ArrowRight, BadgePercent } from 'lucide-react';
+import { subscriptionMutedTextClassName } from '@/src/sections/subscription/constants/subscription';
 
 type SubscriptionPromoBannerProps = {
   period: SubscriptionPeriod;

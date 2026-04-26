@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 
-import { buildPageMetadata } from '@/src/lib/metadata';
 import { ContestView } from '@/sections/contest/view';
+import { buildPageMetadata } from '@/src/lib/metadata';
 
 export const metadata: Metadata = buildPageMetadata({
   description: 'Enter IELTS-style contests and review performance under pressure.',

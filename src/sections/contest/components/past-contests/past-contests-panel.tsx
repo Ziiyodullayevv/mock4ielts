@@ -1,15 +1,15 @@
 'use client';
 
+import type { PastContestTab, PastContestEntry } from '../../types';
+
 import { useState } from 'react';
 import { cn } from '@/src/lib/utils';
 
-import type { PastContestEntry, PastContestTab } from '../../types';
-import { contestInsetCardClassName, contestPanelClassName } from '../contest-theme';
-
-import { ContestPagination } from './contest-pagination';
+import { ShuffleButton } from './shuffle-button';
 import { PastContestRow } from './past-contest-row';
 import { PastContestsTabs } from './past-contests-tabs';
-import { ShuffleButton } from './shuffle-button';
+import { ContestPagination } from './contest-pagination';
+import { contestPanelClassName, contestInsetCardClassName } from '../contest-theme';
 
 type PastContestsPanelProps = {
   entries: PastContestEntry[];

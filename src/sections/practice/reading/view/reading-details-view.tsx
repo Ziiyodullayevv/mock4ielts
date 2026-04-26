@@ -153,7 +153,9 @@ export function ReadingDetailsView({ sectionId }: ReadingDetailsViewProps) {
     }
 
     hasAutoStartedRef.current = true;
+
     void beginAttempt();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     attemptId,
     canLoadReadingSection,

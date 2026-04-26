@@ -3,8 +3,6 @@ services:
     image: ghcr.io/ziiyodullayevv/mock4ielts:latest
     container_name: mock4ielts
     restart: unless-stopped
-    env_file:
-      - .env
     ports:
       - '127.0.0.1:3000:3000'
     environment:

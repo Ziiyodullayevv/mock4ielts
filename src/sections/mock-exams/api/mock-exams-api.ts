@@ -264,7 +264,7 @@ export async function listMockExams(query?: string): Promise<MockExamListResult>
 
   const root = asRecord(response.data) ?? {};
   const items = getDataArray(response.data)
-    .map((entry) => {
+    .map((entry): MockExamListItem | null => {
       const record = asRecord(entry) ?? {};
       const id = pickString(record.id, record.exam_id, record.examId);
 
@@ -274,6 +274,8 @@ export async function listMockExams(query?: string): Promise<MockExamListResult>
 
       const sections = extractSections(record.sections);
       const sectionCount = getSectionCount(record, sections);
+      const description = pickString(record.description);
+      const examType = pickString(record.exam_type, record.examType);
 
       return {
         attemptCount:
@@ -283,16 +285,16 @@ export async function listMockExams(query?: string): Promise<MockExamListResult>
             record.total_attempts,
             record.totalAttempts
           ) ?? 0,
-        description: pickString(record.description),
         durationMinutes:
           pickNumber(record.duration_minutes, record.durationMinutes) ?? 165,
-        examType: pickString(record.exam_type, record.examType),
+        ...(description ? { description } : {}),
+        ...(examType ? { examType } : {}),
         id,
         sectionCount,
         sections,
         title: pickString(record.title) ?? 'IELTS Mock Exam',
         tokenCost: pickNumber(record.token_cost, record.tokenCost) ?? 10,
-      } satisfies MockExamListItem;
+      };
     })
     .filter((item): item is MockExamListItem => Boolean(item));
 

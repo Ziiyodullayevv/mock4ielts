@@ -1,6 +1,6 @@
 'use client';
 
-import type { PracticeOverview } from '../types';
+import type { PracticeOverview, PracticeQuestionItem } from '../types';
 
 import { useState } from 'react';
 import { cn } from '@/src/lib/utils';
@@ -8,10 +8,14 @@ import { paths } from '@/src/routes/paths';
 import { RiTelegram2Fill } from 'react-icons/ri';
 import { toast } from '@/src/components/ui/sonner';
 import { FaXTwitter, FaLinkedinIn } from 'react-icons/fa6';
+import { buildLoginHref } from '@/src/auth/utils/return-to';
+import { useRouter, usePathname } from '@/src/routes/hooks';
+import { useAuthSession } from '@/src/auth/hooks/use-auth-session';
 import { CircularProgress } from '@/src/components/customized/progress/progress';
 import { PRACTICE_HEADER_RING_CLASS } from '@/src/layouts/practice-surface-theme';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/src/components/ui/tooltip';
 import { Popover, PopoverContent, PopoverTrigger } from '@/src/components/ui/popover';
+import { useFavoriteToggleMutation } from '@/src/sections/practice/hooks/use-favorite-toggle-mutation';
 import {
   Dialog,
   DialogClose,
@@ -40,7 +44,9 @@ import {
 
 type PracticeOverviewCardProps = {
   className?: string;
+  currentQuestion?: PracticeQuestionItem | null;
   currentQuestionLabel?: string | null;
+  onPracticeClick?: () => void;
   overview: PracticeOverview;
 };
 
@@ -223,9 +229,15 @@ function OverviewShareButton({
 
 export function PracticeOverviewCard({
   className,
+  currentQuestion,
   currentQuestionLabel,
+  onPracticeClick,
   overview,
 }: PracticeOverviewCardProps) {
+  const router = useRouter();
+  const pathname = usePathname();
+  const { isAuthenticated } = useAuthSession();
+  const favoriteToggleMutation = useFavoriteToggleMutation();
   const [isProgressOpen, setIsProgressOpen] = useState(false);
   const solvedRatio =
     overview.totalQuestions > 0 ? (overview.totalSolved / overview.totalQuestions) * 100 : 0;
@@ -235,6 +247,7 @@ export function PracticeOverviewCard({
   const sectionType = overview.sectionType ?? 'listening';
   const theme = OVERVIEW_THEME[sectionType];
   const OverviewIcon = theme.Icon;
+  const canSaveCurrentQuestion = Boolean(currentQuestion?.remoteId);
   const summaryText =
     overview.summaryLabel ??
     `${overview.sourceLabel} · ${numberFormatter.format(overview.totalQuestions)} questions`;
@@ -245,6 +258,35 @@ export function PracticeOverviewCard({
     'inline-flex items-center gap-2 rounded-full border border-transparent bg-black font-semibold text-white transition-colors hover:bg-[#111111] dark:bg-white dark:text-black dark:hover:bg-stone-100';
   const cardTooltipClassName =
     'rounded-md border border-black/8 bg-white px-2.5 py-1 text-xs font-medium text-black shadow-[0_10px_24px_rgba(15,23,42,0.12)] dark:border-white/10 dark:bg-[#1f1f1f] dark:text-white dark:shadow-[0_10px_24px_rgba(0,0,0,0.32)]';
+
+  const handleOpenPracticeSheet = () => {
+    if (!currentQuestion) {
+      toast.error('No practice test is available yet.');
+      return;
+    }
+
+    onPracticeClick?.();
+  };
+
+  const handleToggleSave = async () => {
+    if (!currentQuestion?.remoteId) {
+      toast.error('No practice test is selected to save.');
+      return;
+    }
+
+    if (!isAuthenticated) {
+      router.push(buildLoginHref(pathname || currentQuestion.href));
+      return;
+    }
+
+    try {
+      const result = await favoriteToggleMutation.mutateAsync(currentQuestion.remoteId);
+
+      toast.success(result.added ? 'Added to favorites.' : 'Removed from favorites.');
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Unable to update favorites right now.');
+    }
+  };
 
   return (
     <>
@@ -353,6 +395,7 @@ export function PracticeOverviewCard({
                   <TooltipTrigger asChild>
                     <button
                       type="button"
+                      onClick={handleOpenPracticeSheet}
                       className={cn(practiceButtonClassName, 'h-11 px-5 text-[15px]')}
                     >
                       <Play className="size-4 fill-white dark:fill-black" strokeWidth={2.2} />
@@ -372,10 +415,21 @@ export function PracticeOverviewCard({
                   <TooltipTrigger asChild>
                     <button
                       type="button"
+                      onClick={handleToggleSave}
                       className={cn('size-11', iconActionButtonClassName)}
-                      aria-label="Save"
+                      aria-label={currentQuestion?.isStarred ? 'Remove from favorites' : 'Save'}
+                      aria-pressed={currentQuestion?.isStarred}
+                      disabled={!canSaveCurrentQuestion || favoriteToggleMutation.isPending}
                     >
-                      <Star className="size-4" strokeWidth={2} />
+                      <Star
+                        className={cn(
+                          'size-4 transition-all',
+                          currentQuestion?.isStarred
+                            ? 'fill-[#ffc31a] text-[#ffc31a]'
+                            : 'text-current'
+                        )}
+                        strokeWidth={2}
+                      />
                     </button>
                   </TooltipTrigger>
                   <TooltipContent sideOffset={8} className={cardTooltipClassName}>
@@ -450,6 +504,7 @@ export function PracticeOverviewCard({
                   <TooltipTrigger asChild>
                     <button
                       type="button"
+                      onClick={handleOpenPracticeSheet}
                       className={cn(practiceButtonClassName, 'h-10 px-5 text-sm')}
                     >
                       <Play className="size-4 fill-white dark:fill-black" strokeWidth={2.2} />
@@ -469,10 +524,21 @@ export function PracticeOverviewCard({
                   <TooltipTrigger asChild>
                     <button
                       type="button"
+                      onClick={handleToggleSave}
                       className={cn('size-10', iconActionButtonClassName)}
-                      aria-label="Save"
+                      aria-label={currentQuestion?.isStarred ? 'Remove from favorites' : 'Save'}
+                      aria-pressed={currentQuestion?.isStarred}
+                      disabled={!canSaveCurrentQuestion || favoriteToggleMutation.isPending}
                     >
-                      <Star className="size-4" strokeWidth={2} />
+                      <Star
+                        className={cn(
+                          'size-4 transition-all',
+                          currentQuestion?.isStarred
+                            ? 'fill-[#ffc31a] text-[#ffc31a]'
+                            : 'text-current'
+                        )}
+                        strokeWidth={2}
+                      />
                     </button>
                   </TooltipTrigger>
                   <TooltipContent sideOffset={8} className={cardTooltipClassName}>

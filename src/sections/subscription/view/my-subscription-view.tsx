@@ -1,25 +1,24 @@
 'use client';
 
-import { useEffect, useMemo } from 'react';
+import type { SubscriptionPeriod } from '@/src/sections/subscription/types/subscription';
 
+import { useMemo, useEffect } from 'react';
 import { usePathname } from 'next/navigation';
-
 import { buildLoginHref } from '@/src/auth/utils/return-to';
+import { useRouter, useSearchParams } from '@/src/routes/hooks';
 import { useAuthSession } from '@/src/auth/hooks/use-auth-session';
 import { useMyProfileQuery } from '@/src/auth/hooks/use-my-profile-query';
 import { ProfileState } from '@/src/sections/profile/components/profile-state';
-import { useRouter, useSearchParams } from '@/src/routes/hooks';
-import {
-  DEFAULT_SUBSCRIPTION_PERIOD,
-  subscriptionPageBackgroundClassName,
-} from '@/src/sections/subscription/constants/subscription';
 import { SUBSCRIPTION_FAQS } from '@/src/sections/subscription/data/subscription-faqs';
 import { SUBSCRIPTION_PLANS } from '@/src/sections/subscription/data/subscription-plans';
 import { SubscriptionFaq } from '@/src/sections/subscription/components/subscription-faq';
 import { SubscriptionHero } from '@/src/sections/subscription/components/subscription-hero';
-import { SubscriptionPeriodToggle } from '@/src/sections/subscription/components/subscription-period-toggle';
 import { SubscriptionPlanGrid } from '@/src/sections/subscription/components/subscription-plan-grid';
-import type { SubscriptionPeriod } from '@/src/sections/subscription/types/subscription';
+import { SubscriptionPeriodToggle } from '@/src/sections/subscription/components/subscription-period-toggle';
+import {
+  DEFAULT_SUBSCRIPTION_PERIOD,
+  subscriptionPageBackgroundClassName,
+} from '@/src/sections/subscription/constants/subscription';
 
 const getProfileInitials = (fullName?: string | null, email?: string) => {
   const source = fullName?.trim() || email?.trim() || 'A';

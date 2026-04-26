@@ -4,10 +4,10 @@ import type { PracticeSectionType, PracticeQuestionItem } from '../types';
 
 import { cn } from '@/src/lib/utils';
 import { motion } from 'motion/react';
+import { paths } from '@/src/routes/paths';
 import { useState, useEffect } from 'react';
 import { toast } from '@/src/components/ui/sonner';
 import { useRouter, usePathname } from '@/src/routes/hooks';
-import { paths } from '@/src/routes/paths';
 import { buildLoginHref } from '@/src/auth/utils/return-to';
 import { TokenIcon } from '@/src/components/icons/token-icon';
 import { useAuthSession } from '@/src/auth/hooks/use-auth-session';
@@ -34,6 +34,8 @@ type PracticeQuestionRowProps = {
   enableEntranceAnimation?: boolean;
   index: number;
   item: PracticeQuestionItem;
+  openRequestId?: number;
+  shouldOpenInfo?: boolean;
 };
 
 const ATTEMPT_COUNT_FORMATTER = new Intl.NumberFormat('en', {
@@ -224,6 +226,8 @@ export function PracticeQuestionRow({
   enableEntranceAnimation = false,
   index,
   item,
+  openRequestId = 0,
+  shouldOpenInfo = false,
 }: PracticeQuestionRowProps) {
   const router = useRouter();
   const pathname = usePathname();
@@ -262,6 +266,21 @@ export function PracticeQuestionRow({
       void queryClient.invalidateQueries({ queryKey: ['auth', 'me'] });
     },
   });
+
+  useEffect(() => {
+    if (!shouldOpenInfo || openRequestId <= 0) {
+      return;
+    }
+
+    if (sectionType === 'mock-exam') {
+      void handleStartPractice();
+      return;
+    }
+
+    setStartError(null);
+    setIsInfoOpen(true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [openRequestId, shouldOpenInfo]);
 
   useEffect(() => {
     if (countdownValue === null) {

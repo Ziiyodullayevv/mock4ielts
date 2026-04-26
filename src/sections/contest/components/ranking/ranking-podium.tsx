@@ -1,15 +1,18 @@
-import Link from 'next/link';
-
-import { cn } from '@/src/lib/utils';
-import { contestInsetCardClassName } from '../contest-theme';
-
 import type { Medal, RankingUser } from '../../types';
+
+import Link from 'next/link';
+import { cn } from '@/src/lib/utils';
+
+import { contestInsetCardClassName } from '../contest-theme';
 
 type RankingPodiumProps = {
   users: RankingUser[];
 };
 
-const MEDAL_RING: Record<Medal, { ring: string; inner: string; nameColor: string; ratingColor: string }> = {
+const MEDAL_RING: Record<
+  Medal,
+  { ring: string; inner: string; nameColor: string; ratingColor: string }
+> = {
   gold: {
     ring: 'rgb(98, 69, 18)',
     inner: 'rgb(233, 205, 119)',
@@ -86,7 +89,6 @@ function PodiumColumn({ user }: { user: RankingUser }) {
         className="absolute left-0 top-[16.5px] h-20 w-20 rounded-full"
         style={{ backgroundColor: palette.inner }}
       />
-      {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
         src={user.avatarUrl}
         alt={`${user.displayName} avatar`}
@@ -101,7 +103,12 @@ function PodiumColumn({ user }: { user: RankingUser }) {
         )}
       >
         <div className="flex w-full items-center justify-center gap-1 px-1 text-center">
-          <div className={cn('line-clamp-1 truncate py-1 text-xs font-medium leading-none', palette.nameColor)}>
+          <div
+            className={cn(
+              'line-clamp-1 truncate py-1 text-xs font-medium leading-none',
+              palette.nameColor
+            )}
+          >
             {user.displayName}
           </div>
           {user.countryFlag ? (

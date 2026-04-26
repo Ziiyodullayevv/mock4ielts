@@ -5,23 +5,12 @@ import type { SpeakingTest } from '@/src/sections/practice/speaking/types';
 import type { WritingTest, WritingAnswers, WritingTestResult } from '@/src/sections/practice/writing/types';
 import type { TestResult, ListeningTest, Answers as ListeningAnswers } from '@/src/sections/practice/listening/types';
 
+import { cn } from '@/src/lib/utils';
+import { paths } from '@/src/routes/paths';
 import { useQuery } from '@tanstack/react-query';
 import { buildLoginHref } from '@/src/auth/utils/return-to';
 import { useRouter, usePathname } from '@/src/routes/hooks';
-import { paths } from '@/src/routes/paths';
-import { cn } from '@/src/lib/utils';
 import { useAuthSession } from '@/src/auth/hooks/use-auth-session';
-import {
-  X,
-  Mic,
-  Zap,
-  Timer,
-  ArrowLeft,
-  PenTool,
-  BookOpen,
-  Headphones,
-  type LucideIcon,
-} from 'lucide-react';
 import { useRef, useMemo, useState, useEffect, useCallback } from 'react';
 import { computeResult as computeReadingResult } from '@/src/sections/practice/reading/utils';
 import { ReadingTestView } from '@/src/sections/practice/reading/components/reading-test-view';
@@ -42,17 +31,16 @@ import {
 } from '@/src/sections/practice/listening/api/listening-attempt-api';
 import { getListeningSectionDetail } from '@/src/sections/practice/listening/api/get-listening-section-detail';
 import {
-  finishMockExam,
-  getMockExamResult,
-  type MockExamResult,
-  type MockExamSection,
-  submitMockExamSection,
-} from '@/src/sections/mock-exams/api/mock-exams-api';
-import {
-  contestButtonClassName,
-  contestInsetCardClassName,
-  contestPrimaryButtonClassName,
-} from '@/src/sections/contest/components/contest-theme';
+  X,
+  Mic,
+  Zap,
+  Timer,
+  PenTool,
+  BookOpen,
+  ArrowLeft,
+  Headphones,
+  type LucideIcon,
+} from 'lucide-react';
 import {
   Sheet,
   SheetClose,
@@ -61,6 +49,18 @@ import {
   SheetContent,
   SheetDescription,
 } from '@/src/components/ui/sheet';
+import {
+  contestButtonClassName,
+  contestInsetCardClassName,
+  contestPrimaryButtonClassName,
+} from '@/src/sections/contest/components/contest-theme';
+import {
+  finishMockExam,
+  getMockExamResult,
+  type MockExamResult,
+  type MockExamSection,
+  submitMockExamSection,
+} from '@/src/sections/mock-exams/api/mock-exams-api';
 
 type MockExamRunnerPageProps = {
   attemptId: string | null;
@@ -1026,7 +1026,7 @@ export function MockExamRunnerPage({
         }}
         onExit={showOverview}
         showResultDialog={false}
-        test={activeSectionState.data}
+        test={activeSectionState.data as SpeakingTest}
       />
     );
   })();

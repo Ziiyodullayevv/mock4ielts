@@ -6,22 +6,22 @@ import { useRef, useState, useEffect } from 'react';
 import { PRACTICE_HEADER_RING_CLASS } from '@/src/layouts/practice-surface-theme';
 import {
   Select,
-  SelectContent,
   SelectItem,
-  SelectTrigger,
   SelectValue,
+  SelectContent,
+  SelectTrigger,
 } from '@/src/components/ui/select';
 import {
   Mic,
   Play,
   Check,
   Pause,
+  Radio,
   Circle,
   ArrowLeft,
   Headphones,
   LoaderCircle,
   ChevronRight,
-  Radio,
 } from 'lucide-react';
 
 const HEADPHONE_SAMPLE_AUDIO_URL = getAssetUrl('/listening/c57cfedc33f14f49870e978fbe231211.mp3');

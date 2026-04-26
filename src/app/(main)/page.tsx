@@ -1,8 +1,8 @@
 import type { Metadata } from 'next';
 
 import { CONFIG } from '@/src/global-config';
-import { buildPageMetadata } from '@/src/lib/metadata';
 import { HomeView } from '@/src/sections/home/view';
+import { buildPageMetadata } from '@/src/lib/metadata';
 
 // --------------------------------------------------
 

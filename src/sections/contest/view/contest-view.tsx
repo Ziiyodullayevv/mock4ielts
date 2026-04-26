@@ -1,10 +1,10 @@
-import {
-  ContestBottomSection,
-  ContestHeader,
-  ContestList,
-  ContestSponsorLink,
-} from '../components';
 import { CONTESTS, CONTEST_CUP_IMAGE } from '../data';
+import {
+  ContestList,
+  ContestHeader,
+  ContestSponsorLink,
+  ContestBottomSection,
+} from '../components';
 
 export function ContestView() {
   return (

@@ -1,10 +1,11 @@
 'use client';
 
-import { SubscriptionPlanCard } from '@/src/sections/subscription/components/subscription-plan-card';
 import type {
-  SubscriptionPeriod,
   SubscriptionPlan,
+  SubscriptionPeriod,
 } from '@/src/sections/subscription/types/subscription';
+
+import { SubscriptionPlanCard } from '@/src/sections/subscription/components/subscription-plan-card';
 
 type SubscriptionPlanGridProps = {
   period: SubscriptionPeriod;
