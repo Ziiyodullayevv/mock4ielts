@@ -7,15 +7,15 @@ import { MainFooter } from '@/src/layouts/main/footer';
 import { ListeningTestLayout } from '@/src/layouts/listening';
 import { RotateCcw, BarChart3, ArrowLeft } from 'lucide-react';
 import { useRef, useState, useEffect, useCallback } from 'react';
-import { PracticeScoreSummary, PracticeSubmittingOverlay } from '@/src/sections/practice/components';
 import {
-  Dialog,
-  DialogTitle,
-  DialogFooter,
-  DialogHeader,
-  DialogContent,
-  DialogDescription,
-} from '@/src/components/ui/dialog';
+  PracticeTextSizeProvider,
+  PRACTICE_TEXT_SIZE_DEFAULT,
+} from '@/src/sections/practice/shared/practice-text-size';
+import {
+  PracticeScoreSummary,
+  PracticeConfirmDialog,
+  PracticeSubmittingOverlay,
+} from '@/src/sections/practice/components';
 
 import { PartPanel } from './part-panel';
 import { computeResult, getPartQuestions, getListeningQuestionAnchorId } from '../utils';
@@ -59,7 +59,9 @@ function getFirstQuestionId(test: ListeningTest, partNumber: number) {
 function getNextQuestionTarget(test: ListeningTest, currentQuestionId: string) {
   for (const part of test.parts) {
     const questions = getPartQuestions(part);
-    const currentQuestionIndex = questions.findIndex((question) => question.id === currentQuestionId);
+    const currentQuestionIndex = questions.findIndex(
+      (question) => question.id === currentQuestionId
+    );
 
     if (currentQuestionIndex === -1) {
       continue;
@@ -118,6 +120,7 @@ export function ListeningTestView({
   const [result, setResult] = useState<TestResult | null>(initialResult);
   const totalDurationSeconds = getTestDurationSeconds(test);
   const [timeLeftSeconds, setTimeLeftSeconds] = useState(totalDurationSeconds);
+  const [textSize, setTextSize] = useState(PRACTICE_TEXT_SIZE_DEFAULT);
   const currentPart = displayTest.parts.find((part) => part.number === activePart)!;
 
   useEffect(() => {
@@ -208,7 +211,8 @@ export function ListeningTestView({
 
       if (target) {
         setActiveQuestionId(pendingQuestionId);
-        const targetTop = window.scrollY + target.getBoundingClientRect().top - QUESTION_SCROLL_OFFSET;
+        const targetTop =
+          window.scrollY + target.getBoundingClientRect().top - QUESTION_SCROLL_OFFSET;
 
         window.scrollTo({
           top: Math.max(0, targetTop),
@@ -408,7 +412,7 @@ export function ListeningTestView({
   };
 
   const isReview = stage === 'review';
-  const isBackToTestsAction = activePart === 1;
+  const isFirstPart = activePart === 1;
   const isSubmitAction = !isReview && activePart >= displayTest.parts.length;
 
   const openExitDialog = (intent: ExitIntent) => {
@@ -417,13 +421,7 @@ export function ListeningTestView({
   };
 
   const handlePrevAction = () => {
-    if (isBackToTestsAction) {
-      if (isReview) {
-        onBack();
-        return;
-      }
-
-      openExitDialog('button');
+    if (isFirstPart) {
       return;
     }
 
@@ -461,7 +459,7 @@ export function ListeningTestView({
 
   if (stage === 'submitted' && result) {
     return (
-      <div className="flex min-h-screen flex-col bg-black text-white">
+      <div className="flex min-h-screen flex-col bg-background text-foreground transition-colors duration-300">
         <div className="flex-1 px-4 py-8 sm:px-6 lg:px-8">
           <div className="mx-auto max-w-6xl">
             <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -469,7 +467,7 @@ export function ListeningTestView({
                 type="button"
                 variant="black"
                 onClick={onBack}
-                className="h-11 rounded-xl border-transparent bg-white/8 px-4 text-sm font-medium text-white hover:bg-white/12"
+                className="h-11 rounded-xl border-transparent bg-black px-4 text-sm font-medium text-white hover:bg-black/85 dark:bg-white/8 dark:text-white dark:hover:bg-white/12"
               >
                 <ArrowLeft className="size-4" strokeWidth={2.2} />
                 Back to tests
@@ -516,8 +514,9 @@ export function ListeningTestView({
         audioUrl={currentPart.audioUrl}
         answers={answers}
         isPrimaryActionDisabled={isSubmitting}
-        isPrevDisabled={false}
+        isPrevDisabled={isFirstPart}
         isReview={isReview}
+        isSubmitAction={isSubmitAction}
         onLogoClick={handleLogoAction}
         onPartChange={(partNumber) => {
           setActivePart(partNumber);
@@ -530,111 +529,60 @@ export function ListeningTestView({
           setActiveQuestionId(questionId);
           setPendingQuestionId(questionId);
         }}
+        onTextSizeChange={setTextSize}
         primaryActionLabelOverride={isSubmitting ? 'Submitting...' : undefined}
-        prevActionLabel={isBackToTestsAction ? 'Back to tests' : 'Prev'}
+        prevActionLabel="Prev"
         test={displayTest}
+        textSize={textSize}
         timeLeftSeconds={timeLeftSeconds}
       >
-        <div className="mx-auto w-full max-w-[1000px]">
-          <PartPanel
-            activeQuestionId={activeQuestionId}
-            part={currentPart}
-            answers={answers}
-            onChange={handleChange}
-            showAnswer={isReview}
-          />
-        </div>
+        <PracticeTextSizeProvider value={textSize}>
+          <div className="mx-auto w-full max-w-[1000px]">
+            <PartPanel
+              activeQuestionId={activeQuestionId}
+              part={currentPart}
+              answers={answers}
+              onChange={handleChange}
+              showAnswer={isReview}
+            />
+          </div>
+        </PracticeTextSizeProvider>
       </ListeningTestLayout>
 
       {isSubmitting ? <PracticeSubmittingOverlay /> : null}
 
-      <Dialog open={isExitDialogOpen} onOpenChange={setIsExitDialogOpen}>
-        <DialogContent
-          overlayClassName="z-[120] bg-black/58"
-          showCloseButton={false}
-          className="z-[121] border border-white/10 bg-[#111111] text-white sm:max-w-md"
-        >
-          <DialogHeader className="space-y-2 text-left">
-            <DialogTitle className="text-xl font-semibold text-white">
-              Leave this test?
-            </DialogTitle>
-            <DialogDescription className="text-sm leading-7 text-white/68">
-              If you leave now, this listening attempt will not be submitted and your result
-              will not be calculated.
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter className="mt-2 sm:justify-start">
-            <Button
-              type="button"
-              variant="orange"
-              className="rounded-full"
-              onClick={() => {
-                setIsExitDialogOpen(false);
+      <PracticeConfirmDialog
+        open={isExitDialogOpen}
+        onOpenChange={setIsExitDialogOpen}
+        title="Leave this test?"
+        description="If you leave now, this listening attempt will not be submitted and your result will not be calculated."
+        cancelLabel="Stay here"
+        confirmLabel="Leave test"
+        onConfirm={() => {
+          if (exitIntent === 'browser-back') {
+            if (window.history.length > 2) {
+              allowNextBrowserNavigationRef.current = true;
+              window.history.go(-2);
+              return;
+            }
+          }
 
-                if (exitIntent === 'browser-back') {
-                  if (window.history.length > 2) {
-                    allowNextBrowserNavigationRef.current = true;
-                    window.history.go(-2);
-                    return;
-                  }
-                }
+          onBack();
+        }}
+      />
 
-                onBack();
-              }}
-            >
-              Leave test
-            </Button>
-            <Button
-              type="button"
-              variant="black"
-              className="rounded-full border-white/14 bg-white/6 hover:bg-white/10"
-              onClick={() => setIsExitDialogOpen(false)}
-            >
-              Stay here
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      <Dialog open={isSubmitDialogOpen} onOpenChange={setIsSubmitDialogOpen}>
-        <DialogContent
-          overlayClassName="z-[120] bg-black/58"
-          showCloseButton={false}
-          className="z-[121] border border-white/10 bg-[#111111] text-white sm:max-w-md"
-        >
-          <DialogHeader className="space-y-2 text-left">
-            <DialogTitle className="text-xl font-semibold text-white">
-              Submit your answers?
-            </DialogTitle>
-            <DialogDescription className="text-sm leading-7 text-white/68">
-              Your listening answers will be sent for checking and this attempt will be
-              completed. Are you sure you want to submit now?
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter className="mt-2 sm:justify-start">
-            <Button
-              type="button"
-              variant="orange"
-              className="rounded-full"
-              disabled={isSubmitting || !isSubmitAction}
-              onClick={() => {
-                setIsSubmitDialogOpen(false);
-                void handleSubmit();
-              }}
-            >
-              Submit answers
-            </Button>
-            <Button
-              type="button"
-              variant="black"
-              className="rounded-full border-white/14 bg-white/6 hover:bg-white/10"
-              onClick={() => setIsSubmitDialogOpen(false)}
-            >
-              Cancel
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <PracticeConfirmDialog
+        open={isSubmitDialogOpen}
+        onOpenChange={setIsSubmitDialogOpen}
+        title="Submit your answers?"
+        description="Your listening answers will be sent for checking and this attempt will be completed. Are you sure you want to submit now?"
+        cancelLabel="Cancel"
+        confirmLabel="Submit answers"
+        confirmDisabled={isSubmitting || !isSubmitAction}
+        onConfirm={() => {
+          void handleSubmit();
+        }}
+      />
     </>
   );
 }

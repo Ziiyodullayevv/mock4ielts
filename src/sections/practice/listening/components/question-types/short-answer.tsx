@@ -1,9 +1,13 @@
 'use client';
 
 import type { BlankField } from '../../types';
+import type { QuestionTypeAnnotationProps } from './annotation-blocks';
+
+import { usePracticeTextSize, getPracticeTextStyle } from '@/src/sections/practice/shared/practice-text-size';
 
 import { CompletionInput } from './completion-input';
 import { getListeningQuestionAnchorId } from '../../utils';
+import { renderQuestionText, getQuestionAnnotationBlockId } from './annotation-blocks';
 import {
   PaperPanel,
   QuestionNumberBadge,
@@ -11,7 +15,7 @@ import {
   PAPER_DIVIDER_CLASS_NAME,
 } from './paper-shell';
 
-interface Props {
+interface Props extends QuestionTypeAnnotationProps {
   activeQuestionId?: string | null;
   questions: BlankField[];
   answers: Record<string, string>;
@@ -21,11 +25,15 @@ interface Props {
 
 export function ShortAnswer({
   activeQuestionId,
+  annotationBlockIdPrefix,
   questions,
   answers,
   onChange,
+  renderAnnotatedTextBlock,
   showAnswer,
 }: Props) {
+  const textSize = usePracticeTextSize();
+
   return (
     <PaperPanel>
       <div className={PAPER_DIVIDER_CLASS_NAME}>
@@ -37,14 +45,26 @@ export function ShortAnswer({
           >
             <div className="flex items-start gap-3">
               <QuestionNumberBadge isActive={q.id === activeQuestionId} number={q.number} />
-              <p className="min-w-0 flex-1 pt-0.5 text-[1.05rem] leading-9 text-stone-800">
-                {q.label}
-              </p>
+              {renderQuestionText({
+                as: 'p',
+                blockId: getQuestionAnnotationBlockId(
+                  annotationBlockIdPrefix,
+                  'question',
+                  q.id,
+                  'text'
+                ),
+                className: 'min-w-0 flex-1 pt-0.5 text-stone-800 dark:text-white/84',
+                renderAnnotatedTextBlock,
+                style: getPracticeTextStyle(textSize, 'body'),
+                text: q.label,
+              })}
             </div>
             <CompletionInput
+              annotationBlockIdPrefix={annotationBlockIdPrefix}
               field={{ ...q, label: '' }}
               value={answers[q.id] ?? ''}
               onChange={onChange}
+              renderAnnotatedTextBlock={renderAnnotatedTextBlock}
               showAnswer={showAnswer}
             />
           </div>

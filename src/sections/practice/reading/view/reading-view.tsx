@@ -2,7 +2,9 @@
 
 import type { PracticeOverview, PracticeQuestionItem } from '../../types';
 
+import { useAuthSession } from '@/src/auth/hooks/use-auth-session';
 import { PracticeWorkspace } from '@/src/sections/practice/components';
+import { useFavoriteIdsQuery } from '@/src/sections/practice/hooks/use-favorite-ids-query';
 
 import { useReadingSectionsQuery } from '../hooks/use-reading-sections-query';
 
@@ -20,15 +22,18 @@ const DEFAULT_OVERVIEW: PracticeOverview = {
 
 export function ReadingView() {
   const { data, error, isLoading } = useReadingSectionsQuery();
+  const { isAuthenticated } = useAuthSession();
+  const { favoriteIds } = useFavoriteIdsQuery(isAuthenticated);
 
   const questions: PracticeQuestionItem[] = (data?.items ?? []).map((item) => ({
     attemptCount: item.questionCount,
     durationMinutes: item.durationMinutes,
     href: item.href,
     id: item.id,
-    isStarred: false,
+    isStarred: favoriteIds.has(item.remoteId),
     isStartAvailable: true,
     questionCount: item.questionCount,
+    remoteId: item.remoteId,
     sectionType: 'reading',
     tokenCost: undefined,
     title: item.title,

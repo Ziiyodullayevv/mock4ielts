@@ -11,6 +11,11 @@ jobs:
     if: ${{ github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
     env:
+      LIVEKIT_URL: ${{ secrets.LIVEKIT_URL }}
+      LIVEKIT_API_KEY: ${{ secrets.LIVEKIT_API_KEY }}
+      LIVEKIT_API_SECRET: ${{ secrets.LIVEKIT_API_SECRET }}
+      LIVEKIT_AGENT_NAME: ${{ secrets.LIVEKIT_AGENT_NAME }}
+      NEXT_PUBLIC_LIVEKIT_URL: ${{ secrets.NEXT_PUBLIC_LIVEKIT_URL }}
       NEXT_PUBLIC_SERVER_URL: ${{ secrets.NEXT_PUBLIC_SERVER_URL }}
       NEXT_PUBLIC_GOOGLE_CLIENT_ID: ${{ secrets.NEXT_PUBLIC_GOOGLE_CLIENT_ID }}
     steps:
@@ -20,10 +25,15 @@ jobs:
           host: ${{ secrets.VPS_HOST || secrets.SSH_HOST }}
           username: ${{ secrets.VPS_USER || secrets.SSH_USERNAME }}
           key: ${{ secrets.VPS_SSH_KEY || secrets.SSH_PRIVATE_KEY }}
-          envs: NEXT_PUBLIC_SERVER_URL,NEXT_PUBLIC_GOOGLE_CLIENT_ID
+          envs: LIVEKIT_URL,LIVEKIT_API_KEY,LIVEKIT_API_SECRET,LIVEKIT_AGENT_NAME,NEXT_PUBLIC_LIVEKIT_URL,NEXT_PUBLIC_SERVER_URL,NEXT_PUBLIC_GOOGLE_CLIENT_ID
           script: |
             cd /opt/mock4ielts-frontend
             {
+              echo "LIVEKIT_URL=$LIVEKIT_URL"
+              echo "LIVEKIT_API_KEY=$LIVEKIT_API_KEY"
+              echo "LIVEKIT_API_SECRET=$LIVEKIT_API_SECRET"
+              echo "LIVEKIT_AGENT_NAME=$LIVEKIT_AGENT_NAME"
+              echo "NEXT_PUBLIC_LIVEKIT_URL=$NEXT_PUBLIC_LIVEKIT_URL"
               echo "NEXT_PUBLIC_SERVER_URL=$NEXT_PUBLIC_SERVER_URL"
               echo "NEXT_PUBLIC_GOOGLE_CLIENT_ID=$NEXT_PUBLIC_GOOGLE_CLIENT_ID"
             } > .env

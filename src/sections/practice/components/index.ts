@@ -10,4 +10,8 @@ export * from './practice-score-summary';
 
 export * from './practice-questions-list';
 
+export * from './practice-confirm-dialog';
+
 export * from './practice-questions-toolbar';
+
+export * from './practice-questions-list-loading';

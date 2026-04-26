@@ -13,7 +13,7 @@ export function FullscreenToggle() {
       type="button"
       onClick={toggleFullscreen}
       disabled={!isSupported}
-      className="flex size-11 items-center justify-center rounded-full border border-border/30 bg-white shadow-md transition-colors hover:bg-black/5 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-white"
+      className="flex size-11 items-center justify-center rounded-full border border-border/30 bg-white shadow-md transition-colors hover:bg-black/5 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-white dark:border-white/10 dark:bg-white/8 dark:text-white dark:shadow-none dark:hover:bg-white/12 dark:disabled:hover:bg-white/8"
       aria-label={isFullscreen ? 'Exit full screen' : 'Enter full screen'}
       title={isFullscreen ? 'Exit full screen' : 'Enter full screen'}
     >

@@ -1,4 +1,4 @@
-import type { NextRequest} from 'next/server';
+import type { NextRequest } from 'next/server';
 
 import { createHmac } from 'node:crypto';
 import { NextResponse } from 'next/server';
@@ -63,13 +63,14 @@ function buildRoomName(attemptId: string | null) {
 }
 
 async function dispatchAgent(params: {
+  agentName: string;
   apiKey: string;
   apiSecret: string;
   livekitUrl: string;
   metadata: string;
   roomName: string;
 }) {
-  const { apiKey, apiSecret, livekitUrl, metadata, roomName } = params;
+  const { agentName, apiKey, apiSecret, livekitUrl, metadata, roomName } = params;
   const httpUrl = livekitUrl.replace('wss://', 'https://').replace('ws://', 'http://');
   const authToken = createLiveKitJwt({
     apiKey,
@@ -89,7 +90,7 @@ async function dispatchAgent(params: {
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      agentName: '',
+      agentName,
       metadata,
       room: roomName,
     }),
@@ -105,6 +106,7 @@ export async function GET(request: NextRequest) {
   const apiKey = process.env.LIVEKIT_API_KEY;
   const apiSecret = process.env.LIVEKIT_API_SECRET;
   const livekitUrl = process.env.LIVEKIT_URL;
+  const agentName = process.env.LIVEKIT_AGENT_NAME?.trim();
 
   if (!apiKey || !apiSecret || !livekitUrl) {
     return NextResponse.json({ error: 'Server config missing' }, { status: 500 });
@@ -113,6 +115,12 @@ export async function GET(request: NextRequest) {
   const attemptId = request.nextUrl.searchParams.get('attemptId');
   const roomName = buildRoomName(attemptId);
   const participantName = `user-${Math.random().toString(36).slice(2, 7)}`;
+
+  // Public URL for client (browser cannot reach Docker-internal ws://livekit:7880)
+  const publicUrl =
+    process.env.LIVEKIT_WS_URL?.trim() ||
+    process.env.NEXT_PUBLIC_LIVEKIT_URL?.trim() ||
+    livekitUrl;
 
   const jwt = createLiveKitJwt({
     apiKey,
@@ -129,6 +137,7 @@ export async function GET(request: NextRequest) {
 
   try {
     await dispatchAgent({
+      agentName: agentName ?? '',
       apiKey,
       apiSecret,
       livekitUrl,
@@ -142,5 +151,5 @@ export async function GET(request: NextRequest) {
     console.error('Agent dispatch error:', error);
   }
 
-  return NextResponse.json({ room: roomName, token: jwt, url: livekitUrl });
+  return NextResponse.json({ room: roomName, token: jwt, url: publicUrl });
 }

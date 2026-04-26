@@ -9,15 +9,16 @@ const buttonVariants = cva(
     variants: {
       variant: {
         default: "bg-primary text-primary-foreground hover:bg-primary/90",
-        black: "border border-white/10 bg-black text-white hover:bg-black/85",
-        blue: "border border-transparent bg-[#2f5073] text-white shadow-none hover:bg-[#365c86]",
-        orange: "border border-transparent bg-[#ff9f2f] text-black shadow-none hover:bg-[#ffab44]",
+        black:
+          "border border-transparent bg-black text-white shadow-[0_12px_28px_rgba(15,23,42,0.12)] hover:bg-black/88 dark:bg-white dark:text-black dark:hover:bg-white/90 dark:shadow-none",
         destructive:
           "bg-destructive text-white hover:bg-destructive/90 focus-visible:ring-destructive/20 dark:bg-destructive/60 dark:focus-visible:ring-destructive/40",
         outline:
           "border bg-background shadow-xs hover:bg-accent hover:text-accent-foreground dark:border-input dark:bg-input/30 dark:hover:bg-input/50",
         outlined:
-          "border border-white/20 bg-transparent text-white hover:bg-white hover:text-black",
+          "border bg-background shadow-xs hover:bg-accent hover:text-accent-foreground dark:border-input dark:bg-input/30 dark:hover:bg-input/50",
+        orange:
+          "border border-[#ffb347] bg-[linear-gradient(135deg,#ffc85a_0%,#ff9f2f_55%,#ff784b_100%)] text-white shadow-[0_12px_28px_rgba(255,120,75,0.24)] hover:brightness-105 dark:shadow-[0_12px_28px_rgba(255,120,75,0.18)]",
         secondary:
           "bg-secondary text-secondary-foreground hover:bg-secondary/80",
         ghost:

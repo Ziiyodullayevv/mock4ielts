@@ -75,7 +75,7 @@ export function ProfileDateField({
       <DatePacker
         value={value}
         onChange={onChange}
-        className="h-[56px] w-full justify-between rounded-xl border-white/14 bg-white/[0.03] px-4 text-[16px] text-white/92 shadow-none hover:bg-white/[0.05] hover:text-white"
+        className="h-[52px] w-full justify-between rounded-xl border-stone-200 bg-white px-4 text-[15px] text-stone-900 shadow-none hover:bg-stone-50 hover:text-stone-900 dark:border-white/14 dark:bg-white/[0.03] dark:text-white/92 dark:hover:bg-white/[0.05] dark:hover:text-white"
         contentClassName={profileDateDropdownClassName}
       />
     </div>
@@ -100,7 +100,7 @@ export function ProfileCountryField({
         defaultValue={value}
         onChange={onChange}
         placeholder="Select a country"
-        className="h-[56px] rounded-xl border border-white/14 bg-white/[0.03] px-4 text-[16px] text-white/92 shadow-none hover:text-white focus:ring-0"
+        className="h-[52px] rounded-xl border border-stone-200 bg-white px-4 text-[15px] text-stone-900 shadow-none hover:bg-stone-50 hover:text-stone-900 focus:ring-0 dark:border-white/14 dark:bg-white/[0.03] dark:text-white/92 dark:hover:text-white"
         contentClassName={`${profileDropdownSurfaceClassName} [&_[data-slot=command-list]]:max-h-[280px]`}
         commandClassName={profileDropdownCommandClassName}
       />
@@ -117,7 +117,7 @@ export function ProfileGenderField({ onChange, value }: ProfileGenderFieldProps)
   return (
     <div>
       <ProfileFieldLabel required>Gender</ProfileFieldLabel>
-      <div className="flex h-[56px] items-center gap-7">
+      <div className="flex h-[52px] items-center gap-6">
         <ProfileRadioOption
           active={value === 'male'}
           label="Male"
@@ -145,7 +145,7 @@ function ProfileRadioOption({ active, label, onClick }: ProfileRadioOptionProps)
       type="button"
       variant="ghost"
       onClick={onClick}
-      className="h-auto gap-3 px-0 text-white hover:bg-transparent hover:text-white"
+      className="h-auto gap-3 px-0 text-stone-900 hover:bg-transparent hover:text-stone-900 dark:text-white dark:hover:text-white"
     >
       <span
         className={`grid size-[28px] place-items-center rounded-full border transition ${
@@ -156,7 +156,7 @@ function ProfileRadioOption({ active, label, onClick }: ProfileRadioOptionProps)
           className={`size-[11px] rounded-full ${active ? 'bg-[#ff9f2f]' : 'bg-transparent'}`}
         />
       </span>
-      <span className="text-[16px] text-white">{label}</span>
+      <span className="text-[15px] text-stone-900 dark:text-white">{label}</span>
     </Button>
   );
 }
@@ -187,8 +187,8 @@ export function ProfilePhoneField({
         }}
         defaultCountry={country as 'UZ'}
         international={false}
-        countryButtonClassName="h-[56px] rounded-s-xl rounded-e-none border-white/14 bg-white/[0.03] px-3 text-white/92 shadow-none hover:bg-white/[0.05] hover:text-white"
-        inputClassName="h-[56px] rounded-e-xl rounded-s-none border-white/14 bg-white/[0.03] px-4 text-[16px] text-white/92 shadow-none placeholder:text-white/34 focus-visible:border-[#ff9f2f] focus-visible:bg-white/[0.05]"
+        countryButtonClassName="h-[52px] rounded-s-xl rounded-e-none border-stone-200 bg-white px-3 text-stone-900 shadow-none hover:bg-stone-50 hover:text-stone-900 dark:border-white/14 dark:bg-white/[0.03] dark:text-white/92 dark:hover:bg-white/[0.05] dark:hover:text-white"
+        inputClassName="h-[52px] rounded-e-xl rounded-s-none border-stone-200 bg-white px-4 text-[15px] text-stone-900 shadow-none placeholder:text-stone-400 focus-visible:border-[#ff9f2f] focus-visible:bg-white dark:border-white/14 dark:bg-white/[0.03] dark:text-white/92 dark:placeholder:text-white/34 dark:focus-visible:bg-white/[0.05]"
         popoverContentClassName={profileDropdownSurfaceClassName}
         commandClassName={profileDropdownCommandClassName}
         className="w-full"

@@ -1,3 +1,13 @@
+import type { Metadata } from 'next';
+
+import { buildPageMetadata } from '@/src/lib/metadata';
+
+export const metadata: Metadata = buildPageMetadata({
+  description: 'Read how Mock4IELTS collects, uses, and protects your account and learning data.',
+  path: '/privacy',
+  title: 'Privacy Policy',
+});
+
 export default function PrivacyPage() {
   return (
     <section className="mx-auto max-w-4xl px-4 py-24 text-white sm:px-6 md:px-8">

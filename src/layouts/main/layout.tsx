@@ -9,7 +9,7 @@ type MainLayoutProps = {
 
 export function MainLayout({ children }: MainLayoutProps) {
   return (
-    <div className="bg-black text-white w-full mx-auto">
+    <div className="mx-auto w-full bg-background text-foreground transition-colors duration-300 dark:bg-black dark:text-white">
       <Suspense fallback={null}>
         <MainHeader />
       </Suspense>

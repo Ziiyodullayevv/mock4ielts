@@ -4,12 +4,17 @@ import type { PracticeSectionType, PracticeQuestionItem } from '../types';
 
 import { cn } from '@/src/lib/utils';
 import { motion } from 'motion/react';
+import { paths } from '@/src/routes/paths';
 import { useState, useEffect } from 'react';
-import { useRouter } from '@/src/routes/hooks';
+import { toast } from '@/src/components/ui/sonner';
+import { useRouter, usePathname } from '@/src/routes/hooks';
 import { buildLoginHref } from '@/src/auth/utils/return-to';
 import { TokenIcon } from '@/src/components/icons/token-icon';
 import { useAuthSession } from '@/src/auth/hooks/use-auth-session';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { startMockExam } from '@/src/sections/mock-exams/api/mock-exams-api';
+import { PRACTICE_HEADER_RING_CLASS } from '@/src/layouts/practice-surface-theme';
+import { useFavoriteToggleMutation } from '@/src/sections/practice/hooks/use-favorite-toggle-mutation';
 import { startListeningSectionAttempt } from '@/src/sections/practice/listening/api/listening-attempt-api';
 import { getListeningSectionDetail } from '@/src/sections/practice/listening/api/get-listening-section-detail';
 import { X, Mic, Zap, Star, Check, Timer, Files, Circle, PenTool, BookOpen, Headphones, type LucideIcon } from 'lucide-react';
@@ -22,11 +27,15 @@ import {
   SheetDescription,
 } from '@/src/components/ui/sheet';
 
+import { PracticeCountdownOverlay } from './practice-test-state';
+
 type PracticeQuestionRowProps = {
   animationDelayMs?: number;
   enableEntranceAnimation?: boolean;
   index: number;
   item: PracticeQuestionItem;
+  openRequestId?: number;
+  shouldOpenInfo?: boolean;
 };
 
 const ATTEMPT_COUNT_FORMATTER = new Intl.NumberFormat('en', {
@@ -165,8 +174,7 @@ const PRACTICE_SECTION_CONTENT = {
     aboutTitle: 'About Full IELTS Mock Exams',
     description:
       'Full IELTS mock exam details and structure.',
-    emptyStartNotice:
-      'Mock exam list is live, but starting a full IELTS mock is not enabled yet.',
+    emptyStartNotice: null,
     examCoverageItems: [
       'Listening, Reading, Writing, and Speaking are combined into one full IELTS-style exam flow.',
       'The format is designed to simulate full test pacing, stamina, and section transitions.',
@@ -218,10 +226,14 @@ export function PracticeQuestionRow({
   enableEntranceAnimation = false,
   index,
   item,
+  openRequestId = 0,
+  shouldOpenInfo = false,
 }: PracticeQuestionRowProps) {
   const router = useRouter();
+  const pathname = usePathname();
   const queryClient = useQueryClient();
-  const { isAuthenticated } = useAuthSession();
+  const { isAuthenticated, isHydrated } = useAuthSession();
+  const favoriteToggleMutation = useFavoriteToggleMutation();
   const [isInfoOpen, setIsInfoOpen] = useState(false);
   const [countdownValue, setCountdownValue] = useState<number | null>(null);
   const [isAttemptPrepared, setIsAttemptPrepared] = useState(false);
@@ -231,7 +243,7 @@ export function PracticeQuestionRow({
   const isStartAvailable =
     item.isStartAvailable ?? ['listening', 'reading', 'writing', 'speaking'].includes(sectionType);
   const content = PRACTICE_SECTION_CONTENT[sectionType];
-  const hasCardBackground = index % 2 === 0;
+  const hasGradientRow = index % 2 === 0;
   const attemptLabel =
     item.countLabel ??
     (item.questionCount
@@ -239,6 +251,7 @@ export function PracticeQuestionRow({
       : ATTEMPT_COUNT_FORMATTER.format(item.attemptCount).toLowerCase());
   const requiredTokenCount = item.tokenCost ?? 0;
   const StatsIcon = content.statsIcon;
+  const canFavorite = Boolean(item.remoteId);
 
   const startAttemptMutation = useMutation({
     mutationFn: startListeningSectionAttempt,
@@ -246,6 +259,28 @@ export function PracticeQuestionRow({
       void queryClient.invalidateQueries({ queryKey: ['auth', 'me'] });
     },
   });
+
+  const startMockExamMutation = useMutation({
+    mutationFn: startMockExam,
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ['auth', 'me'] });
+    },
+  });
+
+  useEffect(() => {
+    if (!shouldOpenInfo || openRequestId <= 0) {
+      return;
+    }
+
+    if (sectionType === 'mock-exam') {
+      void handleStartPractice();
+      return;
+    }
+
+    setStartError(null);
+    setIsInfoOpen(true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [openRequestId, shouldOpenInfo]);
 
   useEffect(() => {
     if (countdownValue === null) {
@@ -282,8 +317,39 @@ export function PracticeQuestionRow({
       return;
     }
 
+    if (!isHydrated) {
+      return;
+    }
+
     if (!isAuthenticated) {
-      router.push(buildLoginHref(item.href));
+      router.push(buildLoginHref(pathname || item.href));
+      return;
+    }
+
+    if (sectionType === 'mock-exam') {
+      if (!item.examId) {
+        setStartError('Mock exam id is missing for this test.');
+        return;
+      }
+
+      setStartError(null);
+
+      try {
+        const { attemptId } = await startMockExamMutation.mutateAsync(item.examId);
+        const detailsHref = paths.mockExam.details(item.examId);
+        const nextHref = `${detailsHref}?attemptId=${encodeURIComponent(attemptId)}`;
+
+        setIsInfoOpen(false);
+        router.prefetch(detailsHref);
+        router.push(nextHref);
+      } catch (error) {
+        const message =
+          error instanceof Error ? error.message : 'Unable to start this mock exam right now.';
+
+        setStartError(message);
+        toast.error(message);
+      }
+
       return;
     }
 
@@ -329,6 +395,27 @@ export function PracticeQuestionRow({
     }
   };
 
+  const handleToggleFavorite = async () => {
+    if (!item.remoteId) {
+      return;
+    }
+
+    if (!isAuthenticated) {
+      router.push(buildLoginHref(pathname || item.href));
+      return;
+    }
+
+    try {
+      const result = await favoriteToggleMutation.mutateAsync(item.remoteId);
+
+      toast.success(result.added ? 'Added to favorites.' : 'Removed from favorites.');
+    } catch (error) {
+      toast.error(
+        error instanceof Error ? error.message : 'Unable to update favorites right now.'
+      );
+    }
+  };
+
   return (
     <>
       <Sheet open={isInfoOpen} onOpenChange={setIsInfoOpen}>
@@ -344,7 +431,9 @@ export function PracticeQuestionRow({
           <div
             className={cn(
               'group grid min-h-10 grid-cols-[minmax(0,1fr)_3.8rem_3.2rem_2rem] items-center gap-x-2 rounded-xl px-3 py-1.5 text-sm transition-colors sm:grid-cols-[minmax(0,1fr)_4.8rem_4.4rem_2.3rem] sm:gap-x-3 sm:px-3',
-              hasCardBackground ? 'bg-white/8' : 'bg-transparent'
+              hasGradientRow
+                ? `${PRACTICE_HEADER_RING_CLASS} shadow-sm dark:shadow-none dark:after:!bg-[#1e1e1e]`
+                : 'bg-transparent'
             )}
           >
             <div className="flex min-w-0 items-center gap-3">
@@ -352,20 +441,28 @@ export function PracticeQuestionRow({
                 {item.isCompleted ? (
                   <Check className="size-4 text-[#18c458]" strokeWidth={2.3} />
                 ) : (
-                  <Circle className="size-4 text-white/72" strokeWidth={1.9} />
+                  <Circle className="size-4 text-black/42 dark:text-white/72" strokeWidth={1.9} />
                 )}
               </span>
 
               <button
                 type="button"
-                onClick={() => setIsInfoOpen(true)}
-                className="truncate text-left text-sm font-semibold tracking-[-0.02em] text-white/92 transition-colors hover:text-link-active"
+                disabled={sectionType === 'mock-exam' && startMockExamMutation.isPending}
+                onClick={() => {
+                  if (sectionType === 'mock-exam') {
+                    void handleStartPractice();
+                    return;
+                  }
+
+                  setIsInfoOpen(true);
+                }}
+                className="truncate text-left text-sm font-semibold tracking-[-0.02em] text-black/92 transition-[color,filter] group-hover:bg-[linear-gradient(90deg,#f7c66c_0%,#ff9f2f_100%)] group-hover:bg-clip-text group-hover:text-transparent group-hover:brightness-105 hover:bg-[linear-gradient(90deg,#f7c66c_0%,#ff9f2f_100%)] hover:bg-clip-text hover:text-transparent hover:brightness-105 focus-visible:bg-[linear-gradient(90deg,#f7c66c_0%,#ff9f2f_100%)] focus-visible:bg-clip-text focus-visible:text-transparent disabled:cursor-wait disabled:opacity-70 dark:text-white/92"
               >
                 {item.id}. {item.title}
               </button>
             </div>
 
-            <p className="justify-self-start text-sm font-medium tabular-nums text-white/66">
+            <p className="justify-self-start text-sm font-medium tabular-nums text-black/66 dark:text-white/66">
               {attemptLabel}
             </p>
 
@@ -381,17 +478,28 @@ export function PracticeQuestionRow({
             </div>
 
             <div className="justify-self-end">
-              <span className="grid size-7 place-items-center rounded-lg transition-colors group-hover:bg-white/8 sm:size-8">
-                <Star
-                  className={cn(
-                    'size-4 transition-all duration-200',
-                    item.isStarred
-                      ? 'fill-[#ffc31a] text-[#ffc31a]'
-                      : 'text-white/78 group-hover:fill-[#ffc31a] group-hover:text-[#ffc31a]'
-                  )}
-                  strokeWidth={1.95}
-                />
-              </span>
+              {canFavorite ? (
+                <button
+                  type="button"
+                  aria-label={item.isStarred ? 'Remove from favorites' : 'Add to favorites'}
+                  aria-pressed={item.isStarred}
+                  disabled={favoriteToggleMutation.isPending}
+                  onClick={handleToggleFavorite}
+                  className="grid size-7 place-items-center rounded-lg transition-colors hover:bg-[#ededed] disabled:cursor-not-allowed disabled:opacity-65 dark:hover:bg-white/8 sm:size-8"
+                >
+                  <Star
+                    className={cn(
+                      'size-4 transition-all duration-200',
+                      item.isStarred
+                        ? 'fill-[#ffc31a] text-[#ffc31a]'
+                        : 'text-black/54 hover:fill-[#ffc31a] hover:text-[#ffc31a] dark:text-white/78'
+                    )}
+                    strokeWidth={1.95}
+                  />
+                </button>
+              ) : (
+                <span className="block size-7 sm:size-8" aria-hidden="true" />
+              )}
             </div>
           </div>
         </motion.div>
@@ -400,7 +508,7 @@ export function PracticeQuestionRow({
           side="bottom"
           showCloseButton={false}
           overlayClassName="bg-black/55 backdrop-blur-xl data-[state=open]:duration-200 data-[state=closed]:duration-150"
-          className="h-[96vh] rounded-t-2xl border-0 bg-[#141414] p-0 text-white data-[state=open]:duration-200 data-[state=closed]:duration-150 data-[state=open]:fade-in-0 data-[state=closed]:fade-out-0 data-[state=open]:slide-in-from-bottom-2 data-[state=closed]:slide-out-to-bottom-2"
+          className="h-[96vh] rounded-t-2xl border-0 bg-[#f7f7f7] p-0 text-black data-[state=open]:duration-200 data-[state=closed]:duration-150 data-[state=open]:fade-in-0 data-[state=closed]:fade-out-0 data-[state=open]:slide-in-from-bottom-2 data-[state=closed]:slide-out-to-bottom-2 dark:bg-[#141414] dark:text-white"
         >
           <SheetClose className="absolute -top-6 right-6 z-20 inline-flex items-center justify-center text-white/72 transition-all duration-200 ease-out data-[state=closed]:translate-y-1 data-[state=closed]:opacity-0 data-[state=open]:translate-y-0 data-[state=open]:opacity-100 hover:text-white focus:outline-none">
             <X className="size-5" />
@@ -408,10 +516,10 @@ export function PracticeQuestionRow({
           </SheetClose>
 
           <div className="mx-auto h-full w-full max-w-5xl overflow-y-auto px-5 pb-8 pt-0 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:px-8">
-            <SheetHeader className="sticky top-0 z-10 -mx-5 border-b border-white/8 bg-[#141414]/95 px-5 py-4 text-left backdrop-blur-md sm:-mx-8 sm:px-8">
+            <SheetHeader className="sticky top-0 z-10 -mx-5 border-b border-black/8 bg-[#f7f7f7]/95 px-5 py-4 text-left backdrop-blur-md sm:-mx-8 sm:px-8 dark:border-white/8 dark:bg-[#141414]/95">
               <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                 <div className="min-w-0 pr-2">
-                  <SheetTitle className="text-3xl font-semibold tracking-[-0.02em] text-[#ff9f2f] sm:text-4xl">
+                  <SheetTitle className="text-3xl font-semibold tracking-[-0.02em] text-black sm:text-4xl dark:text-[#ff9f2f]">
                     {content.aboutTitle}
                   </SheetTitle>
                   <SheetDescription className="sr-only">{content.description}</SheetDescription>
@@ -420,16 +528,25 @@ export function PracticeQuestionRow({
                 <button
                   type="button"
                   onClick={handleStartPractice}
-                  disabled={startAttemptMutation.isPending || !isStartAvailable}
+                  disabled={
+                    !isHydrated ||
+                    startAttemptMutation.isPending ||
+                    startMockExamMutation.isPending ||
+                    !isStartAvailable
+                  }
                   className={cn(
                     'inline-flex h-10 shrink-0 self-start items-center gap-2 rounded-full px-5 text-sm font-semibold transition-colors sm:self-auto',
                     isStartAvailable
-                      ? 'bg-[#ff9f2f] text-black hover:bg-[#ffab44] disabled:cursor-not-allowed disabled:bg-[#ff9f2f]/70'
-                      : 'cursor-not-allowed bg-white/10 text-white/38'
+                      ? 'bg-black text-white hover:bg-black/88 disabled:cursor-not-allowed disabled:bg-black/70 dark:bg-[#ff9f2f] dark:text-black dark:hover:bg-[#ffab44] dark:disabled:bg-[#ff9f2f]/70'
+                      : 'cursor-not-allowed bg-black/10 text-black/38 dark:bg-white/10 dark:text-white/38'
                   )}
                 >
                   {isStartAvailable
-                    ? startAttemptMutation.isPending
+                    ? sectionType === 'mock-exam'
+                      ? startMockExamMutation.isPending
+                        ? 'Starting...'
+                        : 'Start Practice'
+                      : startAttemptMutation.isPending
                       ? 'Starting...'
                       : 'Start Practice'
                     : 'Coming soon'}
@@ -438,20 +555,20 @@ export function PracticeQuestionRow({
             </SheetHeader>
 
             <div className="space-y-7 py-6 text-sm">
-              <p className="text-sm text-white/70">
+              <p className="text-sm text-black/70 dark:text-white/70">
                 {content.itemLabel} {item.id} - {item.title}
               </p>
 
               <div className="flex flex-wrap items-center gap-2 text-sm">
-                <span className="inline-flex items-center gap-2 rounded-full bg-white/8 px-3 py-1.5 font-medium text-white/95">
-                  <StatsIcon className="size-4 text-[#ff9f2f]" />
+                <span className="inline-flex items-center gap-2 rounded-full bg-[#ededed] px-3 py-1.5 font-medium text-black/95 dark:bg-white/8 dark:text-white/95">
+                  <StatsIcon className="size-4 text-black dark:text-[#ff9f2f]" />
                   {item.statLabel ?? `${item.questionCount ?? 40} Questions`}
                 </span>
-                <span className="inline-flex items-center gap-2 rounded-full bg-white/8 px-3 py-1.5 font-medium text-white/95">
-                  <Timer className="size-4 text-[#ff9f2f]" />
+                <span className="inline-flex items-center gap-2 rounded-full bg-[#ededed] px-3 py-1.5 font-medium text-black/95 dark:bg-white/8 dark:text-white/95">
+                  <Timer className="size-4 text-black dark:text-[#ff9f2f]" />
                   {item.durationMinutes ?? 35} minutes
                 </span>
-                <span className="inline-flex items-center gap-2 rounded-full bg-white/8 px-3 py-1.5 font-medium text-[#0f9cff]">
+                <span className="inline-flex items-center gap-2 rounded-full bg-[#ededed] px-3 py-1.5 font-medium text-black/78 dark:bg-white/8 dark:text-[#0f9cff]">
                   <TokenIcon className="text-[15px]" />
                   {requiredTokenCount > 0
                     ? `${requiredTokenCount} token required`
@@ -459,11 +576,11 @@ export function PracticeQuestionRow({
                 </span>
               </div>
 
-              <div className="rounded-xl bg-white/6 p-4 sm:p-5">
-                <p className="mb-3 text-base font-semibold text-white/95">
+              <div className="rounded-xl bg-[#ededed] p-4 sm:p-5 dark:bg-white/6">
+                <p className="mb-3 text-base font-semibold text-black/95 dark:text-white/95">
                   What this set helps you improve
                 </p>
-                <p className="text-sm leading-7 text-white/78">
+                <p className="text-sm leading-7 text-black/78 dark:text-white/78">
                   {content.improvementCopy}
                 </p>
                 <div className="mt-4 grid gap-2.5 sm:grid-cols-2">
@@ -471,8 +588,8 @@ export function PracticeQuestionRow({
                     const ImprovementIcon = point.icon;
 
                     return (
-                      <div key={point.text} className="inline-flex items-center gap-2 text-white/86">
-                        <ImprovementIcon className="size-4 text-[#ff9f2f]" />
+                      <div key={point.text} className="inline-flex items-center gap-2 text-black/86 dark:text-white/86">
+                        <ImprovementIcon className="size-4 text-black dark:text-[#ff9f2f]" />
                         {point.text}
                       </div>
                     );
@@ -481,23 +598,23 @@ export function PracticeQuestionRow({
               </div>
 
               <div className="space-y-4">
-                <p className="text-base font-semibold text-white/94">
+                <p className="text-base font-semibold text-black/94 dark:text-white/94">
                   {content.examCoverageTitle}
                 </p>
 
-                <ul className="list-disc space-y-4 pl-5 text-sm leading-7 text-white/82 marker:text-[#ff9f2f]">
+                <ul className="list-disc space-y-4 pl-5 text-sm leading-7 text-black/82 marker:text-black dark:text-white/82 dark:marker:text-[#ff9f2f]">
                   {content.examCoverageItems.map((examCoverageItem) => (
                     <li key={examCoverageItem}>{examCoverageItem}</li>
                   ))}
                 </ul>
               </div>
 
-              <div className="rounded-xl bg-white/6 p-4 sm:p-5">
-                <p className="inline-flex items-center gap-2 text-base font-semibold text-white/94">
-                  <Zap className="size-4 text-[#ff9f2f]" />
+              <div className="rounded-xl bg-[#ededed] p-4 sm:p-5 dark:bg-white/6">
+                <p className="inline-flex items-center gap-2 text-base font-semibold text-black/94 dark:text-white/94">
+                  <Zap className="size-4 text-black dark:text-[#ff9f2f]" />
                   Before you start
                 </p>
-                <ul className="mt-3 space-y-2 text-sm leading-7 text-white/78">
+                <ul className="mt-3 space-y-2 text-sm leading-7 text-black/78 dark:text-white/78">
                   {content.tips.map((tip) => (
                     <li key={tip}>{tip}</li>
                   ))}
@@ -510,7 +627,7 @@ export function PracticeQuestionRow({
               </div>
 
               {content.emptyStartNotice ? (
-                <div className="rounded-xl border border-white/10 bg-white/4 px-4 py-3 text-sm text-white/70">
+                <div className="rounded-xl border border-black/10 bg-black/3 px-4 py-3 text-sm text-black/70 dark:border-white/10 dark:bg-white/4 dark:text-white/70">
                   {content.emptyStartNotice}
                 </div>
               ) : null}
@@ -525,13 +642,7 @@ export function PracticeQuestionRow({
         </SheetContent>
       </Sheet>
 
-      {countdownValue !== null ? (
-        <div className="fixed inset-0 z-[120] flex items-center justify-center bg-[#0a0a0a]/96 px-6 text-white backdrop-blur-md">
-          <h2 className="text-5xl font-semibold tracking-[-0.04em] text-white sm:text-7xl">
-            {countdownValue}
-          </h2>
-        </div>
-      ) : null}
+      {countdownValue !== null ? <PracticeCountdownOverlay value={countdownValue} /> : null}
     </>
   );
 }

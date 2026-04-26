@@ -6,7 +6,7 @@ const BANNER_VIDEO = 'https://image01.cf.vidu.studio/vidu/landing-page/banner.5a
 
 export function HomeCreativeBanner() {
   return (
-    <section className="relative isolate overflow-hidden bg-black text-white">
+    <section className="relative isolate overflow-hidden bg-background text-foreground transition-colors duration-300 dark:bg-black dark:text-white">
       <div className="relative h-[420px] w-full overflow-hidden max-md:h-[320px]">
         <Image
           src={BANNER_IMAGE}
@@ -28,10 +28,10 @@ export function HomeCreativeBanner() {
           <source src={BANNER_VIDEO} type="video/mp4" />
         </video>
 
-        <div className="absolute inset-0 bg-black/40" />
+        <div className="absolute inset-0 bg-white/48 dark:bg-black/40" />
 
         <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-6 px-6 text-center">
-          <h2 className="text-[48px] font-medium text-white max-md:text-[32px]">
+          <h2 className="text-[48px] font-medium text-stone-950 max-md:text-[32px] dark:text-white">
             Real IELTS Exam Experience
           </h2>
 
@@ -69,7 +69,7 @@ export function HomeCreativeBanner() {
           </video>
         </div>
 
-        <div className="absolute h-[157px] w-full bg-gradient-to-b from-black to-black/60 backdrop-blur-[10px]" />
+        <div className="absolute h-[157px] w-full bg-gradient-to-b from-white to-white/60 backdrop-blur-[10px] dark:from-black dark:to-black/60" />
       </div>
     </section>
   );

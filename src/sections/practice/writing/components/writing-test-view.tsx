@@ -8,15 +8,10 @@ import { MainFooter } from '@/src/layouts/main/footer';
 import { WritingTestLayout } from '@/src/layouts/writing';
 import { ArrowLeft, BarChart3, RotateCcw } from 'lucide-react';
 import { useRef, useState, useEffect, useCallback } from 'react';
-import { PracticeSubmittingOverlay } from '@/src/sections/practice/components';
 import {
-  Dialog,
-  DialogTitle,
-  DialogFooter,
-  DialogHeader,
-  DialogContent,
-  DialogDescription,
-} from '@/src/components/ui/dialog';
+  PracticeConfirmDialog,
+  PracticeSubmittingOverlay,
+} from '@/src/sections/practice/components';
 
 import { countWords } from '../utils';
 import { WRITING_TEXT_SIZE_DEFAULT } from '../types';
@@ -325,7 +320,7 @@ export function WritingTestView({
         activePart={activePart}
         answers={answers}
         isPrimaryActionDisabled={isSubmitting}
-        isPrevDisabled={false}
+        isPrevDisabled={isBackToTestsAction}
         isReview={isReview}
         onLogoClick={handleLogoAction}
         onPartChange={(partNumber) => setActivePart(partNumber)}
@@ -333,7 +328,7 @@ export function WritingTestView({
         onPrimaryAction={handlePrimaryAction}
         onTextSizeChange={setTextSize}
         primaryActionLabelOverride={isSubmitting ? 'Submitting...' : undefined}
-        prevActionLabel={isBackToTestsAction ? 'Back to tests' : 'Prev'}
+        prevActionLabel="Prev"
         test={test}
         textSize={textSize}
         timeLeftSeconds={timeLeftSeconds}
@@ -351,91 +346,38 @@ export function WritingTestView({
         <PracticeSubmittingOverlay description="Your writing answers are being submitted." />
       ) : null}
 
-      {/* Exit dialog */}
-      <Dialog open={isExitDialogOpen} onOpenChange={setIsExitDialogOpen}>
-        <DialogContent
-          overlayClassName="z-[120] bg-black/58"
-          showCloseButton={false}
-          className="z-121 border border-white/10 bg-[#111111] text-white sm:max-w-md"
-        >
-          <DialogHeader className="space-y-2 text-left">
-            <DialogTitle className="text-xl font-semibold text-white">Leave this test?</DialogTitle>
-            <DialogDescription className="text-sm leading-7 text-white/68">
-              If you leave now, this writing attempt will not be submitted and your response will
-              not be saved.
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter className="mt-2 sm:justify-start">
-            <Button
-              type="button"
-              variant="orange"
-              className="rounded-full"
-              onClick={() => {
-                setIsExitDialogOpen(false);
-                if (exitIntent === 'browser-back') {
-                  if (window.history.length > 2) {
-                    allowNextBrowserNavigationRef.current = true;
-                    window.history.go(-2);
-                    return;
-                  }
-                }
-                onBack();
-              }}
-            >
-              Leave test
-            </Button>
-            <Button
-              type="button"
-              variant="black"
-              className="rounded-full border-white/14 bg-white/6 hover:bg-white/10"
-              onClick={() => setIsExitDialogOpen(false)}
-            >
-              Stay here
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <PracticeConfirmDialog
+        open={isExitDialogOpen}
+        onOpenChange={setIsExitDialogOpen}
+        title="Leave this test?"
+        description="If you leave now, this writing attempt will not be submitted and your response will not be saved."
+        cancelLabel="Stay here"
+        confirmLabel="Leave test"
+        onConfirm={() => {
+          if (exitIntent === 'browser-back') {
+            if (window.history.length > 2) {
+              allowNextBrowserNavigationRef.current = true;
+              window.history.go(-2);
+              return;
+            }
+          }
 
-      {/* Submit dialog */}
-      <Dialog open={isSubmitDialogOpen} onOpenChange={setIsSubmitDialogOpen}>
-        <DialogContent
-          overlayClassName="z-[120] bg-black/58"
-          showCloseButton={false}
-          className="z-121 border border-white/10 bg-[#111111] text-white sm:max-w-md"
-        >
-          <DialogHeader className="space-y-2 text-left">
-            <DialogTitle className="text-xl font-semibold text-white">
-              Submit your essays?
-            </DialogTitle>
-            <DialogDescription className="text-sm leading-7 text-white/68">
-              Your writing responses will be submitted for review. Are you sure you want to submit
-              now?
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter className="mt-2 sm:justify-start">
-            <Button
-              type="button"
-              variant="orange"
-              className="rounded-full"
-              disabled={isSubmitting}
-              onClick={() => {
-                setIsSubmitDialogOpen(false);
-                void handleSubmit();
-              }}
-            >
-              Submit essays
-            </Button>
-            <Button
-              type="button"
-              variant="black"
-              className="rounded-full border-white/14 bg-white/6 hover:bg-white/10"
-              onClick={() => setIsSubmitDialogOpen(false)}
-            >
-              Cancel
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+          onBack();
+        }}
+      />
+
+      <PracticeConfirmDialog
+        open={isSubmitDialogOpen}
+        onOpenChange={setIsSubmitDialogOpen}
+        title="Submit your essays?"
+        description="Your writing responses will be submitted for review. Are you sure you want to submit now?"
+        cancelLabel="Cancel"
+        confirmLabel="Submit essays"
+        confirmDisabled={isSubmitting}
+        onConfirm={() => {
+          void handleSubmit();
+        }}
+      />
     </>
   );
 }

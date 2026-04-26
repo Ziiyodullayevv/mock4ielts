@@ -14,6 +14,7 @@ type RetryableAxiosRequestConfig = InternalAxiosRequestConfig & {
 };
 
 type ApiRecord = Record<string, unknown>;
+type BrowserStorage = Pick<Storage, 'getItem' | 'removeItem' | 'setItem'>;
 
 export const JWT_STORAGE_KEY = 'jwt_access_token';
 export const JWT_REFRESH_KEY = 'jwt_refresh_token';
@@ -22,22 +23,60 @@ export const AUTH_STATE_CHANGE_EVENT = 'mock4ielts-auth-state-change';
 const asRecord = (value: unknown): ApiRecord | null =>
   typeof value === 'object' && value !== null ? (value as ApiRecord) : null;
 
-const getStorageItem = (key: string) => {
+const getLocalStorage = (): BrowserStorage | null => {
   if (typeof window === 'undefined') return null;
 
-  return window.sessionStorage.getItem(key);
+  try {
+    return window.localStorage;
+  } catch {
+    return null;
+  }
+};
+
+const getLegacySessionStorage = (): BrowserStorage | null => {
+  if (typeof window === 'undefined') return null;
+
+  try {
+    return window.sessionStorage;
+  } catch {
+    return null;
+  }
+};
+
+const getStorageItem = (key: string) => {
+  const localStorage = getLocalStorage();
+
+  if (localStorage) {
+    const value = localStorage.getItem(key);
+
+    if (value !== null) {
+      return value;
+    }
+  }
+
+  const legacySessionStorage = getLegacySessionStorage();
+  const legacyValue = legacySessionStorage?.getItem(key) ?? null;
+
+  if (legacyValue !== null && localStorage) {
+    localStorage.setItem(key, legacyValue);
+    legacySessionStorage?.removeItem(key);
+  }
+
+  return legacyValue;
 };
 
 const removeStorageItem = (key: string) => {
-  if (typeof window === 'undefined') return;
-
-  window.sessionStorage.removeItem(key);
+  getLocalStorage()?.removeItem(key);
+  getLegacySessionStorage()?.removeItem(key);
 };
 
 const setStorageItem = (key: string, value: string) => {
-  if (typeof window === 'undefined') return;
+  const localStorage = getLocalStorage();
 
-  window.sessionStorage.setItem(key, value);
+  if (!localStorage) return;
+
+  localStorage.setItem(key, value);
+  getLegacySessionStorage()?.removeItem(key);
 };
 
 const notifyAuthStateChange = () => {
@@ -139,9 +178,22 @@ export const endpoints = {
     verifyOtp: 'auth/verify-otp',
   },
   contests: {},
+  favorites: {
+    list: 'favorites',
+    status: (sectionId: string) => `favorites/${sectionId}/status`,
+    toggle: (sectionId: string) => `favorites/${sectionId}`,
+  },
   files: {},
-  mockExams: {},
+  mockExams: {
+    details: (examId: string) => `mock-exams/${examId}`,
+    finish: (examId: string) => `mock-exams/${examId}/finish`,
+    list: 'mock-exams',
+    result: (examId: string, attemptId: string) => `mock-exams/${examId}/result/${attemptId}`,
+    start: (examId: string) => `mock-exams/${examId}/start`,
+    submitSection: (examId: string) => `mock-exams/${examId}/submit-section`,
+  },
   profile: {
+    avatar: 'users/me/avatar',
     delete: 'users/me',
     me: 'users/me',
     update: 'users/me',

@@ -14,6 +14,18 @@ const asRecord = (value: unknown): ApiRecord | null =>
 const pickString = (...values: unknown[]) =>
   values.find((value): value is string => typeof value === 'string' && value.trim().length > 0);
 
+const getConfiguredPublicLiveKitUrl = () => pickString(process.env.NEXT_PUBLIC_LIVEKIT_URL);
+
+const isLikelyInternalLiveKitUrl = (value: string) => {
+  try {
+    const parsedUrl = new URL(value);
+
+    return ['livekit', 'localhost', '127.0.0.1', '0.0.0.0'].includes(parsedUrl.hostname);
+  } catch {
+    return false;
+  }
+};
+
 const parseAttemptId = (payload: unknown) => {
   const root = asRecord(payload) ?? {};
   const data = asRecord(root.data) ?? root;
@@ -43,7 +55,12 @@ export async function startSpeakingLiveSession({
   const data = asRecord(root.data) ?? root;
   const roomName = pickString(data.room_name, data.roomName, data.room);
   const token = pickString(data.token);
-  const url = pickString(data.url, data.livekit_url, data.livekitUrl);
+  const rawUrl = pickString(data.url, data.livekit_url, data.livekitUrl);
+  const configuredPublicUrl = getConfiguredPublicLiveKitUrl();
+  const url =
+    configuredPublicUrl && (!rawUrl || isLikelyInternalLiveKitUrl(rawUrl))
+      ? configuredPublicUrl
+      : rawUrl;
 
   if (!roomName || !token || !url) {
     throw new Error('Start session response did not include room credentials.');

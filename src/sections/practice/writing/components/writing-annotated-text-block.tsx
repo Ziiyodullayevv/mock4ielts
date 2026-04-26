@@ -1,6 +1,6 @@
 'use client';
 
-import type { CSSProperties, MouseEvent as ReactMouseEvent } from 'react';
+import type { ElementType, CSSProperties, MouseEvent as ReactMouseEvent } from 'react';
 import type {
   TextAnnotation,
   AnnotationColor,
@@ -17,10 +17,12 @@ type TextSegment = {
 };
 
 type AnnotatedTextBlockProps = {
+  as?: ElementType;
   annotations: TextAnnotation[];
   blockId: AnnotationBlockId;
   className?: string;
-  onMouseUp: (event: ReactMouseEvent<HTMLElement>) => void;
+  focusedAnnotationId?: string | null;
+  onMouseUp?: (event: ReactMouseEvent<HTMLElement>) => void;
   style?: CSSProperties;
   text: string;
 };
@@ -65,9 +67,11 @@ function buildTextSegments(text: string, annotations: TextAnnotation[]) {
 }
 
 export function AnnotatedTextBlock({
+  as: Component = 'div',
   annotations,
   blockId,
   className,
+  focusedAnnotationId,
   onMouseUp,
   style,
   text,
@@ -75,7 +79,7 @@ export function AnnotatedTextBlock({
   const segments = useMemo(() => buildTextSegments(text, annotations), [annotations, text]);
 
   return (
-    <div
+    <Component
       data-writing-block-id={blockId}
       onMouseUp={onMouseUp}
       style={style}
@@ -87,10 +91,12 @@ export function AnnotatedTextBlock({
             key={segment.id}
             data-writing-annotation-id={segment.annotation.id}
             className={cn(
-              'rounded-[0.45rem] px-0.5 py-0.5 text-inherit transition-colors',
+              'rounded-[0.45rem] px-0.5 py-0.5 text-inherit transition-[color,box-shadow,background-color] duration-200',
               ANNOTATION_STYLES[segment.annotation.color],
               segment.annotation.note &&
-                'underline decoration-dotted decoration-2 underline-offset-[0.28em]'
+                'underline decoration-dotted decoration-2 underline-offset-[0.28em]',
+              focusedAnnotationId === segment.annotation.id &&
+                'shadow-[0_0_0_2px_rgba(255,179,71,0.6)] dark:shadow-[0_0_0_2px_rgba(255,200,90,0.45)]'
             )}
             title={segment.annotation.note ? 'This highlight has a note' : undefined}
           >
@@ -100,6 +106,6 @@ export function AnnotatedTextBlock({
           <span key={segment.id}>{segment.text}</span>
         )
       )}
-    </div>
+    </Component>
   );
 }

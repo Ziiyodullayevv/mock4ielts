@@ -7,7 +7,7 @@ import { HomeCreativeBanner } from '../home-creative-banner';
 
 export function HomeView() {
   return (
-    <main className="bg-black">
+    <main className="bg-background text-foreground transition-colors duration-300 dark:bg-black dark:text-white">
       <HomeHero />
 
       <HeroShowCase />

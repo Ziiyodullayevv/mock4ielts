@@ -1,9 +1,11 @@
 'use client';
 
 import type { DiagramData } from '../../types';
+import type { QuestionTypeAnnotationProps } from './annotation-blocks';
 
 import { CompletionInput } from './completion-input';
 import { getListeningQuestionAnchorId } from '../../utils';
+import { renderQuestionText, getQuestionAnnotationBlockId } from './annotation-blocks';
 import {
   PaperPanel,
   QuestionNumberBadge,
@@ -11,7 +13,7 @@ import {
   PAPER_DIVIDER_CLASS_NAME,
 } from './paper-shell';
 
-interface Props {
+interface Props extends QuestionTypeAnnotationProps {
   activeQuestionId?: string | null;
   answers: Record<string, string>;
   data: DiagramData;
@@ -21,16 +23,26 @@ interface Props {
 
 export function DiagramCompletion({
   activeQuestionId,
+  annotationBlockIdPrefix,
   answers,
   data,
   onChange,
+  renderAnnotatedTextBlock,
   showAnswer,
 }: Props) {
   return (
     <div className="space-y-6">
-      <PaperPanel title={data.title ?? 'Diagram'}>
+      <PaperPanel
+        title={data.title ?? 'Diagram'}
+        titleContent={renderQuestionText({
+          as: 'span',
+          blockId: getQuestionAnnotationBlockId(annotationBlockIdPrefix, 'title'),
+          renderAnnotatedTextBlock,
+          text: data.title ?? 'Diagram',
+        })}
+      >
         {data.imageUrl ? (
-          <div className="border-b border-[#dfdfdf] bg-white px-5 py-5 sm:px-8 sm:py-8">
+          <div className="border-b border-[#dfdfdf] bg-white px-5 py-5 dark:border-white/10 dark:bg-[#131313] sm:px-8 sm:py-8">
             <img
               src={data.imageUrl}
               alt={data.title ?? 'Diagram completion'}
@@ -52,9 +64,11 @@ export function DiagramCompletion({
                 size="sm"
               />
               <CompletionInput
+                annotationBlockIdPrefix={annotationBlockIdPrefix}
                 field={question}
                 value={answers[question.id] ?? ''}
                 onChange={onChange}
+                renderAnnotatedTextBlock={renderAnnotatedTextBlock}
                 showAnswer={showAnswer}
               />
             </div>

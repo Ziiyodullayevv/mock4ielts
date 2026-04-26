@@ -51,15 +51,15 @@ export function HeroWhy() {
   const mobileTranslateY = -220 * scrollProgress;
 
   return (
-    <section className="my-20 w-full overflow-hidden bg-black text-white">
+    <section className="my-20 w-full overflow-hidden bg-background text-stone-950 transition-colors duration-300 dark:bg-black dark:text-white">
       <div className="mx-auto flex max-w-360 flex-col items-center px-6">
-        <h2 className="text-center text-[48px] font-medium leading-tight max-md:text-[32px]">
+        <h2 className="text-center text-[48px] font-medium leading-tight text-stone-950 max-md:text-[32px] dark:text-white">
           Why MOCK4IELTS?
         </h2>
 
-        <div className="my-4 hidden h-0.5 w-12.5 bg-white/25 max-md:block" />
+        <div className="my-4 hidden h-0.5 w-12.5 bg-stone-300 max-md:block dark:bg-white/25" />
 
-        <p className="mt-3 max-w-190 text-center text-base text-white/65">
+        <p className="mt-3 max-w-190 text-center text-base text-stone-600 dark:text-white/65">
           Mock4IELTS helps you practice smarter with real exam-style questions, full mock tests, and
           progress tracking.
         </p>
@@ -73,7 +73,7 @@ export function HeroWhy() {
               <BenefitCard item={item} />
 
               {index !== benefits.length - 1 && (
-                <div className="mt-6 h-33 w-px bg-white/15 max-md:mt-0 max-md:h-px max-md:w-full" />
+                <div className="mt-6 h-33 w-px bg-stone-200 max-md:mt-0 max-md:h-px max-md:w-full dark:bg-white/15" />
               )}
             </div>
           ))}
@@ -81,7 +81,7 @@ export function HeroWhy() {
       </div>
 
       <div ref={gallerySectionRef} className="relative mt-10 w-full overflow-hidden">
-        <div className="pointer-events-none absolute inset-x-0 top-0 z-20 h-24 bg-linear-to-b from-black via-black/95 to-transparent max-md:h-16" />
+        <div className="pointer-events-none absolute inset-x-0 top-0 z-20 h-24 bg-linear-to-b from-background via-background/95 to-transparent max-md:h-16 dark:from-black dark:via-black/95" />
 
         <div className="flex justify-center" style={{ perspective: '900px' }}>
           <div className="max-w-none max-md:relative max-md:left-1/2 max-md:w-[calc(100%+3rem)] max-md:-translate-x-1/2" style={{ transform: 'rotateX(28deg)' }}>

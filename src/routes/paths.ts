@@ -3,8 +3,14 @@ const ROOTS = {
 };
 
 export const paths = {
+  favorites: {
+    root: '/favorites',
+  },
   profile: {
     root: '/my-profile',
+  },
+  subscription: {
+    root: '/my-subscription',
   },
   practice: {
     listening: {
@@ -25,6 +31,7 @@ export const paths = {
     },
   },
   mockExam: {
+    details: (examId: string) => `/mock-exams/${examId}`,
     root: '/mock-exams',
   },
   contest: {

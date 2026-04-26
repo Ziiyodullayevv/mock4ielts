@@ -1,6 +1,7 @@
 import type { SpeakingPart } from '../types';
 
 import { cn } from '@/src/lib/utils';
+import { PRACTICE_FOOTER_CARD_RING_CLASS } from '@/src/layouts/practice-surface-theme';
 
 type SpeakingPartOutlineProps = {
   anchorId?: string;
@@ -17,10 +18,9 @@ export function SpeakingPartOutline({
     <article
       id={anchorId}
       className={cn(
-        'scroll-mt-28 rounded-[24px] border bg-white p-4 shadow-[0_20px_45px_rgba(15,23,42,0.05)] transition-shadow sm:p-5',
-        isActive
-          ? 'border-[#149174]/35 shadow-[0_22px_55px_rgba(20,145,116,0.12)]'
-          : 'border-stone-200'
+        'scroll-mt-28 rounded-[24px] p-4 shadow-[0_4px_24px_rgba(15,23,42,0.05)] transition-shadow sm:p-5',
+        PRACTICE_FOOTER_CARD_RING_CLASS,
+        isActive && 'shadow-[0_22px_55px_rgba(20,145,116,0.10)]'
       )}
     >
       <div className="flex flex-wrap items-start justify-between gap-3">

@@ -1,3 +1,13 @@
+import type { Metadata } from 'next';
+
+import { buildPageMetadata } from '@/src/lib/metadata';
+
+export const metadata: Metadata = buildPageMetadata({
+  description: 'Review the terms for using Mock4IELTS practice content, mock exams, and account features.',
+  path: '/terms',
+  title: 'Terms of Use',
+});
+
 export default function TermsPage() {
   return (
     <section className="mx-auto max-w-4xl px-4 py-24 text-white sm:px-6 md:px-8">
