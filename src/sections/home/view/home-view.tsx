@@ -1,24 +1,18 @@
-import { HeroWhy } from '../hero-why';
 import { HomeHero } from '../home-hero';
-import { FAQSection } from '../home-faqs';
-import { HeroShowCase } from '../hero-show-case';
-import { HomeCommunity } from '../home-community';
-import { HomeCreativeBanner } from '../home-creative-banner';
+import { HomeStaticFooter } from '../home-static-footer';
+import { HomeStaticHeader } from '../home-static-header';
+import { HomeDeferredSections } from '../home-deferred-sections';
 
 export function HomeView() {
   return (
     <main className="bg-background text-foreground transition-colors duration-300 dark:bg-black dark:text-white">
+      <HomeStaticHeader />
+
       <HomeHero />
 
-      <HeroShowCase />
+      <HomeDeferredSections />
 
-      <HeroWhy />
-
-      <HomeCommunity />
-
-      <FAQSection />
-
-      <HomeCreativeBanner />
+      <HomeStaticFooter />
     </main>
   );
 }

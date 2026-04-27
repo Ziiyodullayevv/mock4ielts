@@ -4,8 +4,8 @@ import type { Swiper as SwiperType } from 'swiper';
 import type { ReferenceVideoSlide } from '../../types';
 
 import { useRef, useState } from 'react';
+import { Keyboard } from 'swiper/modules';
 import { Swiper, SwiperSlide } from 'swiper/react';
-import { Autoplay, Keyboard } from 'swiper/modules';
 
 import { VideoCard } from './video-card';
 import { CarouselArrow } from './carousel-arrow';
@@ -25,13 +25,8 @@ export function ReferenceCarousel({ slides }: ReferenceCarouselProps) {
         speed={700}
         slidesPerView={1}
         spaceBetween={20}
-        autoplay={{
-          delay: 5500,
-          disableOnInteraction: false,
-          pauseOnMouseEnter: true,
-        }}
         keyboard={{ enabled: true }}
-        modules={[Autoplay, Keyboard]}
+        modules={[Keyboard]}
         grabCursor
         allowTouchMove
         onSwiper={(swiper) => {

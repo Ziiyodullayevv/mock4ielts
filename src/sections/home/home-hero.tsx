@@ -8,7 +8,7 @@ import { Button } from '@/src/components/ui/button';
 
 import { HERO_SLIDES } from './data/hero-slides.data';
 
-const AUTOPLAY_DELAY_MS = 3600;
+const AUTOPLAY_DELAY_MS = 4200;
 const VISIBLE_THUMB_DISTANCE = 2;
 const THUMB_SPACING = 50;
 
@@ -33,71 +33,79 @@ function getCircularOffset(index: number, activeIndex: number, totalSlides: numb
 
 export function HomeHero() {
   const [activeSlide, setActiveSlide] = useState(0);
-  const videoRefs = useRef<Array<HTMLVideoElement | null>>([]);
+  const [isDesktopViewport, setIsDesktopViewport] = useState(false);
+  const videoRef = useRef<HTMLVideoElement | null>(null);
+  const firstHeroSlide = HERO_SLIDES[0];
+  const activeHeroSlide = isDesktopViewport ? HERO_SLIDES[activeSlide] : firstHeroSlide;
 
   useEffect(() => {
+    const mediaQuery = window.matchMedia('(min-width: 1024px)');
+
+    const updateViewportMode = () => setIsDesktopViewport(mediaQuery.matches);
+
+    updateViewportMode();
+    mediaQuery.addEventListener('change', updateViewportMode);
+
+    return () => mediaQuery.removeEventListener('change', updateViewportMode);
+  }, []);
+
+  useEffect(() => {
+    if (!isDesktopViewport) return undefined;
+
     const timeoutId = window.setTimeout(() => {
       setActiveSlide((prevSlide) => (prevSlide + 1) % HERO_SLIDES.length);
     }, AUTOPLAY_DELAY_MS);
 
     return () => window.clearTimeout(timeoutId);
-  }, [activeSlide]);
+  }, [activeSlide, isDesktopViewport]);
 
   useEffect(() => {
-    videoRefs.current.forEach((videoElement, index) => {
-      if (!videoElement) return;
+    if (!isDesktopViewport || !videoRef.current) return;
 
-      if (index === activeSlide) {
-        videoElement.currentTime = 0;
-        void videoElement.play().catch(() => undefined);
-      } else {
-        videoElement.pause();
-      }
-    });
-  }, [activeSlide]);
+    videoRef.current.currentTime = 0;
+    void videoRef.current.play().catch(() => undefined);
+  }, [activeSlide, isDesktopViewport]);
 
   return (
-    <section className="relative h-[660px] w-full overflow-hidden bg-black text-white lg:h-screen lg:min-h-155">
-      <div className="absolute inset-0">
-        {HERO_SLIDES.map((slide, index) => {
-          const isActive = index === activeSlide;
+    <section className="relative h-[660px] w-full overflow-hidden bg-[#111] text-white lg:h-screen lg:min-h-155">
+      <div className="absolute -inset-2">
+        <Image
+          src={firstHeroSlide.optimizedPoster}
+          alt="Hero poster"
+          fill
+          priority
+          fetchPriority="high"
+          sizes="100vw"
+          unoptimized
+          className="object-cover object-center lg:hidden"
+        />
 
-          return (
-            <div
-              key={slide.id}
-              className={`absolute inset-0 transition-opacity duration-700 ease-out ${isActive ? 'opacity-100' : 'opacity-0'}`}
-              aria-hidden={!isActive}
-            >
-              <Image
-                src={slide.poster}
-                alt="Hero poster"
-                fill
-                priority={index === 0}
-                sizes="100vw"
-                className="object-cover"
-              />
+        <div className="absolute inset-0 hidden lg:block">
+          <Image
+            src={activeHeroSlide.optimizedPoster}
+            alt="Hero poster"
+            fill
+            priority
+            fetchPriority="high"
+            sizes="100vw"
+            unoptimized
+            className="object-cover object-center"
+          />
 
-              <video
-                ref={(element) => {
-                  videoRefs.current[index] = element;
-                }}
-                className={`absolute inset-0 h-full w-full object-cover transition-opacity duration-700 ease-out ${isActive ? 'opacity-100' : 'opacity-0'}`}
-                autoPlay
-                loop
-                muted
-                playsInline
-                poster={slide.poster}
-                preload={isActive ? 'auto' : 'metadata'}
-                onCanPlay={() => {
-                  if (!isActive) return;
-                  void videoRefs.current[index]?.play().catch(() => undefined);
-                }}
-              >
-                <source src={slide.video} type="video/mp4" />
-              </video>
-            </div>
-          );
-        })}
+          <video
+            key={activeHeroSlide.video}
+            ref={videoRef}
+            className="absolute inset-0 h-full w-full object-cover object-center"
+            autoPlay
+            loop
+            muted
+            playsInline
+            poster={activeHeroSlide.optimizedPoster}
+            preload="metadata"
+          >
+            <source src={activeHeroSlide.video} type="video/mp4" />
+          </video>
+        </div>
       </div>
 
       <div className="absolute inset-0 lg:bg-[linear-gradient(180deg,rgba(0,0,0,0.14)_0%,rgba(0,0,0,0.04)_34%,rgba(0,0,0,0.24)_100%)]" />
@@ -132,7 +140,7 @@ export function HomeHero() {
         <div className="mt-10 flex w-full max-w-4xl items-center gap-3 rounded-full border border-white/20 bg-white/14 p-1.5 pl-3 shadow-lg backdrop-blur-sm">
           <div className="relative size-7 ml-2 shrink-0 overflow-hidden  rounded-sm">
             <Image
-              src={HERO_SLIDES[activeSlide].poster}
+              src={activeHeroSlide.optimizedPoster}
               alt="Current prompt"
               fill
               className="object-cover"
@@ -142,7 +150,7 @@ export function HomeHero() {
           <div className="h-4 bg-white w-px" />
 
           <p className="line-clamp-1 flex-1 text-left text-shadow-sm text-white/90 text-base">
-            {HERO_SLIDES[activeSlide].prompt}
+            {activeHeroSlide.prompt}
           </p>
 
           <Button asChild className="h-11 rounded-full px-5 text-sm font-semibold" variant="black">
@@ -175,13 +183,14 @@ export function HomeHero() {
                 width: `${size}px`,
                 zIndex: 20 - distance,
               }}
-              className="absolute left-1/2 shadow-lg rounded-lg -translate-x-1/2 -translate-y-1/2 overflow-hidden transition-all duration-500 ease-out"
+              className="absolute left-1/2 overflow-hidden rounded-lg shadow-lg -translate-x-1/2 -translate-y-1/2 transition-all duration-500 ease-out"
             >
               <Image
-                src={slide.poster}
+                src={slide.optimizedPoster}
                 alt="Slide thumbnail"
                 fill
                 sizes="64px"
+                unoptimized
                 className={`object-cover transition-transform duration-500 ${isActive ? 'scale-100' : 'scale-95'}`}
               />
             </button>

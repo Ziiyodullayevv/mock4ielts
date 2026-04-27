@@ -30,16 +30,48 @@ const NOTIFICATION_ITEMS = [
 ];
 
 type HeaderNotificationDropdownProps = {
+  isGlass?: boolean;
   isHomePage?: boolean;
+  isLoading?: boolean;
 };
 
 export function HeaderNotificationDropdown({
+  isGlass = false,
   isHomePage = false,
+  isLoading = false,
 }: HeaderNotificationDropdownProps) {
   const unreadCount = 6;
-  const badgeClassName = isHomePage
+  const badgeClassName = isHomePage || isGlass
     ? 'absolute -right-0.5 -top-0.5 z-20 grid size-[1.35rem] place-items-center rounded-full bg-[#ff502d] text-[10px] font-semibold leading-none text-white ring-2 ring-[#1f2730] pointer-events-none'
     : 'absolute -right-0.5 -top-0.5 z-20 grid size-[1.35rem] place-items-center rounded-full bg-[#ff502d] text-[10px] font-semibold leading-none text-white ring-2 ring-white pointer-events-none dark:ring-[#141414]';
+
+  if (isLoading) {
+    return (
+      <div className="relative size-10 shrink-0">
+        <div
+          className={cn(
+            'relative flex size-full items-center justify-center rounded-full shadow-[0_8px_18px_rgba(15,23,42,0.08),0_2px_8px_rgba(15,23,42,0.04)] dark:shadow-none',
+            isGlass
+              ? 'border-0 bg-white/10 backdrop-blur-2xl'
+              : [PRACTICE_HEADER_RING_CLASS, isHomePage ? 'after:!bg-[#141414]' : 'dark:after:bg-[#1a1a1a]']
+          )}
+        >
+          <div
+            className={cn(
+              'h-5 w-4 rounded-full animate-pulse',
+              isHomePage || isGlass ? 'bg-white/12' : 'bg-black/8 dark:bg-white/10'
+            )}
+          />
+        </div>
+        <span
+          className={cn(
+            'absolute -right-0.5 -top-0.5 z-20 size-[1.35rem] rounded-full animate-pulse bg-[#ff502d]',
+            isHomePage || isGlass ? 'ring-2 ring-[#1f2730]' : 'ring-2 ring-white dark:ring-[#141414]'
+          )}
+        />
+      </div>
+    );
+  }
 
   return (
     <DropdownMenu>
@@ -49,10 +81,11 @@ export function HeaderNotificationDropdown({
             type="button"
             className={cn(
               'relative flex size-full items-center justify-center rounded-full shadow-[0_8px_18px_rgba(15,23,42,0.08),0_2px_8px_rgba(15,23,42,0.04)] transition-colors dark:shadow-none',
-              PRACTICE_HEADER_RING_CLASS,
-              isHomePage
+              isGlass
+                ? 'border-0 bg-white/10 text-white/92 backdrop-blur-2xl hover:bg-white/16'
+                : [PRACTICE_HEADER_RING_CLASS, isHomePage
                 ? 'text-white/85 after:!bg-[#141414] hover:after:!bg-[#1a1a1a]'
-                : 'text-black/85 hover:after:bg-stone-100 dark:text-white/85 dark:hover:after:bg-[#1a1a1a]'
+                : 'text-black/85 hover:after:bg-stone-100 dark:text-white/85 dark:hover:after:bg-[#1a1a1a]']
             )}
             aria-label="Open notifications"
           >

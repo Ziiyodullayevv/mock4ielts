@@ -39,6 +39,7 @@ type HeaderAccountDropdownProps = {
   avatar?: string | null;
   email?: string;
   fullName?: string | null;
+  isGlass?: boolean;
   isLoading?: boolean;
   isLoggingOut?: boolean;
   onLogout: () => Promise<void> | void;
@@ -65,6 +66,7 @@ export function HeaderAccountDropdown({
   avatar,
   email,
   fullName,
+  isGlass = false,
   isLoading = false,
   isLoggingOut = false,
   onLogout,
@@ -78,7 +80,14 @@ export function HeaderAccountDropdown({
 
   if (isLoading) {
     return (
-      <div className="size-10 rounded-full border border-transparent bg-[#eef1f5] shadow-[0_10px_24px_rgba(15,23,42,0.08)] animate-pulse dark:bg-[#1f2730] dark:shadow-none" />
+      <div
+        className={cn(
+          'size-10 rounded-full shadow-[0_10px_24px_rgba(15,23,42,0.08)] animate-pulse dark:shadow-none',
+          isGlass
+            ? 'border-0 bg-white/10 backdrop-blur-2xl'
+            : 'border border-transparent bg-[#eef1f5] dark:bg-[#1f2730]'
+        )}
+      />
     );
   }
 
@@ -90,10 +99,17 @@ export function HeaderAccountDropdown({
           aria-label="Open account menu"
           className={cn(
             'relative flex size-10 items-center justify-center rounded-full shadow-[0_8px_18px_rgba(15,23,42,0.08),0_2px_8px_rgba(15,23,42,0.04)] transition-colors hover:after:bg-stone-100 dark:shadow-none dark:hover:after:bg-[#1a1a1a]',
-            PRACTICE_HEADER_RING_CLASS
+            isGlass
+              ? 'border-0 bg-transparent shadow-none backdrop-blur-none hover:bg-transparent'
+              : PRACTICE_HEADER_RING_CLASS
           )}
         >
-          <Avatar className="size-[38px] border border-transparent bg-[#1e1e1e] shadow-none">
+          <Avatar
+            className={cn(
+              'border border-transparent bg-[#1e1e1e] shadow-none',
+              isGlass ? 'size-10' : 'size-[38px]'
+            )}
+          >
             <AvatarImage src={avatar ?? undefined} alt={fullName || email || 'Profile'} />
             <AvatarFallback className="border border-transparent bg-[#1e1e1e] text-[1rem] font-medium leading-none text-white shadow-none">
               {fallback}
