@@ -21,9 +21,13 @@ import { HeaderNotificationDropdown } from './header-notification-dropdown';
 
 type HeaderAuthActionsProps = {
   isHomePage?: boolean;
+  variant?: 'default' | 'homeGlass';
 };
 
-export function HeaderAuthActions({ isHomePage = false }: HeaderAuthActionsProps) {
+export function HeaderAuthActions({
+  isHomePage = false,
+  variant = 'default',
+}: HeaderAuthActionsProps) {
   const router = useRouter();
   const queryClient = useQueryClient();
   const pathname = usePathname();
@@ -33,7 +37,14 @@ export function HeaderAuthActions({ isHomePage = false }: HeaderAuthActionsProps
   const { data: profile, isLoading: isProfileLoading } = useMyProfileQuery(isAuthenticated);
   const currentReturnTo = `${pathname}${searchParams.toString() ? `?${searchParams.toString()}` : ''}`;
   const signInHref = buildLoginHref(currentReturnTo);
-  const skeletonSurfaceClass = isHomePage ? 'bg-white/10' : 'bg-black/8 dark:bg-white/10';
+  const isHomeGlass = variant === 'homeGlass';
+  const skeletonSurfaceClass = isHomePage || isHomeGlass ? 'bg-white/10' : 'bg-black/8 dark:bg-white/10';
+  const skeletonRingClass = cn(
+    'shadow-[0_8px_18px_rgba(15,23,42,0.08),0_2px_8px_rgba(15,23,42,0.04)] dark:shadow-none',
+    isHomeGlass
+      ? 'border-0 bg-white/10 backdrop-blur-2xl'
+      : [PRACTICE_HEADER_RING_CLASS, isHomePage ? 'after:!bg-[#141414]' : 'dark:after:bg-[#1a1a1a]']
+  );
 
   const handleLogout = async () => {
     try {
@@ -49,7 +60,17 @@ export function HeaderAuthActions({ isHomePage = false }: HeaderAuthActionsProps
     return (
       <div className="flex items-center gap-2.5">
         <div className="hidden h-10 items-center gap-2.5 lg:flex">
-          <div className={cn('h-10 w-[220px] rounded-full animate-pulse', skeletonSurfaceClass)} />
+          <div
+            className={cn(
+              'inline-flex h-10 w-[220px] items-center gap-3 rounded-full px-3.5',
+              skeletonRingClass
+            )}
+          >
+            <div className={cn('size-5 rounded-full animate-pulse', skeletonSurfaceClass)} />
+            <div className={cn('h-5 w-14 rounded-full animate-pulse', skeletonSurfaceClass)} />
+            <div className={cn('h-5 w-px shrink-0', skeletonSurfaceClass)} />
+            <div className={cn('h-5 w-24 rounded-full animate-pulse', skeletonSurfaceClass)} />
+          </div>
         </div>
         <div className="flex items-center gap-2.5">
           <div className="sm:hidden">
@@ -59,8 +80,8 @@ export function HeaderAuthActions({ isHomePage = false }: HeaderAuthActionsProps
             </div>
           </div>
         </div>
-        <div className={cn('size-10 rounded-full animate-pulse', skeletonSurfaceClass)} />
-        <div className={cn('size-10 rounded-full animate-pulse', skeletonSurfaceClass)} />
+        <HeaderNotificationDropdown isGlass={isHomeGlass} isHomePage={isHomePage} isLoading />
+        <div className={cn('size-10 rounded-full animate-pulse', skeletonRingClass)} />
       </div>
     );
   }
@@ -103,18 +124,26 @@ export function HeaderAuthActions({ isHomePage = false }: HeaderAuthActionsProps
     <>
       <div className="hidden h-10 items-center gap-2.5 sm:flex">
         {isProfileLoading ? (
-          <div className="flex h-10 items-center gap-2.5">
-            <div className="size-5 rounded-full bg-black/8 animate-pulse dark:bg-white/10" />
-            <div className="h-5 w-14 rounded-full bg-black/8 animate-pulse dark:bg-white/10" />
+          <div
+            className={cn(
+              'inline-flex h-10 w-[220px] items-center gap-3 rounded-full px-3.5',
+              skeletonRingClass
+            )}
+          >
+            <div className={cn('size-5 rounded-full animate-pulse', skeletonSurfaceClass)} />
+            <div className={cn('h-5 w-14 rounded-full animate-pulse', skeletonSurfaceClass)} />
+            <div className={cn('h-5 w-px shrink-0', skeletonSurfaceClass)} />
+            <div className={cn('h-5 w-24 rounded-full animate-pulse', skeletonSurfaceClass)} />
           </div>
         ) : (
           <div
             className={cn(
               'inline-flex h-10 items-center gap-3 rounded-full px-3.5 text-sm font-semibold shadow-[0_8px_18px_rgba(15,23,42,0.08),0_2px_8px_rgba(15,23,42,0.04)] dark:shadow-none',
-              PRACTICE_HEADER_RING_CLASS,
-              isHomePage
+              isHomeGlass
+                ? 'border-0 bg-white/10 text-white/92 backdrop-blur-2xl'
+                : [PRACTICE_HEADER_RING_CLASS, isHomePage
                 ? 'text-white/85 after:!bg-[#141414]'
-                : 'text-black/85 dark:text-white/85'
+                : 'text-black/85 dark:text-white/85']
             )}
           >
             <TokenIcon className="size-5 shrink-0 text-[#ffb347]" />
@@ -124,7 +153,7 @@ export function HeaderAuthActions({ isHomePage = false }: HeaderAuthActionsProps
             <span
               className={cn(
                 'h-5 w-px shrink-0',
-                isHomePage ? 'bg-white/16' : 'bg-stone-300 dark:bg-white/12'
+                isHomePage || isHomeGlass ? 'bg-white/20' : 'bg-stone-300 dark:bg-white/12'
               )}
             />
             <span className="bg-[linear-gradient(90deg,#f7c66c_0%,#ff9f2f_100%)] bg-clip-text text-[16px] tracking-[-0.03em] text-transparent">
@@ -134,11 +163,16 @@ export function HeaderAuthActions({ isHomePage = false }: HeaderAuthActionsProps
         )}
       </div>
 
-      <HeaderNotificationDropdown isHomePage={isHomePage} />
+      <HeaderNotificationDropdown
+        isGlass={isHomeGlass}
+        isHomePage={isHomePage}
+        isLoading={isProfileLoading}
+      />
       <HeaderAccountDropdown
         avatar={profile?.avatar}
         email={profile?.email}
         fullName={profile?.fullName}
+        isGlass={isHomeGlass}
         isLoading={isProfileLoading}
         isLoggingOut={logoutMutation.isPending}
         onLogout={handleLogout}

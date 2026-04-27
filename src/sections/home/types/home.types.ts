@@ -11,7 +11,7 @@ export type CommunityImageItem = {
 
 export type HeroSlide = {
   id: number;
-  poster: string;
+  optimizedPoster: string;
   prompt: string;
   video: string;
 };

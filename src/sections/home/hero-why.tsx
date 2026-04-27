@@ -1,23 +1,28 @@
 'use client';
 
 import Image from 'next/image';
-import { useRef, useState, useEffect } from 'react';
+import { useRef, useEffect } from 'react';
 
 import { BenefitCard } from './components/why';
 import { benefits, galleryImages } from './data';
 
-const tiledImages = [...galleryImages, ...galleryImages];
+const GALLERY_TILE_COUNT = 60;
+const tiledImages = Array.from(
+  { length: GALLERY_TILE_COUNT },
+  (_, index) => galleryImages[index % galleryImages.length]
+);
 
 export function HeroWhy() {
   const gallerySectionRef = useRef<HTMLDivElement | null>(null);
-  const [scrollProgress, setScrollProgress] = useState(0);
+  const galleryGridRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     let rafId = 0;
 
     const updateProgress = () => {
       const element = gallerySectionRef.current;
-      if (!element) return;
+      const gridElement = galleryGridRef.current;
+      if (!element || !gridElement) return;
 
       const rect = element.getBoundingClientRect();
       const viewportHeight = window.innerHeight;
@@ -27,8 +32,9 @@ export function HeroWhy() {
 
       const rawProgress = (start - rect.top) / (start - end);
       const clampedProgress = Math.max(0, Math.min(1, rawProgress));
+      const translateY = (window.innerWidth < 768 ? -220 : -700) * clampedProgress;
 
-      setScrollProgress(clampedProgress);
+      gridElement.style.transform = `translate3d(0, ${translateY}px, 0)`;
     };
 
     const onScroll = () => {
@@ -46,9 +52,6 @@ export function HeroWhy() {
       window.removeEventListener('resize', onScroll);
     };
   }, []);
-
-  const desktopTranslateY = -700 * scrollProgress;
-  const mobileTranslateY = -220 * scrollProgress;
 
   return (
     <section className="my-20 w-full overflow-hidden bg-background text-stone-950 transition-colors duration-300 dark:bg-black dark:text-white">
@@ -83,17 +86,20 @@ export function HeroWhy() {
       <div ref={gallerySectionRef} className="relative mt-10 w-full overflow-hidden">
         <div className="pointer-events-none absolute inset-x-0 top-0 z-20 h-24 bg-linear-to-b from-background via-background/95 to-transparent max-md:h-16 dark:from-black dark:via-black/95" />
 
-        <div className="flex justify-center" style={{ perspective: '900px' }}>
-          <div className="max-w-none max-md:relative max-md:left-1/2 max-md:w-[calc(100%+3rem)] max-md:-translate-x-1/2" style={{ transform: 'rotateX(28deg)' }}>
+        <div className="relative w-full" style={{ perspective: '1200px' }}>
+          <div
+            className="relative left-1/2 w-[108vw] min-w-[72rem] max-w-none max-lg:w-[124vw] max-lg:min-w-[48rem] max-md:w-[136vw] max-md:min-w-[34rem]"
+            style={{
+              transform: 'translateX(-50%) rotateX(22deg)',
+              transformOrigin: 'center top',
+            }}
+          >
             <div className="relative h-135 overflow-hidden max-md:h-64">
               <div
-                className="grid grid-cols-5 justify-items-center gap-5 px-6 pb-10 transition-transform duration-75 ease-out max-md:grid-cols-3 max-md:gap-2 max-md:px-3"
+                ref={galleryGridRef}
+                className="grid w-full grid-cols-5 justify-items-stretch gap-4 px-0 pb-10 transition-transform duration-75 ease-out max-lg:grid-cols-4 max-md:grid-cols-3 max-md:gap-2"
                 style={{
-                  transform: `translate3d(0, ${
-                    typeof window !== 'undefined' && window.innerWidth < 768
-                      ? mobileTranslateY
-                      : desktopTranslateY
-                  }px, 0)`,
+                  transform: 'translate3d(0, 0, 0)',
                   willChange: 'transform',
                 }}
               >
@@ -105,7 +111,7 @@ export function HeroWhy() {
                     width={300}
                     height={180}
                     unoptimized
-                    className="aspect-[1.58/1] h-50 w-70 object-cover opacity-90 transition-transform duration-300 max-md:h-32 max-md:w-46"
+                    className="aspect-[1.58/1] h-50 w-full object-cover opacity-90 transition-transform duration-300 max-md:h-32"
                   />
                 ))}
               </div>
