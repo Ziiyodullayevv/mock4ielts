@@ -1,13 +1,14 @@
 services:
   app:
-    build:
-      context: .
-      args:
-        NEXT_PUBLIC_LIVEKIT_URL: ${NEXT_PUBLIC_LIVEKIT_URL:-}
-        NEXT_PUBLIC_SERVER_URL: ${NEXT_PUBLIC_SERVER_URL:-}
-        NEXT_PUBLIC_ASSETS_DIR: ${NEXT_PUBLIC_ASSETS_DIR:-}
-        NEXT_PUBLIC_GOOGLE_CLIENT_ID: ${NEXT_PUBLIC_GOOGLE_CLIENT_ID:-}
-        NEXT_PUBLIC_SPEAKING_USE_LOCAL_TOKEN_ROUTE: ${NEXT_PUBLIC_SPEAKING_USE_LOCAL_TOKEN_ROUTE:-}
+    # build:
+    #   context: .
+    #   args:
+    #     NEXT_PUBLIC_LIVEKIT_URL: ${NEXT_PUBLIC_LIVEKIT_URL:-}
+    #     NEXT_PUBLIC_SERVER_URL: ${NEXT_PUBLIC_SERVER_URL:-}
+    #     NEXT_PUBLIC_ASSETS_DIR: ${NEXT_PUBLIC_ASSETS_DIR:-}
+    #     NEXT_PUBLIC_GOOGLE_CLIENT_ID: ${NEXT_PUBLIC_GOOGLE_CLIENT_ID:-}
+    #     NEXT_PUBLIC_SPEAKING_USE_LOCAL_TOKEN_ROUTE: ${NEXT_PUBLIC_SPEAKING_USE_LOCAL_TOKEN_ROUTE:-}
+    image: ghcr.io/ziiyodullayevv/mock4ielts:latest
     container_name: mock4ielts
     restart: unless-stopped
     ports:
