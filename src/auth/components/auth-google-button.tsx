@@ -158,7 +158,7 @@ export function AuthGoogleButton({
         onPointerDownCapture={() => setIsPressed(true)}
         onPointerUpCapture={() => setIsPressed(false)}
         onPointerCancelCapture={() => setIsPressed(false)}
-        onPointerLeaveCapture={() => setIsPressed(false)}
+        onPointerLeave={() => setIsPressed(false)}
       >
         <button
           type="button"

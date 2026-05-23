@@ -183,22 +183,23 @@ export async function getMySectionStatistics(): Promise<MySectionStatisticsItem[
   const response = await axiosInstance.get(endpoints.statistics.sections);
 
   return getDataArray(response.data)
-    .map((entry) => {
+    .flatMap((entry) => {
       const record = asRecord(entry) ?? {};
       const section = toSectionKey(record.section);
 
       if (!section) {
-        return null;
+        return [];
       }
 
-      return {
+      const item: MySectionStatisticsItem = {
         averageBand: toBandNumber(record.average_band) ?? null,
         lastPracticedAt: pickString(record.last_practiced_at) ?? null,
         section,
         solvedCount: toCount(record.solved_count),
       };
-    })
-    .filter((value): value is MySectionStatisticsItem => value !== null);
+
+      return [item];
+    });
 }
 
 export async function getMyExamStatistics(): Promise<MyExamStatistics> {
