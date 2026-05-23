@@ -3,7 +3,7 @@
 import type { Swiper as SwiperType } from 'swiper';
 import type { ReferenceVideoSlide } from '../../types';
 
-import { useRef, useState } from 'react';
+import { useRef } from 'react';
 import { Keyboard } from 'swiper/modules';
 import { Swiper, SwiperSlide } from 'swiper/react';
 
@@ -15,7 +15,6 @@ type ReferenceCarouselProps = {
 };
 
 export function ReferenceCarousel({ slides }: ReferenceCarouselProps) {
-  const [activeIndex, setActiveIndex] = useState(0);
   const swiperRef = useRef<SwiperType | null>(null);
 
   return (
@@ -32,14 +31,11 @@ export function ReferenceCarousel({ slides }: ReferenceCarouselProps) {
         onSwiper={(swiper) => {
           swiperRef.current = swiper;
         }}
-        onSlideChange={(swiper) => {
-          setActiveIndex(swiper.realIndex);
-        }}
         className="reference-carousel__swiper overflow-hidden"
       >
-        {slides.map((slide, index) => (
+        {slides.map((slide) => (
           <SwiperSlide key={slide.id} className="px-0">
-            <VideoCard isActive={index === activeIndex} slide={slide} />
+            <VideoCard slide={slide} />
           </SwiperSlide>
         ))}
       </Swiper>
