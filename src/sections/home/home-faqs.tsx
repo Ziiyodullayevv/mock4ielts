@@ -46,7 +46,10 @@ export function FAQSection() {
   };
 
   return (
-    <section className="relative mx-auto my-16 flex max-w-280 flex-col gap-10 px-4 sm:px-6 lg:my-20 lg:flex-row lg:gap-20">
+    <section
+      id="help-center"
+      className="relative mx-auto my-16 flex max-w-280 flex-col gap-10 px-4 sm:px-6 lg:my-20 lg:flex-row lg:gap-20"
+    >
       <div className="flex flex-col">
         <h2 className="max-w-sm text-[34px] font-medium leading-[1.2] text-stone-950 sm:text-[42px] lg:text-[48px] dark:text-white">
           Frequently Asked Questions

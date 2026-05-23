@@ -5,7 +5,6 @@ import type { PracticeTextSize } from '@/src/sections/practice/shared/practice-t
 import { cn } from '@/src/lib/utils';
 import { RotateCcw } from 'lucide-react';
 import { Slider as SliderPrimitive } from 'radix-ui';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/src/components/ui/tooltip';
 import {
   PRACTICE_TEXT_SIZE_MAX,
   PRACTICE_TEXT_SIZE_MIN,
@@ -18,21 +17,30 @@ type PracticeTextSizeSliderProps = {
   menuOpen: boolean;
   onTextSizeChange: (textSize: PracticeTextSize) => void;
   textSize: PracticeTextSize;
+  variant?: 'card' | 'bare';
 };
 
 export function PracticeTextSizeSlider({
   menuOpen,
   onTextSizeChange,
   textSize,
+  variant = 'card',
 }: PracticeTextSizeSliderProps) {
   const activeSize = getPracticeTextSizeIndex(textSize);
   const totalSteps = PRACTICE_TEXT_SIZE_MAX - PRACTICE_TEXT_SIZE_MIN;
   const activePercent =
     totalSteps > 0 ? ((activeSize - PRACTICE_TEXT_SIZE_MIN) / totalSteps) * 100 : 0;
+  const isBare = variant === 'bare';
 
   return (
-    <div className="px-0.5 pb-0.5">
-      <div className="rounded-xl bg-stone-50 px-2.5 py-2.5 dark:bg-white/4">
+    <div className={cn(isBare ? '' : 'px-0.5 pb-0.5')}>
+      <div
+        className={cn(
+          isBare
+            ? 'px-2.5 pt-1.5 pb-2.5'
+            : 'rounded-2xl bg-stone-50 px-3 py-3 dark:bg-white/4'
+        )}
+      >
         <button
           type="button"
           aria-label="Reset text size"
@@ -64,6 +72,17 @@ export function PracticeTextSizeSlider({
 
         <div className="pt-5">
           <div className="relative">
+            {menuOpen ? (
+              <div
+                className="pointer-events-none absolute z-20 -translate-x-1/2"
+                style={{ left: `${activePercent}%`, top: '-2.55rem' }}
+              >
+                <div className="relative rounded-xl bg-[#1f2632] px-2 py-0.75 text-[11px] font-semibold text-white shadow-[0_10px_20px_rgba(15,23,42,0.2)] after:absolute after:left-1/2 after:top-full after:block after:size-1.5 after:-translate-x-1/2 after:-translate-y-0.5 after:rotate-45 after:rounded-[2px] after:bg-[#1f2632] after:content-[''] dark:bg-[#0f1114] dark:shadow-none dark:after:bg-[#0f1114]">
+                  {activeSize}px
+                </div>
+              </div>
+            ) : null}
+
             <SliderPrimitive.Root
               value={[activeSize]}
               min={PRACTICE_TEXT_SIZE_MIN}
@@ -104,20 +123,7 @@ export function PracticeTextSizeSlider({
                 <SliderPrimitive.Range className="absolute h-full bg-linear-to-r from-[#58d790] to-[#149174]" />
               </SliderPrimitive.Track>
 
-              <Tooltip open={menuOpen}>
-                <TooltipTrigger asChild>
-                  <SliderPrimitive.Thumb className="relative z-10 block size-4.5 shrink-0 rounded-full border-[3px] border-white bg-[#eff3f7] shadow-[0_5px_12px_rgba(148,163,184,0.32)] outline-none" />
-                </TooltipTrigger>
-                <TooltipContent
-                  side="top"
-                  align="center"
-                  sideOffset={12}
-                  avoidCollisions={false}
-                  className="relative rounded-xl bg-[#1f2632] px-2 py-0.75 text-[11px] font-semibold text-white shadow-[0_10px_20px_rgba(15,23,42,0.2)] after:absolute after:left-1/2 after:top-full after:block after:size-1.5 after:-translate-x-1/2 after:-translate-y-0.5 after:rotate-45 after:rounded-[2px] after:bg-[#1f2632] after:content-[''] dark:bg-[#0f1114] dark:shadow-none dark:after:bg-[#0f1114]"
-                >
-                  {activeSize}px
-                </TooltipContent>
-              </Tooltip>
+              <SliderPrimitive.Thumb className="relative z-10 block size-4.5 shrink-0 rounded-full border-[3px] border-white bg-[#eff3f7] shadow-[0_5px_12px_rgba(148,163,184,0.32)] outline-none" />
             </SliderPrimitive.Root>
           </div>
         </div>

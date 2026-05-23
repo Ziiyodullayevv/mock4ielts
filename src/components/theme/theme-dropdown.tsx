@@ -5,7 +5,7 @@ import type { LucideIcon } from 'lucide-react';
 import { cn } from '@/src/lib/utils';
 import { useTheme } from 'next-themes';
 import { useState, useEffect } from 'react';
-import { MoonStar, SunMedium, MonitorCog } from 'lucide-react';
+import { SunMoon, MoonStar, SunMedium } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuItem,
@@ -58,7 +58,7 @@ const THEME_OPTIONS: Array<{
   },
   {
     description: 'Match your device settings',
-    icon: MonitorCog,
+    icon: SunMoon,
     label: 'System',
     value: 'system',
   },
@@ -196,7 +196,7 @@ export function ThemeDropdown({
 }: ThemeDropdownProps) {
   const { activeTheme, resolvedTheme } = useMountedTheme();
   const ResolvedTriggerIcon =
-    activeTheme === 'system' ? MonitorCog : resolvedTheme === 'dark' ? MoonStar : SunMedium;
+    activeTheme === 'system' ? SunMoon : resolvedTheme === 'dark' ? MoonStar : SunMedium;
   const TriggerIcon = CustomTriggerIcon ?? ResolvedTriggerIcon;
 
   return (

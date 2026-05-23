@@ -5,6 +5,7 @@ import type { SubscriptionPeriod } from '@/src/sections/subscription/types/subsc
 import { useMemo, useEffect } from 'react';
 import { usePathname } from 'next/navigation';
 import { buildLoginHref } from '@/src/auth/utils/return-to';
+import { LoadingScreen } from '@/src/components/loading-screen';
 import { useRouter, useSearchParams } from '@/src/routes/hooks';
 import { useAuthSession } from '@/src/auth/hooks/use-auth-session';
 import { useMyProfileQuery } from '@/src/auth/hooks/use-my-profile-query';
@@ -92,15 +93,15 @@ export function MySubscriptionView() {
   }, [profile]);
 
   if (!isHydrated) {
-    return <ProfileState label="Loading your subscription..." />;
+    return <LoadingScreen />;
   }
 
   if (!isAuthenticated) {
-    return <ProfileState label="Redirecting to login..." />;
+    return <LoadingScreen />;
   }
 
   if (isLoading && !profile) {
-    return <ProfileState label="Loading your subscription..." />;
+    return <LoadingScreen />;
   }
 
   if (error instanceof Error && !profile) {

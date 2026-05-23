@@ -24,6 +24,8 @@ export type ReferenceVideoItem = {
 
 export type ReferenceVideoSlide = {
   id: string;
+  mediaScale?: number;
+  mediaPosition?: string;
   poster: string;
   previewVideo: string;
   previewVideoAlt: string;

@@ -14,10 +14,11 @@ import {
   Star,
   Moon,
   LogOut,
+  SunMoon,
   UserRound,
   BadgePlus,
   CircleHelp,
-  MonitorCog,
+  ChartColumn,
   MessageCircleMore,
 } from 'lucide-react';
 import {
@@ -76,13 +77,13 @@ export function HeaderAccountDropdown({
   const activeTheme = getSafeTheme(theme);
   const themeLabel =
     activeTheme === 'system' ? 'System Default' : activeTheme === 'dark' ? 'Dark' : 'Light';
-  const ThemeIcon = activeTheme === 'system' ? MonitorCog : activeTheme === 'dark' ? Moon : Sun;
+  const ThemeIcon = activeTheme === 'system' ? SunMoon : activeTheme === 'dark' ? Moon : Sun;
 
   if (isLoading) {
     return (
       <div
         className={cn(
-          'size-10 rounded-full shadow-[0_10px_24px_rgba(15,23,42,0.08)] animate-pulse dark:shadow-none',
+          'size-10 rounded-full animate-pulse shadow-none',
           isGlass
             ? 'border-0 bg-white/10 backdrop-blur-2xl'
             : 'border border-transparent bg-[#eef1f5] dark:bg-[#1f2730]'
@@ -125,8 +126,12 @@ export function HeaderAccountDropdown({
       >
         <DropdownMenuLabel className="px-3 py-2">
           <div className="flex flex-col">
-            <span className="text-sm font-semibold text-black dark:text-white">{fullName || 'My Account'}</span>
-            {email ? <span className="text-xs text-black/60 dark:text-white/60">{email}</span> : null}
+            <span className="text-sm font-semibold text-black dark:text-white">
+              {fullName || 'My Account'}
+            </span>
+            {email ? (
+              <span className="text-xs text-black/60 dark:text-white/60">{email}</span>
+            ) : null}
           </div>
         </DropdownMenuLabel>
 
@@ -149,6 +154,16 @@ export function HeaderAccountDropdown({
           <Link href={paths.favorites.root}>
             <Star className="size-5 text-black/90 dark:text-white/90" />
             Favorites
+          </Link>
+        </DropdownMenuItem>
+
+        <DropdownMenuItem
+          asChild
+          className="h-11 rounded-xl px-3 text-sm font-medium text-black/95 focus:bg-[#ededed] focus:text-black dark:text-white/95 dark:focus:bg-white/8 dark:focus:text-white"
+        >
+          <Link href={paths.statistics.root}>
+            <ChartColumn className="size-5 text-black/90 dark:text-white/90" />
+            My Statistics
           </Link>
         </DropdownMenuItem>
 

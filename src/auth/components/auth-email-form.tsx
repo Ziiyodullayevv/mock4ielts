@@ -61,7 +61,7 @@ export function AuthEmailForm({
       <button
         type="submit"
         disabled={isSubmitting}
-        className="inline-flex h-12 w-full items-center justify-center whitespace-nowrap rounded-lg bg-white px-4 py-2 text-base font-medium text-black transition-colors disabled:cursor-not-allowed disabled:opacity-50"
+        className="inline-flex h-12 w-full items-center justify-center whitespace-nowrap rounded-lg bg-white px-4 py-2 text-base font-medium text-black shadow-[0_10px_24px_rgba(0,0,0,0.18)] transition-[transform,background-color,box-shadow,opacity] duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/45 focus-visible:ring-offset-0 hover:bg-white/94 active:translate-y-px active:bg-white/88 active:shadow-[0_5px_12px_rgba(0,0,0,0.14)] disabled:cursor-not-allowed disabled:opacity-50 disabled:shadow-none"
       >
         {isSubmitting ? 'Sending...' : 'Send OTP'}
       </button>

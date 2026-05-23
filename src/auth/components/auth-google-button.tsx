@@ -1,6 +1,7 @@
 'use client';
 
 import Script from 'next/script';
+import { cn } from '@/src/lib/utils';
 import { useRef, useState, useEffect } from 'react';
 
 import { GoogleIcon } from './auth-provider-icons';
@@ -59,6 +60,7 @@ export function AuthGoogleButton({
   onError,
 }: AuthGoogleButtonProps) {
   const [scriptLoaded, setScriptLoaded] = useState(false);
+  const [isPressed, setIsPressed] = useState(false);
   const callbackRef = useRef(onCredential);
   const containerRef = useRef<HTMLDivElement | null>(null);
   const isInitializedRef = useRef(false);
@@ -67,6 +69,12 @@ export function AuthGoogleButton({
   useEffect(() => {
     callbackRef.current = onCredential;
   }, [onCredential]);
+
+  useEffect(() => {
+    if (window.google?.accounts?.id) {
+      setScriptLoaded(true);
+    }
+  }, []);
 
   useEffect(() => {
     if (!clientId || !scriptLoaded) {
@@ -142,13 +150,24 @@ export function AuthGoogleButton({
         src="https://accounts.google.com/gsi/client"
         strategy="afterInteractive"
         onLoad={() => setScriptLoaded(true)}
+        onReady={() => setScriptLoaded(true)}
       />
-
-      <div className="relative w-full">
+      <div
+        className="relative w-full"
+        onPointerDownCapture={() => setIsPressed(true)}
+        onPointerUpCapture={() => setIsPressed(false)}
+        onPointerCancelCapture={() => setIsPressed(false)}
+        onPointerLeaveCapture={() => setIsPressed(false)}
+      >
         <button
           type="button"
           disabled={isUnavailable}
-          className="inline-flex h-12 w-full items-center justify-center whitespace-nowrap rounded-lg bg-white px-4 py-2 text-base font-medium text-black transition-colors disabled:cursor-not-allowed disabled:opacity-50"
+          className={cn(
+            'inline-flex h-12 w-full items-center justify-center whitespace-nowrap rounded-lg bg-white px-4 py-2 text-base font-medium text-black shadow-[0_10px_24px_rgba(0,0,0,0.18)] transition-[transform,background-color,box-shadow,opacity] duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/45 focus-visible:ring-offset-0 disabled:cursor-not-allowed disabled:opacity-50 disabled:shadow-none',
+            isPressed
+              ? 'translate-y-px bg-white/88 shadow-[0_5px_12px_rgba(0,0,0,0.14)]'
+              : 'hover:bg-white/94'
+          )}
         >
           {loading ? (
             <span className="inline-flex items-center gap-2">

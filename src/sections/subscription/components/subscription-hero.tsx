@@ -36,8 +36,8 @@ export function SubscriptionHero({
       )}
     >
       <div className="px-6 pb-4 pt-6 sm:px-7 sm:pb-5">
+        <div className="flex flex-col gap-4">
           <div className="flex flex-col gap-4">
-          <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
             <div className="flex min-w-0 items-center gap-3">
               <div
                 className={cn(
@@ -63,11 +63,15 @@ export function SubscriptionHero({
               </div>
             </div>
 
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-end">
+            <div className="flex items-center justify-between gap-3">
+              <span className="text-[15px] font-semibold tracking-[-0.02em] text-stone-950 dark:text-white">
+                Token
+              </span>
+
               <div
                 className={cn(
                   subscriptionCardClassName,
-                  'inline-flex items-center gap-3 rounded-full px-3 py-2 shadow-[0_8px_18px_rgba(15,23,42,0.08),0_2px_8px_rgba(15,23,42,0.04)] dark:shadow-none'
+                  'inline-flex w-fit items-center gap-3 rounded-full px-3 py-2 shadow-[0_8px_18px_rgba(15,23,42,0.08),0_2px_8px_rgba(15,23,42,0.04)] dark:shadow-none'
                 )}
               >
                 <TokenIcon className="size-5 text-[#ffb347] dark:text-[#ffb347]" />

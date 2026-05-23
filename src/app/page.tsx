@@ -3,6 +3,7 @@ import type { Metadata } from 'next';
 import { CONFIG } from '@/src/global-config';
 import { HomeView } from '@/src/sections/home/view';
 import { buildPageMetadata } from '@/src/lib/metadata';
+import { RouteProviders } from '@/src/components/providers/route-providers';
 
 export const metadata: Metadata = buildPageMetadata({
   absoluteTitle: true,
@@ -12,5 +13,9 @@ export const metadata: Metadata = buildPageMetadata({
 });
 
 export default function Page() {
-  return <HomeView />;
+  return (
+    <RouteProviders>
+      <HomeView />
+    </RouteProviders>
+  );
 }

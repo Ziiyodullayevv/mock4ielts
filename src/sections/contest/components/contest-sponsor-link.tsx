@@ -1,18 +1,12 @@
-import { cn } from '@/src/lib/utils';
-import { HeartHandshake } from 'lucide-react';
-
-import { contestButtonClassName } from './contest-theme';
+import { Handshake } from 'lucide-react';
 
 export function ContestSponsorLink() {
   return (
     <button
       type="button"
-      className={cn(
-        contestButtonClassName,
-        'mx-auto mt-6 gap-2 px-4 py-2 text-sm text-stone-500 dark:text-stone-300'
-      )}
+      className="flex items-center hover:text-stone-700 mx-auto gap-2 px-4 py-2.5 text-sm text-stone-500 dark:text-stone-300"
     >
-      <HeartHandshake className="size-4" strokeWidth={2} aria-hidden />
+      <Handshake className="size-4" strokeWidth={2} aria-hidden />
       <span>Sponsor a Contest</span>
     </button>
   );

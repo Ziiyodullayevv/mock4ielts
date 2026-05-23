@@ -121,7 +121,7 @@ export function HomeHero() {
 
         <Button
           asChild
-          className="mx-auto mt-8 h-14 w-full max-w-[14rem] rounded-full text-base font-semibold"
+          className="mx-auto mt-8 rounded-full text-sm font-semibold"
           variant="black"
         >
           <Link href={paths.mockExam.root}>Try Now</Link>
@@ -153,7 +153,7 @@ export function HomeHero() {
             {activeHeroSlide.prompt}
           </p>
 
-          <Button asChild className="h-11 rounded-full px-5 text-sm font-semibold" variant="black">
+          <Button asChild className="rounded-full text-sm font-semibold" variant="black">
             <Link href={paths.mockExam.root}>Try Now</Link>
           </Button>
         </div>

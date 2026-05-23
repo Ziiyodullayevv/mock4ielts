@@ -35,7 +35,7 @@ export function ReadingTestLayout({
 
   return (
     <PracticeShell
-      mainClassName="max-w-[1380px]"
+      mainClassName="max-w-[1380px] pt-0 lg:pt-6"
       header={
         <ReadingTestHeader
           isPrimaryActionDisabled={isPrimaryActionDisabled}

@@ -172,7 +172,7 @@ export function AuthVerificationForm({
       <button
         type="submit"
         disabled={isSubmitting}
-        className="inline-flex h-12 w-full items-center justify-center whitespace-nowrap rounded-lg bg-white px-4 py-2 text-base font-medium text-black transition-colors disabled:cursor-not-allowed disabled:opacity-80 max-sm:min-h-12 max-sm:whitespace-normal max-sm:py-3 max-sm:text-sm max-sm:leading-5"
+        className="inline-flex h-12 w-full items-center justify-center whitespace-nowrap rounded-lg bg-white px-4 py-2 text-base font-medium text-black shadow-[0_10px_24px_rgba(0,0,0,0.18)] transition-[transform,background-color,box-shadow,opacity] duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/45 focus-visible:ring-offset-0 hover:bg-white/94 active:translate-y-px active:bg-white/88 active:shadow-[0_5px_12px_rgba(0,0,0,0.14)] disabled:cursor-not-allowed disabled:opacity-80 disabled:shadow-none max-sm:min-h-12 max-sm:whitespace-normal max-sm:py-3 max-sm:text-sm max-sm:leading-5"
       >
         {isSubmitting ? (
           <span className="inline-flex items-center gap-2">
@@ -188,7 +188,7 @@ export function AuthVerificationForm({
         type="button"
         onClick={handleResend}
         disabled={secondsLeft > 0 || isResending || isSubmitting}
-        className="inline-flex h-12 w-full items-center justify-center whitespace-nowrap rounded-lg bg-white px-4 py-2 text-base font-medium text-black transition-colors disabled:cursor-not-allowed disabled:opacity-80 max-sm:min-h-12 max-sm:whitespace-normal max-sm:py-3 max-sm:text-sm max-sm:leading-5"
+        className="inline-flex h-12 w-full items-center justify-center whitespace-nowrap rounded-lg bg-white px-4 py-2 text-base font-medium text-black shadow-[0_10px_24px_rgba(0,0,0,0.18)] transition-[transform,background-color,box-shadow,opacity] duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/45 focus-visible:ring-offset-0 hover:bg-white/94 active:translate-y-px active:bg-white/88 active:shadow-[0_5px_12px_rgba(0,0,0,0.14)] disabled:cursor-not-allowed disabled:opacity-80 disabled:shadow-none max-sm:min-h-12 max-sm:whitespace-normal max-sm:py-3 max-sm:text-sm max-sm:leading-5"
       >
         {isResending ? 'Resending...' : `Resend Code ${secondsLeft > 0 ? `(${secondsLeft}s)` : ''}`}
       </button>

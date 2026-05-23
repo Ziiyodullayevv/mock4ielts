@@ -202,6 +202,12 @@ export const endpoints = {
     gradeAttempt: (attemptId: string) => `attempts/${attemptId}/grade-speaking`,
     startSession: 'speaking/start-session',
   },
+  statistics: {
+    exams: 'statistics/me/exams',
+    global: 'statistics/global',
+    me: 'statistics/me',
+    sections: 'statistics/me/sections',
+  },
   sections: {
     details: (sectionId: string) => `sections/${sectionId}`,
     list: 'sections',

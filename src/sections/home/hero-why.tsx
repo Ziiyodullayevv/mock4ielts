@@ -7,6 +7,9 @@ import { BenefitCard } from './components/why';
 import { benefits, galleryImages } from './data';
 
 const GALLERY_TILE_COUNT = 60;
+const GALLERY_PERSPECTIVE_PX = 920;
+const GALLERY_PLANE_TRANSFORM = 'translateX(-50%) rotateX(28deg) scale3d(1.12, 1.04, 1)';
+
 const tiledImages = Array.from(
   { length: GALLERY_TILE_COUNT },
   (_, index) => galleryImages[index % galleryImages.length]
@@ -84,17 +87,18 @@ export function HeroWhy() {
       </div>
 
       <div ref={gallerySectionRef} className="relative mt-10 w-full overflow-hidden">
-        <div className="pointer-events-none absolute inset-x-0 top-0 z-20 h-24 bg-linear-to-b from-background via-background/95 to-transparent max-md:h-16 dark:from-black dark:via-black/95" />
+        <div className="pointer-events-none absolute inset-x-0 top-0 z-20 h-32 bg-[linear-gradient(180deg,rgba(255,255,255,1)_0%,rgba(255,255,255,0.985)_16%,rgba(255,255,255,0.92)_38%,rgba(255,255,255,0.68)_58%,rgba(255,255,255,0.28)_78%,rgba(255,255,255,0)_100%)] max-md:h-24 dark:bg-[linear-gradient(180deg,rgba(0,0,0,1)_0%,rgba(0,0,0,0.985)_16%,rgba(0,0,0,0.92)_38%,rgba(0,0,0,0.68)_58%,rgba(0,0,0,0.28)_78%,rgba(0,0,0,0)_100%)]" />
+        <div className="pointer-events-none absolute inset-x-[-5%] top-0 z-10 h-18 bg-background/72 blur-3xl max-md:h-14 dark:bg-black/72" />
 
-        <div className="relative w-full" style={{ perspective: '1200px' }}>
+        <div className="relative w-full" style={{ perspective: `${GALLERY_PERSPECTIVE_PX}px` }}>
           <div
-            className="relative left-1/2 w-[108vw] min-w-[72rem] max-w-none max-lg:w-[124vw] max-lg:min-w-[48rem] max-md:w-[136vw] max-md:min-w-[34rem]"
+            className="relative left-1/2 w-[116vw] min-w-[78rem] max-w-none max-lg:w-[134vw] max-lg:min-w-[54rem] max-md:w-[152vw] max-md:min-w-[38rem]"
             style={{
-              transform: 'translateX(-50%) rotateX(22deg)',
+              transform: GALLERY_PLANE_TRANSFORM,
               transformOrigin: 'center top',
             }}
           >
-            <div className="relative h-135 overflow-hidden max-md:h-64">
+            <div className="relative h-145 overflow-hidden max-md:h-72">
               <div
                 ref={galleryGridRef}
                 className="grid w-full grid-cols-5 justify-items-stretch gap-4 px-0 pb-10 transition-transform duration-75 ease-out max-lg:grid-cols-4 max-md:grid-cols-3 max-md:gap-2"

@@ -1,16 +1,31 @@
 'use client';
 
 import { cn } from '@/src/lib/utils';
-import { Slider } from '@/src/components/ui/slider';
 import { useRef, useState, useEffect, useCallback } from 'react';
 import { TimerDisplay } from '@/src/layouts/listening/timer-display';
+import { PracticeAudioSliderCard } from '@/src/layouts/practice/practice-audio-slider-card';
 import {
   LogOut,
   Volume1,
   Volume2,
   VolumeX,
+  EllipsisVertical,
 } from 'lucide-react';
-import { PRACTICE_HEADER_RING_CLASS } from '@/src/layouts/practice-surface-theme';
+import { PracticeHeaderShareButton } from '@/src/layouts/practice/practice-header-share-button';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuTrigger,
+} from '@/src/components/ui/dropdown-menu';
+import {
+  PRACTICE_HEADER_RING_CLASS,
+  PRACTICE_MENU_PANEL_RING_CLASS,
+} from '@/src/layouts/practice-surface-theme';
+import {
+  PracticeHeaderMenuSection,
+  PracticeHeaderMenuQuickActions,
+  PracticeHeaderMenuQuickActionShell,
+} from '@/src/layouts/practice/practice-header-menu-section';
 
 import GradualBlur from '../../components/GradualBlur';
 import { ListeningHeaderMoreMenu, ListeningHeaderFullscreenButton } from '../listening/header-more-menu';
@@ -55,46 +70,17 @@ export function SpeakingTestHeader({
         zIndex={0}
       />
 
-      <div className="relative z-10 flex min-h-16 w-full items-center justify-between gap-3 px-4 py-2.5 sm:hidden">
-        <ExitButton onExit={onExit} />
-
-        <div className="flex h-full min-w-0 flex-1 items-center self-center">
-          <div className="flex w-full items-center justify-center">
-            <TimerDisplay isReview={false} totalSeconds={timeLeftSeconds} />
-          </div>
+      <div className="relative z-10 grid min-h-16 w-full grid-cols-[1fr_auto_1fr] items-center gap-2 px-4 py-2.5 sm:hidden">
+        <div className="flex items-center justify-self-start">
+          <ExitButton onExit={onExit} />
         </div>
 
-        <div className="flex h-full shrink-0 self-center items-center gap-2">
-          <div
-            className={cn(
-              'flex items-center rounded-full p-1 shadow-lg dark:shadow-none',
-              PRACTICE_HEADER_RING_CLASS
-            )}
-          >
-            <SpeakingHeaderInlineAudioMenu
-              volume={volume}
-              onVolumeChange={setVolume}
-              onExpandedChange={setIsAudioExpanded}
-            />
+        <div className="flex h-full items-center justify-center">
+          <TimerDisplay isReview={false} totalSeconds={timeLeftSeconds} />
+        </div>
 
-            <span
-              className={cn(
-                'mx-0.5 h-6 w-px bg-stone-200 dark:bg-white/12',
-                isAudioExpanded && 'hidden'
-              )}
-            />
-
-            <ListeningHeaderFullscreenButton />
-          </div>
-
-          <div
-            className={cn(
-              'flex items-center rounded-full p-1 shadow-lg dark:shadow-none',
-              PRACTICE_HEADER_RING_CLASS
-            )}
-          >
-            <ListeningHeaderMoreMenu />
-          </div>
+        <div className="flex items-center justify-self-end">
+          <SpeakingHeaderMobileMenu volume={volume} onVolumeChange={setVolume} />
         </div>
       </div>
 
@@ -155,6 +141,77 @@ type SpeakingHeaderInlineAudioMenuProps = {
   onVolumeChange: (value: number) => void;
   volume: number;
 };
+
+function SpeakingHeaderMobileMenu({
+  volume,
+  onVolumeChange,
+}: {
+  onVolumeChange: (value: number) => void;
+  volume: number;
+}) {
+  const [open, setOpen] = useState(false);
+  const TriggerIcon = volume === 0 ? VolumeX : volume < 50 ? Volume1 : Volume2;
+
+  return (
+    <DropdownMenu open={open} onOpenChange={setOpen}>
+      <DropdownMenuTrigger asChild>
+        <button
+          type="button"
+          aria-label="Open speaking controls"
+          title="Open speaking controls"
+          className={cn(
+            'inline-flex size-10 shrink-0 items-center justify-center rounded-full text-stone-800 shadow-lg transition-colors hover:bg-stone-50 dark:text-white/78 dark:shadow-none dark:hover:bg-white/8 dark:hover:text-white',
+            PRACTICE_HEADER_RING_CLASS
+          )}
+        >
+          <EllipsisVertical className="size-4.5" strokeWidth={2} />
+        </button>
+      </DropdownMenuTrigger>
+
+      <DropdownMenuContent
+        align="end"
+        sideOffset={10}
+        className={`max-h-[calc(100svh-5rem)] w-[16.5rem] max-w-[calc(100vw-1rem)] overflow-y-scroll overscroll-contain rounded-2xl p-2 touch-pan-y text-stone-900 [scrollbar-gutter:stable] [scrollbar-width:thin] dark:text-white dark:shadow-none ${PRACTICE_MENU_PANEL_RING_CLASS} sm:max-h-[32rem]`}
+      >
+        <div className="space-y-3">
+          <PracticeHeaderMenuQuickActions>
+            <PracticeHeaderMenuQuickActionShell>
+              <button
+                type="button"
+                onClick={() => onVolumeChange(volume === 0 ? 80 : 0)}
+                aria-label={volume === 0 ? 'Unmute audio' : 'Mute audio'}
+                title={volume === 0 ? 'Unmute audio' : 'Mute audio'}
+                className="inline-flex items-center justify-center text-stone-700 transition-colors hover:bg-stone-100 hover:text-stone-900 dark:text-white/78 dark:hover:bg-white/8 dark:hover:text-white"
+              >
+                <TriggerIcon className="size-4.5" strokeWidth={2} />
+              </button>
+            </PracticeHeaderMenuQuickActionShell>
+            <PracticeHeaderMenuQuickActionShell>
+              <ListeningHeaderFullscreenButton />
+            </PracticeHeaderMenuQuickActionShell>
+            <PracticeHeaderMenuQuickActionShell>
+              <ListeningHeaderMoreMenu />
+            </PracticeHeaderMenuQuickActionShell>
+            <PracticeHeaderMenuQuickActionShell>
+              <PracticeHeaderShareButton />
+            </PracticeHeaderMenuQuickActionShell>
+          </PracticeHeaderMenuQuickActions>
+
+          <PracticeHeaderMenuSection
+            title="Audio"
+            contentClassName="overflow-hidden px-0 py-0"
+          >
+            <PracticeAudioSliderCard
+              volume={volume}
+              onToggleMute={() => onVolumeChange(volume === 0 ? 80 : 0)}
+              onVolumeChange={onVolumeChange}
+            />
+          </PracticeHeaderMenuSection>
+        </div>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
 
 function SpeakingHeaderInlineAudioMenu({
   volume,

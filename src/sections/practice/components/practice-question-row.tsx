@@ -34,6 +34,7 @@ type PracticeQuestionRowProps = {
   enableEntranceAnimation?: boolean;
   index: number;
   item: PracticeQuestionItem;
+  openBehavior?: 'info' | 'start';
   openRequestId?: number;
   shouldOpenInfo?: boolean;
 };
@@ -226,6 +227,7 @@ export function PracticeQuestionRow({
   enableEntranceAnimation = false,
   index,
   item,
+  openBehavior = 'info',
   openRequestId = 0,
   shouldOpenInfo = false,
 }: PracticeQuestionRowProps) {
@@ -273,7 +275,7 @@ export function PracticeQuestionRow({
     }
 
     const timer = window.setTimeout(() => {
-      if (sectionType === 'mock-exam') {
+      if (openBehavior === 'start' || sectionType === 'mock-exam') {
         void handleStartPractice();
         return;
       }
@@ -284,7 +286,7 @@ export function PracticeQuestionRow({
 
     return () => window.clearTimeout(timer);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [openRequestId, shouldOpenInfo]);
+  }, [openBehavior, openRequestId, shouldOpenInfo]);
 
   useEffect(() => {
     if (countdownValue === null) {
