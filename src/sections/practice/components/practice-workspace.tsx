@@ -10,6 +10,7 @@ import { PracticeQuestionsToolbar } from './practice-questions-toolbar';
 import { PracticeQuestionsListLoading } from './practice-questions-list-loading';
 
 export type PracticeStatusFilter = 'all' | 'completed' | 'uncompleted';
+type PracticeOpenBehavior = 'info' | 'start';
 
 type PracticeWindow = Window & {
   __practiceRowsInitialAnimationPlayed?: boolean;
@@ -36,6 +37,7 @@ export function PracticeWorkspace({
   const [isRowsAnimationActive, setIsRowsAnimationActive] = useState(false);
   const [openItemHref, setOpenItemHref] = useState<string | null>(null);
   const [openRequestId, setOpenRequestId] = useState(0);
+  const [openBehavior, setOpenBehavior] = useState<PracticeOpenBehavior>('info');
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<PracticeStatusFilter>('all');
   const rowsAnimationTimerRef = useRef<number | null>(null);
@@ -120,7 +122,25 @@ export function PracticeWorkspace({
 
     setSearchTerm('');
     setStatusFilter('all');
+    setOpenBehavior('info');
     setOpenItemHref(currentQuestion.href);
+    setOpenRequestId((currentRequestId) => currentRequestId + 1);
+  };
+
+  const handleStartRandomQuestion = () => {
+    if (!filteredQuestions.length) {
+      return;
+    }
+
+    const randomIndex = Math.floor(Math.random() * filteredQuestions.length);
+    const randomQuestion = filteredQuestions[randomIndex];
+
+    if (!randomQuestion) {
+      return;
+    }
+
+    setOpenBehavior('start');
+    setOpenItemHref(randomQuestion.href);
     setOpenRequestId((currentRequestId) => currentRequestId + 1);
   };
 
@@ -131,7 +151,7 @@ export function PracticeWorkspace({
       <div className="mx-auto w-full max-w-300 px-5 xl:px-10">
         <div className="grid items-start gap-5 md:grid-cols-[21rem_minmax(0,1fr)] lg:grid-cols-[22.5rem_minmax(0,1fr)] xl:grid-cols-[24rem_minmax(0,1fr)]">
           <PracticeOverviewCard
-            className="justify-self-start md:sticky md:top-28 md:self-start"
+            className="w-full md:justify-self-start md:sticky md:top-28 md:self-start"
             currentQuestion={currentQuestion}
             currentQuestionLabel={currentQuestionLabel}
             onPracticeClick={handleOpenCurrentQuestion}
@@ -140,6 +160,8 @@ export function PracticeWorkspace({
 
           <section className="space-y-3">
             <PracticeQuestionsToolbar
+              canStartRandom={filteredQuestions.length > 0}
+              onRandomStart={handleStartRandomQuestion}
               searchTerm={searchTerm}
               statusFilter={statusFilter}
               searchPlaceholder={searchPlaceholder}
@@ -167,6 +189,7 @@ export function PracticeWorkspace({
                 animateRows={isRowsAnimationActive}
                 animationSeed={rowsAnimationSeed}
                 openItemHref={openItemHref}
+                openBehavior={openBehavior}
                 openRequestId={openRequestId}
               />
             ) : null}

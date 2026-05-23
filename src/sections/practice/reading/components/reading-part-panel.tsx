@@ -210,7 +210,7 @@ export function ReadingPartPanel({
       {/* ── Mobile / tablet: tab switcher ── */}
       <div className="flex flex-col gap-0 lg:hidden">
         {/* Tab bar */}
-        <div className="sticky top-14 z-10 flex border-b border-stone-200 bg-white dark:border-white/10 dark:bg-background">
+        <div className="sticky top-16 z-30 flex border-b border-stone-200 bg-white shadow-[0_8px_20px_rgba(15,23,42,0.04)] dark:border-white/10 dark:bg-background dark:shadow-none sm:top-[72px]">
           <button
             type="button"
             onClick={() => setMobileTab('passage')}
@@ -238,7 +238,7 @@ export function ReadingPartPanel({
         </div>
 
         {/* Tab content */}
-        <div className="pt-4">
+        <div className="pt-3">
           {mobileTab === 'passage' ? (
             <PaperSurface className="overflow-hidden">
               <div className="border-b border-[#dfdfdf] px-5 py-4 dark:border-white/10 sm:px-6">

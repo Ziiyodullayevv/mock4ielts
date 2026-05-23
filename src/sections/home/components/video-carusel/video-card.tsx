@@ -16,6 +16,11 @@ export function VideoCard({ isActive, slide }: VideoCardProps) {
   const [isInView, setIsInView] = useState(false);
   const [hasInteracted, setHasInteracted] = useState(false);
   const shouldLoadVideo = isActive && isInView && hasInteracted;
+  const mediaFrameClassName = 'absolute inset-0 block h-full w-full object-cover object-center';
+  const mediaTransformStyle = {
+    objectPosition: slide.mediaPosition ?? 'center',
+    transform: `scale(${slide.mediaScale ?? 1})`,
+  } as const;
 
   useEffect(() => {
     const rootElement = rootRef.current;
@@ -55,13 +60,14 @@ export function VideoCard({ isActive, slide }: VideoCardProps) {
       onTouchStart={() => setHasInteracted(true)}
     >
       <div className="relative overflow-hidden rounded-none border border-stone-200 bg-white shadow-[0_26px_70px_rgba(15,23,42,0.12)] sm:rounded-lg dark:border-white/8 dark:bg-[#0b0b0b] dark:shadow-[0_30px_120px_rgba(0,0,0,0.75)]">
-        <div className="relative aspect-video w-full">
+        <div className="relative aspect-[16/9] w-full overflow-hidden bg-black">
           <Image
             fill
             src={slide.poster}
             alt={slide.previewVideoAlt}
             sizes="(min-width: 1280px) 1100px, (min-width: 768px) 90vw, 100vw"
-            className="absolute inset-0 h-full w-full scale-[1.04] object-cover"
+            className={mediaFrameClassName}
+            style={mediaTransformStyle}
           />
 
           {shouldLoadVideo && (
@@ -72,7 +78,8 @@ export function VideoCard({ isActive, slide }: VideoCardProps) {
               playsInline
               preload="metadata"
               poster={slide.poster}
-              className="absolute inset-0 h-full w-full scale-[1.04] object-cover"
+              className={mediaFrameClassName}
+              style={mediaTransformStyle}
               aria-label={slide.previewVideoAlt}
             >
               <source src={slide.previewVideo} type="video/mp4" />

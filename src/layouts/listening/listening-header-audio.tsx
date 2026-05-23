@@ -5,6 +5,7 @@ import type { ListeningHeaderAudioControls } from './use-listening-header-audio'
 import { cn } from '@/src/lib/utils';
 import { Slider } from '@/src/components/ui/slider';
 import { Volume1, Volume2, VolumeX } from 'lucide-react';
+import { PracticeAudioSliderCard } from '@/src/layouts/practice/practice-audio-slider-card';
 
 type ListeningHeaderAudioProps = {
   controls: ListeningHeaderAudioControls;
@@ -17,6 +18,17 @@ export function ListeningHeaderAudio({
 }: ListeningHeaderAudioProps) {
   const { handleToggleMute, handleVolumeChange, volume } = controls;
   const isMobileVariant = variant === 'mobile';
+
+  if (isMobileVariant) {
+    return (
+      <PracticeAudioSliderCard
+        volume={volume}
+        onToggleMute={handleToggleMute}
+        onVolumeChange={handleVolumeChange}
+      />
+    );
+  }
+
   const LeadingVolumeIcon = volume === 0 ? VolumeX : Volume1;
 
   return (

@@ -2,6 +2,7 @@
 
 import { Bell } from 'lucide-react';
 import { cn } from '@/src/lib/utils';
+import { useTheme } from 'next-themes';
 import { PRACTICE_HEADER_RING_CLASS } from '@/src/layouts/practice-surface-theme';
 import {
   DropdownMenu,
@@ -40,8 +41,17 @@ export function HeaderNotificationDropdown({
   isHomePage = false,
   isLoading = false,
 }: HeaderNotificationDropdownProps) {
+  const { resolvedTheme } = useTheme();
   const unreadCount = 6;
-  const badgeClassName = isHomePage || isGlass
+  const useHomeOverlayTone = isGlass && isHomePage;
+  const useLightGlassTone = isGlass && !isHomePage && resolvedTheme !== 'dark';
+  const bellIconClassName = cn(
+    'relative z-10 size-5 -translate-y-px stroke-[2.1]',
+    useHomeOverlayTone || (isGlass && !useLightGlassTone)
+      ? 'text-white/92 stroke-white/92'
+      : 'text-black stroke-black dark:text-white dark:stroke-white'
+  );
+  const badgeClassName = useHomeOverlayTone
     ? 'absolute -right-0.5 -top-0.5 z-20 grid size-[1.35rem] place-items-center rounded-full bg-[#ff502d] text-[10px] font-semibold leading-none text-white ring-2 ring-[#1f2730] pointer-events-none'
     : 'absolute -right-0.5 -top-0.5 z-20 grid size-[1.35rem] place-items-center rounded-full bg-[#ff502d] text-[10px] font-semibold leading-none text-white ring-2 ring-white pointer-events-none dark:ring-[#141414]';
 
@@ -50,23 +60,23 @@ export function HeaderNotificationDropdown({
       <div className="relative size-10 shrink-0">
         <div
           className={cn(
-            'relative flex size-full items-center justify-center rounded-full shadow-[0_8px_18px_rgba(15,23,42,0.08),0_2px_8px_rgba(15,23,42,0.04)] dark:shadow-none',
-            isGlass
-              ? 'border-0 bg-white/10 backdrop-blur-2xl'
+            'relative flex size-full items-center justify-center rounded-full shadow-none',
+            useHomeOverlayTone
+              ? 'border-0 bg-black/30 backdrop-blur-2xl'
               : [PRACTICE_HEADER_RING_CLASS, isHomePage ? 'after:!bg-[#141414]' : 'dark:after:bg-[#1a1a1a]']
           )}
         >
           <div
             className={cn(
               'h-5 w-4 rounded-full animate-pulse',
-              isHomePage || isGlass ? 'bg-white/12' : 'bg-black/8 dark:bg-white/10'
+              useHomeOverlayTone ? 'bg-white/12' : 'bg-black/8 dark:bg-white/10'
             )}
           />
         </div>
         <span
           className={cn(
             'absolute -right-0.5 -top-0.5 z-20 size-[1.35rem] rounded-full animate-pulse bg-[#ff502d]',
-            isHomePage || isGlass ? 'ring-2 ring-[#1f2730]' : 'ring-2 ring-white dark:ring-[#141414]'
+            useHomeOverlayTone ? 'ring-2 ring-[#1f2730]' : 'ring-2 ring-white dark:ring-[#141414]'
           )}
         />
       </div>
@@ -81,15 +91,20 @@ export function HeaderNotificationDropdown({
             type="button"
             className={cn(
               'relative flex size-full items-center justify-center rounded-full shadow-[0_8px_18px_rgba(15,23,42,0.08),0_2px_8px_rgba(15,23,42,0.04)] transition-colors dark:shadow-none',
-              isGlass
-                ? 'border-0 bg-white/10 text-white/92 backdrop-blur-2xl hover:bg-white/16'
+              useHomeOverlayTone
+                ? 'border-0 bg-black/30 text-white/92 backdrop-blur-2xl hover:bg-black/36'
+                : isGlass
+                ? [
+                    PRACTICE_HEADER_RING_CLASS,
+                    'text-black/85 hover:after:bg-stone-100 dark:text-white/85 dark:hover:after:bg-[#1a1a1a] dark:after:bg-[#1a1a1a]',
+                  ]
                 : [PRACTICE_HEADER_RING_CLASS, isHomePage
                 ? 'text-white/85 after:!bg-[#141414] hover:after:!bg-[#1a1a1a]'
                 : 'text-black/85 hover:after:bg-stone-100 dark:text-white/85 dark:hover:after:bg-[#1a1a1a]']
             )}
             aria-label="Open notifications"
           >
-            <Bell className="size-5 -translate-y-px" />
+            <Bell className={bellIconClassName} />
           </button>
         </DropdownMenuTrigger>
 

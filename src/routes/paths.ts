@@ -9,6 +9,9 @@ export const paths = {
   profile: {
     root: '/my-profile',
   },
+  statistics: {
+    root: '/my-statistics',
+  },
   subscription: {
     root: '/my-subscription',
   },
@@ -35,6 +38,7 @@ export const paths = {
     root: '/mock-exams',
   },
   contest: {
+    details: (slug: string) => `/contest/${slug}`,
     root: '/contest',
   },
 };

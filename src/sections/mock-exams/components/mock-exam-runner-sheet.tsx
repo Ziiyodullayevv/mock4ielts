@@ -8,6 +8,7 @@ import type { TestResult, ListeningTest, Answers as ListeningAnswers } from '@/s
 import { cn } from '@/src/lib/utils';
 import { paths } from '@/src/routes/paths';
 import { useQuery } from '@tanstack/react-query';
+import { MainFooter } from '@/src/layouts/main/footer';
 import { buildLoginHref } from '@/src/auth/utils/return-to';
 import { useRouter, usePathname } from '@/src/routes/hooks';
 import { useAuthSession } from '@/src/auth/hooks/use-auth-session';
@@ -31,17 +32,6 @@ import {
 } from '@/src/sections/practice/listening/api/listening-attempt-api';
 import { getListeningSectionDetail } from '@/src/sections/practice/listening/api/get-listening-section-detail';
 import {
-  X,
-  Mic,
-  Zap,
-  Timer,
-  PenTool,
-  BookOpen,
-  ArrowLeft,
-  Headphones,
-  type LucideIcon,
-} from 'lucide-react';
-import {
   Sheet,
   SheetClose,
   SheetTitle,
@@ -49,6 +39,18 @@ import {
   SheetContent,
   SheetDescription,
 } from '@/src/components/ui/sheet';
+import {
+  X,
+  Mic,
+  Zap,
+  Timer,
+  Clock3,
+  PenTool,
+  BookOpen,
+  ArrowLeft,
+  Headphones,
+  type LucideIcon,
+} from 'lucide-react';
 import {
   contestButtonClassName,
   contestInsetCardClassName,
@@ -200,6 +202,18 @@ function formatTimeSpent(value?: number | null) {
   const totalMinutes = Math.round(value / 60);
   const hours = Math.floor(totalMinutes / 60);
   const minutes = totalMinutes % 60;
+
+  if (hours > 0) {
+    return `${hours}h ${minutes}m`;
+  }
+
+  return `${minutes}m`;
+}
+
+function formatCountdownLabel(totalSeconds: number) {
+  const safeTotalSeconds = Math.max(0, totalSeconds);
+  const hours = Math.floor(safeTotalSeconds / 3600);
+  const minutes = Math.floor((safeTotalSeconds % 3600) / 60);
 
   if (hours > 0) {
     return `${hours}h ${minutes}m`;
@@ -464,6 +478,7 @@ function MockExamSectionChooser({
   onPreviewSection,
   onSelectSection,
   sections,
+  timeLeftSeconds,
 }: {
   activeType: MockExamSection['type'] | null;
   completedTypes: Set<MockExamSection['type']>;
@@ -472,130 +487,151 @@ function MockExamSectionChooser({
   onPreviewSection: (sectionType: MockExamSection['type']) => void;
   onSelectSection: (sectionType: MockExamSection['type']) => void;
   sections: MockExamSection[];
+  timeLeftSeconds: number;
 }) {
   return (
-    <div className="flex min-h-screen items-center justify-center bg-white px-4 py-10 text-stone-950 dark:bg-[#0b0b0b] dark:text-white">
-      <div className="w-full max-w-4xl">
-        <div className="mb-6">
-          <button
-            type="button"
-            onClick={onBack}
-            className={cn(contestButtonClassName, 'h-10 gap-2 px-4 text-sm font-semibold')}
-          >
-            <ArrowLeft className="relative z-10 size-4" />
-            <span className="relative z-10">Back</span>
-          </button>
+    <div className="min-h-screen bg-white text-stone-950 dark:bg-[#0b0b0b] dark:text-white">
+      <div className="flex min-h-screen flex-col">
+        <header className="sticky top-0 z-30 border-b border-stone-200/70 bg-white/92 backdrop-blur-[30px] dark:border-white/10 dark:bg-[#0b0b0b]/88">
+          <div className="mx-auto flex min-h-[72px] w-full max-w-6xl items-center justify-between gap-4 px-4 py-4 sm:px-6">
+            <button
+              type="button"
+              onClick={onBack}
+              className={cn(contestButtonClassName, 'h-10 gap-2 px-4 text-sm font-semibold')}
+            >
+              <ArrowLeft className="relative z-10 size-4" />
+              <span className="relative z-10">Back</span>
+            </button>
 
-          <h1 className="mt-5 text-3xl font-semibold tracking-[-0.03em] text-stone-950 dark:text-white sm:text-4xl">
-            {examTitle}
-          </h1>
-          <p className="mt-3 max-w-2xl text-sm leading-7 text-stone-600 dark:text-white/60">
-            Choose an unlocked section to continue your full IELTS mock exam.
-          </p>
-        </div>
+            <div
+              className={cn(
+                contestButtonClassName,
+                'h-10 gap-2 px-4 text-sm font-semibold text-stone-700 dark:text-white/80'
+              )}
+            >
+              <Clock3 className="relative z-10 size-4" />
+              <span className="relative z-10">{formatCountdownLabel(timeLeftSeconds)}</span>
+            </div>
+          </div>
+        </header>
 
-        <div className="grid w-full max-w-4xl gap-4 md:grid-cols-2">
-          {sections.map((section, index) => {
-            const isCompleted = completedTypes.has(section.type);
-            const isUnlocked = isSectionUnlocked(section.type, completedTypes);
-            const canStart = isUnlocked && !isCompleted;
-            const isActive = activeType === section.type && canStart;
+        <div className="flex flex-1 items-center justify-center px-4 py-10">
+          <div className="w-full max-w-4xl">
+            <div className="mb-6">
+              <h1 className="text-3xl font-semibold tracking-[-0.03em] text-stone-950 dark:text-white sm:text-4xl">
+                {examTitle}
+              </h1>
+              <p className="mt-3 max-w-2xl text-sm leading-7 text-stone-600 dark:text-white/60">
+                Choose an unlocked section to continue your full IELTS mock exam.
+              </p>
+            </div>
 
-            return (
-              <div
-                key={section.type}
-                onClick={() => {
-                  if (canStart) {
-                    onPreviewSection(section.type);
-                  }
-                }}
-                className={cn(
-                  contestInsetCardClassName,
-                  'rounded-3xl p-5 transition-[transform,box-shadow] duration-200',
-                  isActive
-                    ? 'after:!bg-[#fff6ec] shadow-[0_12px_28px_rgba(255,120,75,0.16)] dark:after:!bg-[#1a1510] dark:shadow-[0_12px_28px_rgba(255,120,75,0.14)]'
-                    : 'hover:after:bg-[#f8fafc] dark:hover:after:bg-[#1a1a1a]',
-                  canStart ? 'cursor-pointer' : isCompleted ? 'cursor-default' : 'opacity-70'
-                )}
-              >
-                <div className="flex items-start justify-between gap-4">
-                  <div>
-                    <p className="text-[11px] font-semibold tracking-[0.22em] text-stone-500 uppercase dark:text-white/45">
-                      Section {index + 1}
-                    </p>
-                    <h3 className="mt-2 text-xl font-semibold text-stone-950 capitalize dark:text-white">
-                      {SECTION_LABELS[section.type]}
-                    </h3>
-                    <p className="mt-2 text-sm text-stone-600 dark:text-white/60">
-                      {section.title}
-                    </p>
-                  </div>
+            <div className="grid w-full max-w-4xl gap-4 md:grid-cols-2">
+              {sections.map((section, index) => {
+                const isCompleted = completedTypes.has(section.type);
+                const isUnlocked = isSectionUnlocked(section.type, completedTypes);
+                const canStart = isUnlocked && !isCompleted;
+                const isActive = activeType === section.type && canStart;
 
-                  <span
+                return (
+                  <div
+                    key={section.type}
+                    onClick={() => {
+                      if (canStart) {
+                        onPreviewSection(section.type);
+                      }
+                    }}
                     className={cn(
-                      'rounded-full text-[11px] font-semibold uppercase tracking-[0.18em]',
-                      isCompleted
-                        ? cn(mockFinishedButtonClassName, 'px-3 py-1 text-[11px]')
-                        : isUnlocked
-                          ? cn(
-                              contestButtonClassName,
-                              'px-3 py-1 text-[11px] shadow-none dark:shadow-none'
-                            )
+                      contestInsetCardClassName,
+                      'rounded-3xl p-5 transition-[transform,box-shadow] duration-200',
+                      isActive
+                        ? 'after:!bg-[#fff6ec] shadow-[0_12px_28px_rgba(255,120,75,0.16)] dark:after:!bg-[#1a1510] dark:shadow-[0_12px_28px_rgba(255,120,75,0.14)]'
+                        : 'hover:after:bg-[#f8fafc] dark:hover:after:bg-[#1a1a1a]',
+                      canStart ? 'cursor-pointer' : isCompleted ? 'cursor-default' : 'opacity-70'
+                    )}
+                  >
+                    <div className="flex items-start justify-between gap-4">
+                      <div>
+                        <p className="text-[11px] font-semibold tracking-[0.22em] text-stone-500 uppercase dark:text-white/45">
+                          Section {index + 1}
+                        </p>
+                        <h3 className="mt-2 text-xl font-semibold text-stone-950 capitalize dark:text-white">
+                          {SECTION_LABELS[section.type]}
+                        </h3>
+                        <p className="mt-2 text-sm text-stone-600 dark:text-white/60">
+                          {section.title}
+                        </p>
+                      </div>
+
+                      <span
+                        className={cn(
+                          'rounded-full text-[11px] font-semibold uppercase tracking-[0.18em]',
+                          isCompleted
+                            ? cn(mockFinishedButtonClassName, 'px-3 py-1 text-[11px]')
+                            : isUnlocked
+                              ? cn(
+                                  contestButtonClassName,
+                                  'px-3 py-1 text-[11px] shadow-none dark:shadow-none'
+                                )
+                              : cn(
+                                  contestButtonClassName,
+                                  'px-3 py-1 text-[11px] opacity-70 shadow-none dark:shadow-none'
+                                )
+                        )}
+                      >
+                        <span
+                          className={cn(
+                            'relative z-10',
+                            isCompleted
+                              ? 'text-white'
+                              : isUnlocked
+                                ? 'text-stone-600 dark:text-white/70'
+                                : 'text-stone-600 dark:text-white/70'
+                          )}
+                        >
+                          {isCompleted ? 'Finished' : isUnlocked ? 'Ready' : 'Locked'}
+                        </span>
+                      </span>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        if (canStart) {
+                          onSelectSection(section.type);
+                        }
+                      }}
+                      disabled={!canStart}
+                      className={cn(
+                        'mt-5 h-11 px-5 text-sm font-semibold',
+                        isActive && isUnlocked
+                          ? contestPrimaryButtonClassName
                           : cn(
                               contestButtonClassName,
-                              'px-3 py-1 text-[11px] opacity-70 shadow-none dark:shadow-none'
+                              !canStart ? 'cursor-default opacity-70' : 'shadow-none dark:shadow-none'
                             )
-                    )}
-                  >
-                    <span
-                      className={cn(
-                        'relative z-10',
-                        isCompleted
-                          ? 'text-white'
-                          : isUnlocked
-                            ? 'text-stone-600 dark:text-white/70'
-                            : 'text-stone-600 dark:text-white/70'
                       )}
                     >
-                      {isCompleted ? 'Finished' : isUnlocked ? 'Ready' : 'Locked'}
-                    </span>
-                  </span>
-                </div>
-
-                <button
-                  type="button"
-                  onClick={(event) => {
-                    event.stopPropagation();
-                    if (canStart) {
-                      onSelectSection(section.type);
-                    }
-                  }}
-                  disabled={!canStart}
-                  className={cn(
-                    'mt-5 h-11 px-5 text-sm font-semibold',
-                    isActive && isUnlocked
-                      ? contestPrimaryButtonClassName
-                      : cn(
-                          contestButtonClassName,
-                          !canStart ? 'cursor-default opacity-70' : 'shadow-none dark:shadow-none'
-                        )
-                  )}
-                >
-                  <span
-                    className={cn(
-                      'relative z-10',
-                      isActive && isUnlocked
-                        ? 'text-white'
-                        : 'text-stone-600 dark:text-white/70'
-                    )}
-                  >
-                    {isCompleted ? 'Completed' : 'Start section'}
-                  </span>
-                </button>
-              </div>
-            );
-          })}
+                      <span
+                        className={cn(
+                          'relative z-10',
+                          isActive && isUnlocked
+                            ? 'text-white'
+                            : 'text-stone-600 dark:text-white/70'
+                        )}
+                      >
+                        {isCompleted ? 'Completed' : 'Start section'}
+                      </span>
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
         </div>
+
+        <MainFooter />
       </div>
     </div>
   );
@@ -617,6 +653,7 @@ export function MockExamRunnerPage({
   const [completedSectionTypes, setCompletedSectionTypes] = useState<Set<MockExamSection['type']>>(
     () => new Set()
   );
+  const [overviewTimeLeftSeconds, setOverviewTimeLeftSeconds] = useState<number | null>(null);
   const [finalResult, setFinalResult] = useState<MockExamResult | null>(null);
   const [finalError, setFinalError] = useState<string | null>(null);
   const [isFinishing, setIsFinishing] = useState(false);
@@ -633,6 +670,7 @@ export function MockExamRunnerPage({
       setPendingSectionType(null);
       setViewMode('overview');
       setCompletedSectionTypes(new Set());
+      setOverviewTimeLeftSeconds(null);
       completedSectionTypesRef.current = new Set();
       setFinalResult(null);
       setFinalError(null);
@@ -916,6 +954,7 @@ export function MockExamRunnerPage({
   }, [isAuthenticated, isHydrated, pathname, router]);
 
   const resolvedExamTitle = detailQuery.data?.title ?? examTitle ?? 'Mock Exam';
+  const mockExamDurationSeconds = Math.max((detailQuery.data?.durationMinutes ?? 170) * 60, 0);
   const activeError =
     activeSectionState?.error instanceof Error ? activeSectionState.error.message : null;
   const defaultSelectedSectionType = useMemo(
@@ -923,6 +962,30 @@ export function MockExamRunnerPage({
     [completedSectionTypes, orderedSections]
   );
   const highlightedSectionType = selectedSectionType ?? defaultSelectedSectionType;
+
+  useEffect(() => {
+    if (!mockExamDurationSeconds) {
+      return;
+    }
+
+    setOverviewTimeLeftSeconds((currentValue) =>
+      currentValue === null ? mockExamDurationSeconds : currentValue
+    );
+  }, [mockExamDurationSeconds]);
+
+  useEffect(() => {
+    if (overviewTimeLeftSeconds === null || overviewTimeLeftSeconds <= 0 || finalResult) {
+      return undefined;
+    }
+
+    const timer = window.setTimeout(() => {
+      setOverviewTimeLeftSeconds((currentValue) =>
+        typeof currentValue === 'number' ? Math.max(currentValue - 1, 0) : currentValue
+      );
+    }, 1000);
+
+    return () => window.clearTimeout(timer);
+  }, [finalResult, overviewTimeLeftSeconds]);
 
   const activeSectionView = (() => {
     if (viewMode === 'overview' && orderedSections.length) {
@@ -935,6 +998,7 @@ export function MockExamRunnerPage({
           onPreviewSection={handleSectionPreview}
           onSelectSection={handleSectionSelect}
           sections={orderedSections}
+          timeLeftSeconds={overviewTimeLeftSeconds ?? mockExamDurationSeconds}
         />
       );
     }

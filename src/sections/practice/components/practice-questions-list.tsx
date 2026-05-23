@@ -6,6 +6,7 @@ type PracticeQuestionsListProps = {
   animationSeed?: number;
   animateRows?: boolean;
   items: PracticeQuestionItem[];
+  openBehavior?: 'info' | 'start';
   openItemHref?: string | null;
   openRequestId?: number;
 };
@@ -14,6 +15,7 @@ export function PracticeQuestionsList({
   animationSeed = 0,
   animateRows = false,
   items,
+  openBehavior = 'info',
   openItemHref = null,
   openRequestId = 0,
 }: PracticeQuestionsListProps) {
@@ -26,6 +28,7 @@ export function PracticeQuestionsList({
           index={index}
           enableEntranceAnimation={animateRows}
           animationDelayMs={Math.min(index, 12) * 28}
+          openBehavior={openBehavior}
           shouldOpenInfo={item.href === openItemHref}
           openRequestId={openRequestId}
         />

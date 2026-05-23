@@ -135,39 +135,40 @@ export function ListeningTestFooter({
         </div>
 
         <div className="hidden sm:block md:hidden">
-          <div className="-mx-1 overflow-x-auto px-1">
-            <div className="flex min-w-max items-stretch gap-2">
-              {test.parts.map((part) => {
-                const questions = getPartQuestions(part);
-                const answeredCount = countPartAnswered(part, answers);
-                const hasActiveQuestion = questions.some(
-                  (question) => question.id === activeQuestionId
-                );
-                const isActive = activePart === part.number || hasActiveQuestion;
+          <div
+            className="grid items-stretch gap-2"
+            style={{ gridTemplateColumns: `repeat(${test.parts.length}, minmax(0, 1fr))` }}
+          >
+            {test.parts.map((part) => {
+              const questions = getPartQuestions(part);
+              const answeredCount = countPartAnswered(part, answers);
+              const hasActiveQuestion = questions.some(
+                (question) => question.id === activeQuestionId
+              );
+              const isActive = activePart === part.number || hasActiveQuestion;
 
-                return (
-                  <button
-                    key={part.number}
-                    type="button"
-                    onClick={() => handlePartSelect(part.number)}
-                    className={cn(
-                      'flex shrink-0 flex-col rounded-xl px-3 py-2 text-left transition-colors',
-                      isActive
-                        ? PRACTICE_FOOTER_ACTIVE_SURFACE_CLASS
-                        : PRACTICE_FOOTER_INACTIVE_SURFACE_CLASS
-                    )}
-                    aria-current={isActive ? 'step' : undefined}
-                  >
-                    <span className="text-xs font-semibold uppercase tracking-[0.12em] text-stone-500 dark:text-white/48">
-                      Part {part.number}
-                    </span>
-                    <span className="mt-1 text-sm font-medium text-stone-900 dark:text-white">
-                      {answeredCount}/{questions.length}
-                    </span>
-                  </button>
-                );
-              })}
-            </div>
+              return (
+                <button
+                  key={part.number}
+                  type="button"
+                  onClick={() => handlePartSelect(part.number)}
+                  className={cn(
+                    'flex min-w-0 w-full flex-col rounded-xl px-3 py-2 text-left transition-colors',
+                    isActive
+                      ? PRACTICE_FOOTER_ACTIVE_SURFACE_CLASS
+                      : PRACTICE_FOOTER_INACTIVE_SURFACE_CLASS
+                  )}
+                  aria-current={isActive ? 'step' : undefined}
+                >
+                  <span className="truncate text-xs font-semibold uppercase tracking-[0.12em] text-stone-500 dark:text-white/48">
+                    Part {part.number}
+                  </span>
+                  <span className="mt-1 text-sm font-medium text-stone-900 dark:text-white">
+                    {answeredCount}/{questions.length}
+                  </span>
+                </button>
+              );
+            })}
           </div>
         </div>
 

@@ -5,6 +5,7 @@ import type { PracticeStatusFilter } from './practice-workspace';
 import { cn } from '@/src/lib/utils';
 import { Check, Funnel, Search, Shuffle } from 'lucide-react';
 import { PRACTICE_HEADER_RING_CLASS } from '@/src/layouts/practice-surface-theme';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/src/components/ui/tooltip';
 import {
   DropdownMenu,
   DropdownMenuItem,
@@ -14,6 +15,8 @@ import {
 } from '@/src/components/ui/dropdown-menu';
 
 type PracticeQuestionsToolbarProps = {
+  canStartRandom?: boolean;
+  onRandomStart?: () => void;
   onStatusFilterChange: (statusFilter: PracticeStatusFilter) => void;
   onSearchTermChange: (searchTerm: string) => void;
   searchTerm: string;
@@ -22,6 +25,8 @@ type PracticeQuestionsToolbarProps = {
 };
 
 export function PracticeQuestionsToolbar({
+  canStartRandom = false,
+  onRandomStart,
   onStatusFilterChange,
   onSearchTermChange,
   searchTerm,
@@ -29,6 +34,8 @@ export function PracticeQuestionsToolbar({
   statusFilter,
 }: PracticeQuestionsToolbarProps) {
   const activeFilterCount = statusFilter === 'all' ? 0 : 1;
+  const cardTooltipClassName =
+    'rounded-md border border-black/8 bg-white px-2.5 py-1 text-xs font-medium text-black shadow-[0_10px_24px_rgba(15,23,42,0.12)] dark:border-white/10 dark:bg-[#1f1f1f] dark:text-white dark:shadow-[0_10px_24px_rgba(0,0,0,0.32)]';
 
   return (
     <div className="flex items-center gap-2.5 text-sm md:gap-3">
@@ -125,13 +132,22 @@ export function PracticeQuestionsToolbar({
           PRACTICE_HEADER_RING_CLASS
         )}
       >
-        <button
-          type="button"
-          className="grid size-10.5 place-items-center rounded-full bg-transparent text-black/52 transition-colors hover:bg-[#ededed] hover:text-black md:size-10 dark:text-white/52 dark:hover:bg-white/8 dark:hover:text-white"
-          aria-label="Shuffle list"
-        >
-          <Shuffle className="size-4" strokeWidth={2} />
-        </button>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <button
+              type="button"
+              onClick={onRandomStart}
+              disabled={!canStartRandom}
+              className="grid size-10.5 place-items-center rounded-full bg-transparent text-black/52 transition-colors hover:bg-[#ededed] hover:text-black disabled:cursor-not-allowed disabled:opacity-45 md:size-10 dark:text-white/52 dark:hover:bg-white/8 dark:hover:text-white"
+              aria-label="Random"
+            >
+              <Shuffle className="size-4" strokeWidth={2} />
+            </button>
+          </TooltipTrigger>
+          <TooltipContent sideOffset={8} className={cardTooltipClassName}>
+            Random
+          </TooltipContent>
+        </Tooltip>
       </div>
     </div>
   );

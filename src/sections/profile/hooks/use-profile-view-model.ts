@@ -118,6 +118,7 @@ export function useProfileViewModel() {
     onSuccess: () => {
       clearAuthTokens();
       queryClient.removeQueries({ queryKey: ['auth', 'me'] });
+      queryClient.removeQueries({ queryKey: ['statistics'] });
       router.replace('/');
     },
     onError: (mutationError) => {

@@ -1,16 +1,25 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useLayoutEffect } from 'react';
 import { getAccessToken, AUTH_STATE_CHANGE_EVENT } from '@/src/lib/axios';
 
-export function useAuthSession() {
-  const [accessToken, setAccessToken] = useState<string | null>(null);
-  const [isHydrated, setIsHydrated] = useState(false);
+const useIsomorphicLayoutEffect = typeof window === 'undefined' ? useEffect : useLayoutEffect;
 
-  useEffect(() => {
+export function useAuthSession() {
+  const [session, setSession] = useState<{
+    accessToken: string | null;
+    isHydrated: boolean;
+  }>({
+    accessToken: null,
+    isHydrated: false,
+  });
+
+  useIsomorphicLayoutEffect(() => {
     const syncAuthSession = () => {
-      setAccessToken(getAccessToken());
-      setIsHydrated(true);
+      setSession({
+        accessToken: getAccessToken(),
+        isHydrated: true,
+      });
     };
 
     syncAuthSession();
@@ -25,8 +34,8 @@ export function useAuthSession() {
   }, []);
 
   return {
-    accessToken,
-    isHydrated,
-    isAuthenticated: Boolean(accessToken),
+    accessToken: session.accessToken,
+    isHydrated: session.isHydrated,
+    isAuthenticated: Boolean(session.accessToken),
   };
 }

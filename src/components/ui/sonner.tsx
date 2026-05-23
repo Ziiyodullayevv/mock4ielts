@@ -20,7 +20,7 @@ function ContestToastCard({
   onClose: () => void;
 }) {
   return (
-    <div className="group relative w-[calc(100vw-2rem)] max-w-82 pl-1.5 pt-1.5">
+    <div className="group relative w-[calc(100vw-2rem)] max-w-none pl-1.5 pt-1.5 sm:max-w-82">
       <button
         type="button"
         onClick={onClose}

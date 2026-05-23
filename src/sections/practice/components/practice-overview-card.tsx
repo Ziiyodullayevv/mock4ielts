@@ -28,6 +28,11 @@ import {
   APP_CONFIRM_DIALOG_OVERLAY_CLASS,
 } from '@/src/components/ui/dialog-theme';
 import {
+  contestPanelClassName,
+  contestInsetCardClassName,
+  contestIconButtonClassName,
+} from '@/src/sections/contest/components/contest-theme';
+import {
   X,
   Zap,
   Mic,
@@ -296,10 +301,10 @@ export function PracticeOverviewCard({
           overlayClassName={cn(APP_CONFIRM_DIALOG_OVERLAY_CLASS, 'backdrop-blur-xl')}
           className={cn(
             APP_CONFIRM_DIALOG_CONTENT_CLASS,
-            'max-w-[calc(100%-1.75rem)] p-0 shadow-md dark:bg-[#242424] dark:shadow-[0_24px_80px_rgba(0,0,0,0.42)]'
+            'max-w-[calc(100%-1.75rem)] overflow-hidden rounded-2xl border-0 bg-transparent p-0 shadow-none dark:bg-transparent dark:shadow-none'
           )}
         >
-          <div className="p-4 sm:p-5">
+          <div className={cn('rounded-2xl p-4 sm:p-5', contestPanelClassName)}>
             <div className="flex items-center justify-between gap-4">
               <div className="flex items-center gap-2">
                 <DialogTitle className="text-[1.55rem] font-semibold tracking-[-0.04em] text-black sm:text-[1.7rem] dark:text-white">
@@ -307,8 +312,13 @@ export function PracticeOverviewCard({
                 </DialogTitle>
               </div>
 
-              <DialogClose className="-mr-1 inline-flex size-10 items-center justify-center rounded-full text-black/68 transition-colors hover:bg-black/6 hover:text-black dark:text-white/68 dark:hover:bg-white/6 dark:hover:text-white">
-                <X className="size-5" />
+              <DialogClose
+                className={cn(
+                  contestIconButtonClassName,
+                  'inline-flex size-10 shrink-0 items-center justify-center rounded-2xl p-0 text-black/68 dark:text-white/68'
+                )}
+              >
+                <X className="relative z-10 size-5" />
                 <span className="sr-only">Close</span>
               </DialogClose>
             </div>
@@ -317,7 +327,7 @@ export function PracticeOverviewCard({
               Progress summary for {overview.title}
             </DialogDescription>
 
-            <div className="mt-4 rounded-xl bg-[#f6f6f6] p-4 sm:p-5 dark:bg-white/6 dark:shadow-none">
+            <div className={cn('mt-4 rounded-xl p-4 sm:p-5', contestInsetCardClassName)}>
               <div className="flex items-center gap-4 sm:gap-6">
                 <div className="relative shrink-0">
                   <CircularProgress
@@ -361,7 +371,7 @@ export function PracticeOverviewCard({
         </DialogContent>
       </Dialog>
 
-      <aside className={cn('text-sm', className)}>
+      <aside className={cn('w-full min-w-0 text-sm', className)}>
         <div
           className={cn(
             'rounded-3xl p-4 text-black shadow-sm md:p-5 dark:text-white dark:shadow-none dark:after:!bg-[#1e1e1e]',
@@ -371,7 +381,7 @@ export function PracticeOverviewCard({
           <div className="md:hidden">
             <div
               className={cn(
-                'mx-auto mt-3 flex size-24 items-center justify-center rounded-2xl shadow-sm dark:shadow-none',
+                'mx-auto flex size-24 items-center justify-center rounded-2xl shadow-sm dark:shadow-none',
                 theme.iconSurfaceClassName
               )}
             >

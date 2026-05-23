@@ -3,6 +3,7 @@ export type ContestStatus = 'live' | 'upcoming';
 export type ContestItem = {
   id: string;
   title: string;
+  description?: string;
   slug: string;
   /** ISO date string of when the contest starts */
   startsAt: string;

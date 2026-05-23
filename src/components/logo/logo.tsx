@@ -19,6 +19,7 @@ type LogoProps = {
   href?: string;
   onClick?: MouseEventHandler<HTMLAnchorElement>;
   size?: number;
+  svgClassName?: string;
   variant?: LogoVariant;
 };
 
@@ -27,6 +28,7 @@ export function Logo({
   href = '/',
   onClick,
   size = 30,
+  svgClassName,
   variant = 'light',
 }: LogoProps) {
   const width = Math.round((size * LOGO_VIEWBOX_WIDTH) / LOGO_VIEWBOX_HEIGHT);
@@ -49,7 +51,7 @@ export function Logo({
         fill="none"
         xmlns="http://www.w3.org/2000/svg"
         aria-hidden="true"
-        className="h-auto shrink-0"
+        className={cn('h-auto shrink-0', svgClassName)}
       >
         <path
           fillRule="evenodd"
