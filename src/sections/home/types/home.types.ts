@@ -13,7 +13,6 @@ export type HeroSlide = {
   id: number;
   optimizedPoster: string;
   prompt: string;
-  video: string;
 };
 
 export type ReferenceVideoItem = {
@@ -27,7 +26,9 @@ export type ReferenceVideoSlide = {
   mediaScale?: number;
   mediaPosition?: string;
   poster: string;
+  previewVideo: string;
   previewVideoAlt: string;
+  references: [ReferenceVideoItem, ReferenceVideoItem, ReferenceVideoItem];
 };
 
 export type ReferenceVideoSectionContent = {
