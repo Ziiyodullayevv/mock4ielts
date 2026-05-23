@@ -35,7 +35,7 @@ export function HomeHero() {
   const [activeSlide, setActiveSlide] = useState(0);
   const [isDesktopViewport, setIsDesktopViewport] = useState(false);
   const firstHeroSlide = HERO_SLIDES[0];
-  const activeHeroSlide = isDesktopViewport ? HERO_SLIDES[activeSlide] : firstHeroSlide;
+  const activeHeroSlide = HERO_SLIDES[activeSlide];
 
   useEffect(() => {
     const mediaQuery = window.matchMedia('(min-width: 1024px)');
@@ -73,16 +73,21 @@ export function HomeHero() {
         />
 
         <div className="absolute inset-0 hidden lg:block">
-          <Image
-            src={activeHeroSlide.optimizedPoster}
-            alt="Hero poster"
-            fill
-            priority
-            fetchPriority="high"
-            sizes="100vw"
-            unoptimized
-            className="object-cover object-center transition-opacity duration-500"
-          />
+          {HERO_SLIDES.map((slide, index) => (
+            <Image
+              key={slide.id}
+              src={slide.optimizedPoster}
+              alt="Hero poster"
+              fill
+              priority={index === 0}
+              fetchPriority={index === 0 ? 'high' : 'low'}
+              sizes="100vw"
+              unoptimized
+              className={`object-cover object-center transition-opacity duration-700 ease-in-out ${
+                index === activeSlide ? 'opacity-100' : 'opacity-0'
+              }`}
+            />
+          ))}
         </div>
       </div>
 
@@ -117,12 +122,17 @@ export function HomeHero() {
 
         <div className="mt-10 flex w-full max-w-4xl items-center gap-3 rounded-full border border-white/20 bg-white/14 p-1.5 pl-3 shadow-lg backdrop-blur-sm">
           <div className="relative size-7 ml-2 shrink-0 overflow-hidden rounded-sm">
-            <Image
-              src={activeHeroSlide.optimizedPoster}
-              alt="Current prompt"
-              fill
-              className="object-cover"
-            />
+            {HERO_SLIDES.map((slide, index) => (
+              <Image
+                key={slide.id}
+                src={slide.optimizedPoster}
+                alt="Current prompt"
+                fill
+                className={`object-cover transition-opacity duration-700 ease-in-out ${
+                  index === activeSlide ? 'opacity-100' : 'opacity-0'
+                }`}
+              />
+            ))}
           </div>
 
           <div className="h-4 bg-white w-px" />
