@@ -1,6 +1,7 @@
 'use client';
 
 import { cn } from '@/src/lib/utils';
+import { Slider } from '@/src/components/ui/slider';
 import { useRef, useState, useEffect, useCallback } from 'react';
 import { TimerDisplay } from '@/src/layouts/listening/timer-display';
 import { PracticeAudioSliderCard } from '@/src/layouts/practice/practice-audio-slider-card';
