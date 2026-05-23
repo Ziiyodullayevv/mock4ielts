@@ -968,6 +968,7 @@ export function MockExamRunnerPage({
       return;
     }
 
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setOverviewTimeLeftSeconds((currentValue) =>
       currentValue === null ? mockExamDurationSeconds : currentValue
     );
