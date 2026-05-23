@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { paths } from '@/src/routes/paths';
-import { useRef, useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/src/components/ui/button';
 
 import { HERO_SLIDES } from './data/hero-slides.data';
@@ -34,7 +34,6 @@ function getCircularOffset(index: number, activeIndex: number, totalSlides: numb
 export function HomeHero() {
   const [activeSlide, setActiveSlide] = useState(0);
   const [isDesktopViewport, setIsDesktopViewport] = useState(false);
-  const videoRef = useRef<HTMLVideoElement | null>(null);
   const firstHeroSlide = HERO_SLIDES[0];
   const activeHeroSlide = isDesktopViewport ? HERO_SLIDES[activeSlide] : firstHeroSlide;
 
@@ -57,13 +56,6 @@ export function HomeHero() {
     }, AUTOPLAY_DELAY_MS);
 
     return () => window.clearTimeout(timeoutId);
-  }, [activeSlide, isDesktopViewport]);
-
-  useEffect(() => {
-    if (!isDesktopViewport || !videoRef.current) return;
-
-    videoRef.current.currentTime = 0;
-    void videoRef.current.play().catch(() => undefined);
   }, [activeSlide, isDesktopViewport]);
 
   return (
@@ -89,22 +81,8 @@ export function HomeHero() {
             fetchPriority="high"
             sizes="100vw"
             unoptimized
-            className="object-cover object-center"
+            className="object-cover object-center transition-opacity duration-500"
           />
-
-          <video
-            key={activeHeroSlide.video}
-            ref={videoRef}
-            className="absolute inset-0 h-full w-full object-cover object-center"
-            autoPlay
-            loop
-            muted
-            playsInline
-            poster={activeHeroSlide.optimizedPoster}
-            preload="metadata"
-          >
-            <source src={activeHeroSlide.video} type="video/mp4" />
-          </video>
         </div>
       </div>
 
@@ -138,7 +116,7 @@ export function HomeHero() {
         </p>
 
         <div className="mt-10 flex w-full max-w-4xl items-center gap-3 rounded-full border border-white/20 bg-white/14 p-1.5 pl-3 shadow-lg backdrop-blur-sm">
-          <div className="relative size-7 ml-2 shrink-0 overflow-hidden  rounded-sm">
+          <div className="relative size-7 ml-2 shrink-0 overflow-hidden rounded-sm">
             <Image
               src={activeHeroSlide.optimizedPoster}
               alt="Current prompt"
