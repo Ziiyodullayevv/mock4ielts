@@ -30,16 +30,12 @@ export function MainHeader() {
   const headerHorizontalPaddingClass = 'px-4 sm:px-6';
   const panelOverlayClass = hasPanel
     ? isHomePage
-      ? useHomeDarkTone
-        ? 'h-full bg-black/56 opacity-100 backdrop-blur-[30px]'
-        : 'h-full bg-white/42 opacity-100 backdrop-blur-[30px] dark:bg-black/56'
+      ? 'h-full bg-black/5 opacity-100'
       : 'h-full bg-black/10 opacity-100 backdrop-blur-[30px] dark:bg-black/56'
     : 'h-full opacity-0';
   const headerSurfaceClass = hasPanel
     ? isHomePage
-      ? useHomeDarkTone
-        ? 'bg-black/45 backdrop-blur-[28px]'
-        : 'bg-white/74 backdrop-blur-[28px] dark:bg-black/45'
+      ? 'bg-black/5 backdrop-blur-lg'
       : 'bg-white backdrop-blur-none dark:bg-transparent'
     : shouldConstrainHeaderWidth
       ? 'bg-white backdrop-blur-[30px] dark:bg-[#141414]'
@@ -236,7 +232,7 @@ export function MainHeader() {
           shouldConstrainHeaderWidth && !hasPanel && 'dark:bg-white/8',
           hasPanel &&
             (isHomePage
-              ? 'border-b border-white/12 bg-black/5 backdrop-blur-[28px]'
+              ? 'border-b border-white/12 bg-black/5 backdrop-blur-lg'
               : 'border-b border-gray-300/50 bg-white shadow-[0_16px_36px_rgba(15,23,42,0.08)] backdrop-blur-none dark:border-white/10 dark:bg-transparent dark:shadow-[0_20px_44px_rgba(0,0,0,0.22)]'),
           hasPanel ? 'max-h-100 translate-y-0 opacity-100' : 'max-h-0 -translate-y-2 opacity-0'
         )}
