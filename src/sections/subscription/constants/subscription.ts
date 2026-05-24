@@ -22,9 +22,9 @@ export const SUBSCRIPTION_PERIOD_OPTIONS: Array<{
 ];
 
 export const subscriptionPageBackgroundClassName =
-  'min-h-screen bg-[#f4f6f9] px-4 text-stone-950 sm:px-6 dark:bg-[linear-gradient(180deg,#090909_0%,#050505_100%)] dark:text-white';
+  'min-h-screen bg-white px-4 text-stone-950 sm:px-6 dark:bg-[linear-gradient(180deg,#090909_0%,#050505_100%)] dark:text-white';
 
-export const subscriptionCardClassName = `${PRACTICE_MENU_PANEL_RING_CLASS} text-stone-950 dark:text-white`;
+export const subscriptionCardClassName = `${PRACTICE_MENU_PANEL_RING_CLASS} text-stone-950 shadow-[0_8px_18px_rgba(15,23,42,0.08),0_2px_8px_rgba(15,23,42,0.04)] dark:text-white dark:shadow-none`;
 
 export const subscriptionSurfaceClassName =
   `${subscriptionCardClassName} rounded-[28px] shadow-[0_8px_18px_rgba(15,23,42,0.08),0_2px_8px_rgba(15,23,42,0.04)] dark:shadow-none`;

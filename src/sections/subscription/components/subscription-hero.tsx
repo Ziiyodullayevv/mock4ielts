@@ -47,7 +47,7 @@ export function SubscriptionHero({
               >
                 <Avatar className="size-full bg-transparent">
                   <AvatarImage src={avatar ?? undefined} alt={fullName || email || 'Profile'} />
-                  <AvatarFallback className="bg-transparent text-lg font-semibold text-white">
+                  <AvatarFallback className="bg-transparent text-lg font-semibold text-stone-900 dark:text-white">
                     {initials}
                   </AvatarFallback>
                 </Avatar>

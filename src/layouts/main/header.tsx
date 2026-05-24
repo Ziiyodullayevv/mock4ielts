@@ -28,13 +28,10 @@ export function MainHeader() {
   const activeNavTextClass =
     'bg-[linear-gradient(90deg,#f7c66c_0%,#ff9f2f_100%)] bg-clip-text text-transparent';
   const headerHorizontalPaddingClass = 'px-4 sm:px-6';
-  const panelOverlayClass = hasPanel && !isHomePage
-    ? 'h-full bg-black/10 opacity-100 backdrop-blur-[30px] dark:bg-black/56'
-    : 'h-full opacity-0';
   const headerSurfaceClass = hasPanel
     ? isHomePage
       ? 'bg-black/5'
-      : 'bg-white/80 backdrop-blur-[30px] dark:bg-[#141414]/80'
+      : 'bg-white/8 backdrop-blur-xl dark:bg-black/5'
     : shouldConstrainHeaderWidth
       ? 'bg-white backdrop-blur-[30px] dark:bg-[#141414]'
       : shouldShowHomeBackdrop
@@ -71,7 +68,7 @@ export function MainHeader() {
 
       const triggerRect = triggerElement.getBoundingClientRect();
       const panelRect = panelElement.getBoundingClientRect();
-      const panelContentInset = 24; // matches `px-6` on the panel container
+      const panelContentInset = 24;
       setPanelOffset(Math.max(0, triggerRect.left - panelRect.left - panelContentInset));
     };
 
@@ -117,13 +114,6 @@ export function MainHeader() {
       className="fixed inset-x-0 top-0 z-40"
       onMouseLeave={() => setOpenItemId(null)}
     >
-      <div
-        className={cn(
-          'pointer-events-none absolute inset-x-0 top-0 hidden transition-all duration-300 ease-out lg:block',
-          panelOverlayClass
-        )}
-      />
-
       <header
         className={cn(
           isHomePage
@@ -205,66 +195,64 @@ export function MainHeader() {
             <HeaderAuthActions isHomePage={useHomeDarkTone} />
           </div>
 
-        <button
-          type="button"
-          onClick={() => {
-            setOpenItemId(null);
-            setIsMobileMenuOpen(true);
-          }}
-          aria-label="Open menu"
-          className={cn(
-            'inline-flex items-center justify-center p-0 transition-colors lg:hidden',
-            isHomePage
-              ? useHomeDarkTone
-                ? 'text-white'
+          <button
+            type="button"
+            onClick={() => {
+              setOpenItemId(null);
+              setIsMobileMenuOpen(true);
+            }}
+            aria-label="Open menu"
+            className={cn(
+              'inline-flex items-center justify-center p-0 transition-colors lg:hidden',
+              isHomePage
+                ? useHomeDarkTone
+                  ? 'text-white'
+                  : 'text-black dark:text-white'
                 : 'text-black dark:text-white'
-              : 'text-black dark:text-white'
+            )}
+          >
+            <Menu className="size-5" strokeWidth={2.2} />
+          </button>
+        </div>
+
+        <div
+          className={cn(
+            'relative hidden overflow-hidden transition-all duration-100 ease-linear lg:block',
+            hasPanel &&
+              (isHomePage
+                ? 'border-b border-white/12'
+                : 'border-b border-gray-300/30 dark:border-white/10'),
+            hasPanel ? 'max-h-100 translate-y-0 opacity-100' : 'max-h-0 -translate-y-2 opacity-0'
           )}
         >
-          <Menu className="size-5" strokeWidth={2.2} />
-        </button>
+          {openedItem?.panelItems ? (
+            <div ref={panelSurfaceRef} className={cn('pb-6 pt-3', headerHorizontalPaddingClass)}>
+              <div style={{ paddingLeft: `${panelOffset}px` }}>
+                <ul className="space-y-4">
+                  {openedItem.panelItems.map((panelItem) => (
+                    <li key={panelItem.href}>
+                      <Link
+                        href={panelItem.href}
+                        onClick={() => setOpenItemId(null)}
+                        className={cn(
+                          'inline-block px-3 py-1 text-sm font-medium tracking-[-0.01em] transition-colors',
+                          pathname === panelItem.href
+                            ? activeNavTextClass
+                            : isHomePage
+                              ? 'text-white/70 hover:text-white'
+                              : 'text-black/70 hover:text-black dark:text-white/70 dark:hover:text-white'
+                        )}
+                      >
+                        {panelItem.label}
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+          ) : null}
         </div>
       </header>
-
-      <div
-        className={cn(
-          'relative hidden overflow-hidden transition-all duration-100 ease-linear lg:block',
-          shouldConstrainHeaderWidth && !hasPanel && 'bg-white',
-          shouldConstrainHeaderWidth && !hasPanel && 'dark:bg-white/8',
-          hasPanel &&
-            (isHomePage
-              ? 'border-b border-white/12 bg-black/5'
-              : 'border-b border-gray-300/50 bg-white/80 backdrop-blur-[30px] shadow-[0_16px_36px_rgba(15,23,42,0.08)] dark:border-white/10 dark:bg-[#141414]/80 dark:shadow-[0_20px_44px_rgba(0,0,0,0.22)]'),
-          hasPanel ? 'max-h-100 translate-y-0 opacity-100' : 'max-h-0 -translate-y-2 opacity-0'
-        )}
-      >
-        {openedItem?.panelItems ? (
-          <div ref={panelSurfaceRef} className={cn('pb-8 pt-2', headerHorizontalPaddingClass)}>
-            <div style={{ paddingLeft: `${panelOffset}px` }}>
-              <ul className="space-y-2">
-                {openedItem.panelItems.map((panelItem) => (
-                  <li key={panelItem.href}>
-                    <Link
-                      href={panelItem.href}
-                      onClick={() => setOpenItemId(null)}
-                      className={cn(
-                        'inline-block px-3 text-sm font-medium tracking-[-0.01em] transition-colors',
-                        pathname === panelItem.href
-                          ? activeNavTextClass
-                          : isHomePage
-                            ? 'text-white/70 hover:text-white'
-                            : 'text-black/70 hover:text-black dark:text-white/70 dark:hover:text-white'
-                      )}
-                    >
-                      {panelItem.label}
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          </div>
-        ) : null}
-      </div>
 
       <HeaderMobileMenu
         isOpen={isMobileMenuOpen}
