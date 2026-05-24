@@ -1,8 +1,8 @@
 'use client';
 
 import { Globe } from 'lucide-react';
-import { useMemo, useState } from 'react';
 import { motion } from 'motion/react';
+import { useMemo, useState } from 'react';
 import { FaTelegramPlane } from 'react-icons/fa';
 import { Button } from '@/src/components/ui/button';
 

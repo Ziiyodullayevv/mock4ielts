@@ -1,7 +1,8 @@
+import { ScrollReveal } from '@/src/components/animations/scroll-reveal';
+
 import { heroShowCaseSections } from './data';
 import { FeatureCardsSection } from './components/feature-cards';
 import { ReferenceVideoSection } from './components/video-carusel';
-import { ScrollReveal } from '@/src/components/animations/scroll-reveal';
 
 export function HeroShowCase() {
   return (

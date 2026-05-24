@@ -1,8 +1,8 @@
 'use client';
 
 import Image from 'next/image';
-import { useRef, useEffect } from 'react';
 import { motion } from 'motion/react';
+import { useRef, useEffect } from 'react';
 
 import { BenefitCard } from './components/why';
 import { benefits, galleryImages } from './data';
