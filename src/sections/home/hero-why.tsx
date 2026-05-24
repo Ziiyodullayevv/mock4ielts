@@ -2,6 +2,7 @@
 
 import Image from 'next/image';
 import { useRef, useEffect } from 'react';
+import { motion } from 'motion/react';
 
 import { BenefitCard } from './components/why';
 import { benefits, galleryImages } from './data';
@@ -14,6 +15,10 @@ const tiledImages = Array.from(
   { length: GALLERY_TILE_COUNT },
   (_, index) => galleryImages[index % galleryImages.length]
 );
+
+const HIDDEN = { opacity: 0, y: 24, filter: 'blur(8px)' };
+const VISIBLE = { opacity: 1, y: 0, filter: 'blur(0px)' };
+const EASE = [0.22, 1, 0.36, 1] as const;
 
 export function HeroWhy() {
   const gallerySectionRef = useRef<HTMLDivElement | null>(null);
@@ -59,21 +64,43 @@ export function HeroWhy() {
   return (
     <section className="my-20 w-full overflow-hidden bg-background text-stone-950 transition-colors duration-300 dark:bg-black dark:text-white">
       <div className="mx-auto flex max-w-360 flex-col items-center px-6">
-        <h2 className="text-center text-[48px] font-medium leading-tight text-stone-950 max-md:text-[32px] dark:text-white">
+        <motion.h2
+          initial={HIDDEN}
+          whileInView={VISIBLE}
+          viewport={{ once: true, amount: 0.3 }}
+          transition={{ duration: 0.65, ease: EASE }}
+          className="text-center text-[48px] font-medium leading-tight text-stone-950 max-md:text-[32px] dark:text-white"
+        >
           Why MOCK4IELTS?
-        </h2>
+        </motion.h2>
 
-        <div className="my-4 hidden h-0.5 w-12.5 bg-stone-300 max-md:block dark:bg-white/25" />
+        <motion.div
+          initial={HIDDEN}
+          whileInView={VISIBLE}
+          viewport={{ once: true, amount: 0.3 }}
+          transition={{ duration: 0.65, delay: 0.1, ease: EASE }}
+          className="my-4 hidden h-0.5 w-12.5 bg-stone-300 max-md:block dark:bg-white/25"
+        />
 
-        <p className="mt-3 max-w-190 text-center text-base text-stone-600 dark:text-white/65">
+        <motion.p
+          initial={HIDDEN}
+          whileInView={VISIBLE}
+          viewport={{ once: true, amount: 0.3 }}
+          transition={{ duration: 0.65, delay: 0.15, ease: EASE }}
+          className="mt-3 max-w-190 text-center text-base text-stone-600 dark:text-white/65"
+        >
           Mock4IELTS helps you practice smarter with real exam-style questions, full mock tests, and
           progress tracking.
-        </p>
+        </motion.p>
 
         <div className="mt-20 flex w-full items-start justify-center gap-18 max-lg:gap-10 max-md:mt-12 max-md:flex-col max-md:items-center max-md:gap-8">
           {benefits.map((item, index) => (
-            <div
+            <motion.div
               key={item.title}
+              initial={HIDDEN}
+              whileInView={VISIBLE}
+              viewport={{ once: true, amount: 0.2 }}
+              transition={{ duration: 0.65, delay: 0.1 + index * 0.12, ease: EASE }}
               className="flex items-start gap-18 max-lg:gap-10 max-md:w-full max-md:flex-col max-md:items-center max-md:gap-8"
             >
               <BenefitCard item={item} />
@@ -81,7 +108,7 @@ export function HeroWhy() {
               {index !== benefits.length - 1 && (
                 <div className="mt-6 h-33 w-px bg-stone-200 max-md:mt-0 max-md:h-px max-md:w-full dark:bg-white/15" />
               )}
-            </div>
+            </motion.div>
           ))}
         </div>
       </div>

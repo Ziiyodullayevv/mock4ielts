@@ -2,11 +2,7 @@
 
 import type { PracticeOverview, PracticeQuestionItem } from '@/src/sections/practice/types';
 
-import { useEffect } from 'react';
 import { paths } from '@/src/routes/paths';
-import { useRouter } from '@/src/routes/hooks';
-import { buildLoginHref } from '@/src/auth/utils/return-to';
-import { useAuthSession } from '@/src/auth/hooks/use-auth-session';
 import { PracticeWorkspace } from '@/src/sections/practice/components';
 
 import { useMockExamsQuery } from '../hooks/use-mock-exams-query';
@@ -25,15 +21,7 @@ const DEFAULT_OVERVIEW: PracticeOverview = {
 };
 
 export function MockExamsView() {
-  const router = useRouter();
-  const { isAuthenticated, isHydrated } = useAuthSession();
-  const { data, error, isLoading } = useMockExamsQuery(isAuthenticated);
-
-  useEffect(() => {
-    if (isHydrated && !isAuthenticated) {
-      router.replace(buildLoginHref(paths.mockExam.root));
-    }
-  }, [isAuthenticated, isHydrated, router]);
+  const { data, error, isLoading } = useMockExamsQuery(true);
 
   const questions: PracticeQuestionItem[] = (data?.items ?? []).map((item, index) => ({
     attemptCount: item.attemptCount,
@@ -65,15 +53,11 @@ export function MockExamsView() {
       }
     : DEFAULT_OVERVIEW;
 
-  if (isHydrated && !isAuthenticated) {
-    return null;
-  }
-
   return (
     <PracticeWorkspace
       emptyMessage="No full IELTS mock exams found yet."
       errorMessage={error instanceof Error ? error.message : null}
-      isLoading={!isHydrated || (isAuthenticated && isLoading)}
+      isLoading={isLoading}
       overview={overview}
       questions={questions}
       searchPlaceholder="Search mock exams"

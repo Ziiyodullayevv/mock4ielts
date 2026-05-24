@@ -28,15 +28,13 @@ export function MainHeader() {
   const activeNavTextClass =
     'bg-[linear-gradient(90deg,#f7c66c_0%,#ff9f2f_100%)] bg-clip-text text-transparent';
   const headerHorizontalPaddingClass = 'px-4 sm:px-6';
-  const panelOverlayClass = hasPanel
-    ? isHomePage
-      ? 'h-full opacity-0'
-      : 'h-full bg-black/10 opacity-100 backdrop-blur-[30px] dark:bg-black/56'
+  const panelOverlayClass = hasPanel && !isHomePage
+    ? 'h-full bg-black/10 opacity-100 backdrop-blur-[30px] dark:bg-black/56'
     : 'h-full opacity-0';
   const headerSurfaceClass = hasPanel
     ? isHomePage
       ? 'bg-black/5'
-      : 'bg-white backdrop-blur-none dark:bg-transparent'
+      : 'bg-white/80 backdrop-blur-[30px] dark:bg-[#141414]/80'
     : shouldConstrainHeaderWidth
       ? 'bg-white backdrop-blur-[30px] dark:bg-[#141414]'
       : shouldShowHomeBackdrop
@@ -116,10 +114,7 @@ export function MainHeader() {
 
   return (
     <div
-      className={cn(
-        'fixed inset-x-0 top-0 z-40 transition-[backdrop-filter] duration-300',
-        isHomePage && hasPanel && 'backdrop-blur-lg'
-      )}
+      className="fixed inset-x-0 top-0 z-40"
       onMouseLeave={() => setOpenItemId(null)}
     >
       <div
@@ -133,8 +128,8 @@ export function MainHeader() {
         className={cn(
           isHomePage
             ? useHomeDarkTone
-              ? 'relative text-white/88 transition-[background-color,backdrop-filter] duration-500 ease-out'
-              : 'relative text-black/88 transition-[background-color,backdrop-filter] duration-500 ease-out dark:text-white/88'
+              ? 'relative text-white/88 transition-[background-color,backdrop-filter,box-shadow] duration-500 ease-out'
+              : 'relative text-black/88 transition-[background-color,backdrop-filter,box-shadow] duration-500 ease-out dark:text-white/88'
             : 'relative text-black/88 transition-[background-color,backdrop-filter,box-shadow,border-color] duration-500 ease-out dark:text-white/88',
           !isHomePage && !hasPanel && 'border-b border-gray-300/50 dark:border-white/10',
           headerSurfaceClass,
@@ -239,7 +234,7 @@ export function MainHeader() {
           hasPanel &&
             (isHomePage
               ? 'border-b border-white/12 bg-black/5'
-              : 'border-b border-gray-300/50 bg-white shadow-[0_16px_36px_rgba(15,23,42,0.08)] backdrop-blur-none dark:border-white/10 dark:bg-transparent dark:shadow-[0_20px_44px_rgba(0,0,0,0.22)]'),
+              : 'border-b border-gray-300/50 bg-white/80 backdrop-blur-[30px] shadow-[0_16px_36px_rgba(15,23,42,0.08)] dark:border-white/10 dark:bg-[#141414]/80 dark:shadow-[0_20px_44px_rgba(0,0,0,0.22)]'),
           hasPanel ? 'max-h-100 translate-y-0 opacity-100' : 'max-h-0 -translate-y-2 opacity-0'
         )}
       >

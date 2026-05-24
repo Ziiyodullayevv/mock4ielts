@@ -14,8 +14,9 @@ export function VideoCard({ isActive, slide }: VideoCardProps) {
   const rootRef = useRef<HTMLDivElement | null>(null);
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const [isInView, setIsInView] = useState(false);
-  const [hasInteracted, setHasInteracted] = useState(false);
-  const shouldLoadVideo = isActive && isInView && hasInteracted;
+  const hasVideo = Boolean(slide.previewVideo);
+  const shouldPlayVideo = hasVideo && isActive && isInView;
+
   const mediaFrameClassName = 'absolute inset-0 block h-full w-full object-cover object-center';
   const mediaTransformStyle = {
     objectPosition: slide.mediaPosition ?? 'center',
@@ -42,27 +43,21 @@ export function VideoCard({ isActive, slide }: VideoCardProps) {
     const videoElement = videoRef.current;
     if (!videoElement) return;
 
-    if (shouldLoadVideo) {
+    if (shouldPlayVideo) {
       videoElement.currentTime = 0;
       void videoElement.play().catch(() => undefined);
-      return;
+    } else {
+      videoElement.pause();
     }
-
-    videoElement.pause();
-  }, [shouldLoadVideo]);
+  }, [shouldPlayVideo]);
 
   return (
-    <div
-      ref={rootRef}
-      className="relative"
-      onFocus={() => setHasInteracted(true)}
-      onMouseEnter={() => setHasInteracted(true)}
-      onTouchStart={() => setHasInteracted(true)}
-    >
+    <div ref={rootRef} className="relative">
       <div className="relative overflow-hidden rounded-none border border-stone-200 bg-white shadow-[0_26px_70px_rgba(15,23,42,0.12)] sm:rounded-lg dark:border-white/8 dark:bg-[#0b0b0b] dark:shadow-[0_30px_120px_rgba(0,0,0,0.75)]">
         <div className="relative aspect-[16/9] w-full overflow-hidden bg-black">
           <Image
             fill
+            priority={isActive}
             src={slide.poster}
             alt={slide.previewVideoAlt}
             sizes="(min-width: 1280px) 1100px, (min-width: 768px) 90vw, 100vw"
@@ -70,16 +65,21 @@ export function VideoCard({ isActive, slide }: VideoCardProps) {
             style={mediaTransformStyle}
           />
 
-          {shouldLoadVideo && (
+          {hasVideo && (
             <video
               ref={videoRef}
               loop
               muted
+              autoPlay
               playsInline
-              preload="metadata"
+              preload="auto"
               poster={slide.poster}
               className={mediaFrameClassName}
-              style={mediaTransformStyle}
+              style={{
+                ...mediaTransformStyle,
+                opacity: shouldPlayVideo ? 1 : 0,
+                transition: 'opacity 0.4s ease',
+              }}
               aria-label={slide.previewVideoAlt}
             >
               <source src={slide.previewVideo} type="video/mp4" />
