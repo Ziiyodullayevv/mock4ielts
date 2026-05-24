@@ -236,9 +236,7 @@ export function MainHeader() {
           shouldConstrainHeaderWidth && !hasPanel && 'dark:bg-white/8',
           hasPanel &&
             (isHomePage
-              ? useHomeDarkTone
-                ? 'border-b border-white/12 bg-black/45 shadow-[0_22px_48px_rgba(0,0,0,0.26)] backdrop-blur-[28px]'
-                : 'border-b border-black/8 bg-white/72 shadow-[0_16px_36px_rgba(15,23,42,0.08)] backdrop-blur-[28px] dark:border-white/12 dark:bg-black/45 dark:shadow-[0_22px_48px_rgba(0,0,0,0.26)]'
+              ? 'border-b border-white/12 bg-black/5 backdrop-blur-[28px]'
               : 'border-b border-gray-300/50 bg-white shadow-[0_16px_36px_rgba(15,23,42,0.08)] backdrop-blur-none dark:border-white/10 dark:bg-transparent dark:shadow-[0_20px_44px_rgba(0,0,0,0.22)]'),
           hasPanel ? 'max-h-100 translate-y-0 opacity-100' : 'max-h-0 -translate-y-2 opacity-0'
         )}
@@ -246,7 +244,7 @@ export function MainHeader() {
         {openedItem?.panelItems ? (
           <div ref={panelSurfaceRef} className={cn('pb-8 pt-2', headerHorizontalPaddingClass)}>
             <div style={{ paddingLeft: `${panelOffset}px` }}>
-              <ul className="space-y-8">
+              <ul className="space-y-2">
                 {openedItem.panelItems.map((panelItem) => (
                   <li key={panelItem.href}>
                     <Link
@@ -257,9 +255,7 @@ export function MainHeader() {
                         pathname === panelItem.href
                           ? activeNavTextClass
                           : isHomePage
-                            ? useHomeDarkTone
-                              ? 'text-white/70 hover:text-white'
-                              : 'text-black/70 hover:text-black dark:text-white/70 dark:hover:text-white'
+                            ? 'text-white/70 hover:text-white'
                             : 'text-black/70 hover:text-black dark:text-white/70 dark:hover:text-white'
                       )}
                     >
