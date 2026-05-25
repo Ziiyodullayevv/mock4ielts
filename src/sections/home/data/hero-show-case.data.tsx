@@ -7,48 +7,48 @@ const listeningReadingSlides: ReferenceVideoSlide[] = [
   {
     id: 'reference-slide-1',
     mediaScale: 1.07,
-    poster: '/assets/home/carusel/posters/listening-1.webp',
+    poster: '/assets/home/carusel/posters/banner-1.webp',
     previewVideo: '/assets/home/carusel/videos/banner-1.mp4',
     previewVideoAlt: 'IELTS listening practice carousel preview',
     references: [
       {
         alt: 'Listening poster',
         id: 'reference-slide-1-char-1',
-        image: '/assets/home/carusel/posters/listening-1.webp',
+        image: '/assets/home/carusel/posters/banner-1.webp',
       },
       {
         alt: 'Reading poster',
         id: 'reference-slide-1-object',
-        image: '/assets/home/carusel/posters/reading-1.webp',
+        image: '/assets/home/carusel/posters/banner-2.webp',
       },
       {
         alt: 'Writing poster',
         id: 'reference-slide-1-char-2',
-        image: '/assets/home/carusel/posters/writing-1.webp',
+        image: '/assets/home/carusel/posters/banner-3.webp',
       },
     ],
   },
   {
     id: 'reference-slide-2',
     mediaScale: 1.01,
-    poster: '/assets/home/carusel/posters/reading-1.webp',
+    poster: '/assets/home/carusel/posters/banner-2.webp',
     previewVideo: '/assets/home/carusel/videos/banner-2.mp4',
     previewVideoAlt: 'IELTS reading practice carousel preview',
     references: [
       {
         alt: 'Reading poster',
         id: 'reference-slide-2-desert',
-        image: '/assets/home/carusel/posters/reading-1.webp',
+        image: '/assets/home/carusel/posters/banner-2.webp',
       },
       {
         alt: 'Speaking poster',
         id: 'reference-slide-2-robot',
-        image: '/assets/home/carusel/posters/speaking-1.webp',
+        image: '/assets/home/carusel/posters/banner-4.webp',
       },
       {
         alt: 'Listening poster',
         id: 'reference-slide-2-light',
-        image: '/assets/home/carusel/posters/listening-1.webp',
+        image: '/assets/home/carusel/posters/banner-1.webp',
       },
     ],
   },
@@ -58,48 +58,48 @@ const writingSpeakingSlides: ReferenceVideoSlide[] = [
   {
     id: 'reference-slide-3',
     mediaScale: 1.01,
-    poster: '/assets/home/carusel/posters/writing-1.webp',
+    poster: '/assets/home/carusel/posters/banner-3.webp',
     previewVideo: '/assets/home/carusel/videos/banner-3.mp4',
     previewVideoAlt: 'IELTS writing practice carousel preview',
     references: [
       {
         alt: 'Writing poster',
         id: 'reference-slide-3-city',
-        image: '/assets/home/carusel/posters/writing-1.webp',
+        image: '/assets/home/carusel/posters/banner-3.webp',
       },
       {
         alt: 'Listening poster',
         id: 'reference-slide-3-character',
-        image: '/assets/home/carusel/posters/listening-1.webp',
+        image: '/assets/home/carusel/posters/banner-1.webp',
       },
       {
         alt: 'Speaking poster',
         id: 'reference-slide-3-mood',
-        image: '/assets/home/carusel/posters/speaking-1.webp',
+        image: '/assets/home/carusel/posters/banner-4.webp',
       },
     ],
   },
   {
     id: 'reference-slide-4',
     mediaScale: 1.01,
-    poster: '/assets/home/carusel/posters/speaking-1.webp',
+    poster: '/assets/home/carusel/posters/banner-4.webp',
     previewVideo: '/assets/home/carusel/videos/banner-4.mp4',
     previewVideoAlt: 'IELTS speaking practice carousel preview',
     references: [
       {
         alt: 'Speaking poster',
         id: 'reference-slide-4-speaking',
-        image: '/assets/home/carusel/posters/speaking-1.webp',
+        image: '/assets/home/carusel/posters/banner-4.webp',
       },
       {
         alt: 'Reading poster',
         id: 'reference-slide-4-reading',
-        image: '/assets/home/carusel/posters/reading-1.webp',
+        image: '/assets/home/carusel/posters/banner-2.webp',
       },
       {
         alt: 'Writing poster',
         id: 'reference-slide-4-writing',
-        image: '/assets/home/carusel/posters/writing-1.webp',
+        image: '/assets/home/carusel/posters/banner-3.webp',
       },
     ],
   },

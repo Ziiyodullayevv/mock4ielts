@@ -68,7 +68,8 @@ export function HomeHero() {
           priority
           fetchPriority="high"
           sizes="100vw"
-          unoptimized
+          placeholder="blur"
+          blurDataURL={firstHeroSlide.blurDataURL}
           className="object-cover object-center lg:hidden"
         />
 
@@ -82,7 +83,8 @@ export function HomeHero() {
               priority={index === 0}
               fetchPriority={index === 0 ? 'high' : 'low'}
               sizes="100vw"
-              unoptimized
+              placeholder="blur"
+              blurDataURL={slide.blurDataURL}
               className={`object-cover object-center transition-opacity duration-700 ease-in-out ${
                 index === activeSlide ? 'opacity-100' : 'opacity-0'
               }`}
@@ -128,6 +130,7 @@ export function HomeHero() {
                 src={slide.optimizedPoster}
                 alt="Current prompt"
                 fill
+                sizes="28px"
                 className={`object-cover transition-opacity duration-700 ease-in-out ${
                   index === activeSlide ? 'opacity-100' : 'opacity-0'
                 }`}
@@ -178,7 +181,6 @@ export function HomeHero() {
                 alt="Slide thumbnail"
                 fill
                 sizes="64px"
-                unoptimized
                 className={`object-cover transition-transform duration-500 ${isActive ? 'scale-100' : 'scale-95'}`}
               />
             </button>

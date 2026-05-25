@@ -52,6 +52,9 @@ type AuthGoogleButtonProps = {
   onError: (message: string) => void;
 };
 
+// Module-level flag — persists across component re-mounts so initialize() is called only once
+let googleSdkInitialized = false;
+
 export function AuthGoogleButton({
   clientId,
   disabled = false,
@@ -63,7 +66,6 @@ export function AuthGoogleButton({
   const [isPressed, setIsPressed] = useState(false);
   const callbackRef = useRef(onCredential);
   const containerRef = useRef<HTMLDivElement | null>(null);
-  const isInitializedRef = useRef(false);
   const isUnavailable = !clientId || disabled || loading;
   const isOverlayActive = scriptLoaded && !isUnavailable;
 
@@ -90,7 +92,7 @@ export function AuthGoogleButton({
       return undefined;
     }
 
-    if (!isInitializedRef.current) {
+    if (!googleSdkInitialized) {
       googleIdentity.initialize({
         callback: (response) => {
           const idToken = response.credential;
@@ -107,7 +109,7 @@ export function AuthGoogleButton({
         ux_mode: 'popup',
       });
 
-      isInitializedRef.current = true;
+      googleSdkInitialized = true;
     }
 
     const renderButton = () => {
