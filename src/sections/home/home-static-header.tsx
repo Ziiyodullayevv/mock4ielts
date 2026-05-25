@@ -88,8 +88,8 @@ export function HomeStaticHeader() {
           'group/header fixed inset-x-0 top-0 z-40 transition-[background-color,backdrop-filter,box-shadow,color] duration-100 ease-linear',
           hasPanel
             ? hasScrollBackdrop
-              ? 'bg-white text-black/88 shadow-[0_16px_36px_rgba(15,23,42,0.08)] dark:bg-[#101010] dark:text-white/88 dark:shadow-[0_22px_48px_rgba(0,0,0,0.26)]'
-              : 'bg-[#101010] text-white/88 shadow-[0_22px_48px_rgba(0,0,0,0.26)]'
+              ? 'bg-white text-black/88 shadow-[0_16px_36px_rgba(15,23,42,0.08)] dark:bg-black/5 dark:text-white/88 dark:backdrop-blur-xl dark:shadow-none'
+              : 'bg-black/5 text-white/88 backdrop-blur-xl'
             : hasScrollBackdrop
             ? 'bg-white/78 text-black/88 shadow-[0_16px_40px_rgba(15,23,42,0.08)] backdrop-blur-[30px] dark:bg-black/60 dark:text-white/88 dark:shadow-none'
             : 'bg-[linear-gradient(180deg,rgba(0,0,0,0.64)0%,rgba(0,0,0,0)100%)] text-white/88'
@@ -198,8 +198,8 @@ export function HomeStaticHeader() {
             hasPanel ? 'max-h-72 translate-y-0 opacity-100' : 'max-h-0 -translate-y-2 opacity-0',
             hasPanel &&
               (hasScrollBackdrop
-                ? 'border-b border-black/8 bg-white dark:border-white/12 dark:bg-[#101010]'
-                : 'border-b border-white/12 bg-[#101010]')
+                ? 'border-b border-black/8 bg-white dark:border-white/12 dark:bg-black/5'
+                : 'border-b border-white/12')
           )}
         >
           {openedItem?.panelItems ? (

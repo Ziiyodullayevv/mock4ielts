@@ -4,9 +4,10 @@ import { buildPageMetadata } from '@/src/lib/metadata';
 import { SpeakingView } from '@/sections/practice/speaking/view';
 
 export const metadata: Metadata = buildPageMetadata({
-  description: 'Practise IELTS speaking with structured prompts and replay-based review.',
+  description:
+    'Practice IELTS Speaking with Part 1, Part 2 cue cards, and Part 3 discussion topics. Record your answers, review them, and improve fluency and coherence for your target band score.',
   path: '/practice/speaking',
-  title: 'Speaking Practice',
+  title: 'IELTS Speaking Practice | Cue Cards & Discussion Topics',
 });
 
 export default function Page() {

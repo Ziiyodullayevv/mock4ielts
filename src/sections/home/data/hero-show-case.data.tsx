@@ -8,7 +8,7 @@ const listeningReadingSlides: ReferenceVideoSlide[] = [
     id: 'reference-slide-1',
     mediaScale: 1.07,
     poster: '/assets/home/carusel/posters/listening-1.webp',
-    previewVideo: '/assets/home/carusel/videos/listening-1.mp4',
+    previewVideo: '/assets/home/carusel/videos/banner-1.mp4',
     previewVideoAlt: 'IELTS listening practice carousel preview',
     references: [
       {
@@ -32,7 +32,7 @@ const listeningReadingSlides: ReferenceVideoSlide[] = [
     id: 'reference-slide-2',
     mediaScale: 1.01,
     poster: '/assets/home/carusel/posters/reading-1.webp',
-    previewVideo: '/assets/home/carusel/videos/reading-1.mp4',
+    previewVideo: '/assets/home/carusel/videos/banner-2.mp4',
     previewVideoAlt: 'IELTS reading practice carousel preview',
     references: [
       {
@@ -59,7 +59,7 @@ const writingSpeakingSlides: ReferenceVideoSlide[] = [
     id: 'reference-slide-3',
     mediaScale: 1.01,
     poster: '/assets/home/carusel/posters/writing-1.webp',
-    previewVideo: '/assets/home/carusel/videos/writing-1.mp4',
+    previewVideo: '/assets/home/carusel/videos/banner-3.mp4',
     previewVideoAlt: 'IELTS writing practice carousel preview',
     references: [
       {
@@ -83,7 +83,7 @@ const writingSpeakingSlides: ReferenceVideoSlide[] = [
     id: 'reference-slide-4',
     mediaScale: 1.01,
     poster: '/assets/home/carusel/posters/speaking-1.webp',
-    previewVideo: '/assets/home/carusel/videos/speaking-1.mp4',
+    previewVideo: '/assets/home/carusel/videos/banner-4.mp4',
     previewVideoAlt: 'IELTS speaking practice carousel preview',
     references: [
       {

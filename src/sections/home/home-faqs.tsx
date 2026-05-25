@@ -4,8 +4,13 @@ import type { FAQItem } from './types';
 
 import { useState } from 'react';
 import { Plus } from 'lucide-react';
+import { motion } from 'motion/react';
 
 import { faqItems } from '../home/data';
+
+const HIDDEN = { opacity: 0, y: 24, filter: 'blur(8px)' };
+const VISIBLE = { opacity: 1, y: 0, filter: 'blur(0px)' };
+const EASE = [0.22, 1, 0.36, 1] as const;
 
 function FAQAccordionItem({
   item,
@@ -51,24 +56,44 @@ export function FAQSection() {
       className="relative mx-auto my-16 flex max-w-280 flex-col gap-10 px-4 sm:px-6 lg:my-20 lg:flex-row lg:gap-20"
     >
       <div className="flex flex-col">
-        <h2 className="max-w-sm text-[34px] font-medium leading-[1.2] text-stone-950 sm:text-[42px] lg:text-[48px] dark:text-white">
+        <motion.h2
+          initial={HIDDEN}
+          whileInView={VISIBLE}
+          viewport={{ once: true, amount: 0.2 }}
+          transition={{ duration: 0.65, ease: EASE }}
+          className="max-w-sm text-[34px] font-medium leading-[1.2] text-stone-950 sm:text-[42px] lg:text-[48px] dark:text-white"
+        >
           Frequently Asked Questions
-        </h2>
+        </motion.h2>
 
-        <div className="mt-5 max-w-[320px] text-[14px] leading-6 text-stone-600 md:mb-5.5 md:mt-6 md:leading-5.5 dark:text-white/65">
+        <motion.div
+          initial={HIDDEN}
+          whileInView={VISIBLE}
+          viewport={{ once: true, amount: 0.2 }}
+          transition={{ duration: 0.65, delay: 0.14, ease: EASE }}
+          className="mt-5 max-w-[320px] text-[14px] leading-6 text-stone-600 md:mb-5.5 md:mt-6 md:leading-5.5 dark:text-white/65"
+        >
           Find answers to common questions about Mock4IELTS, including practice sections, mock
           exams, pricing, and support.
-        </div>
+        </motion.div>
       </div>
 
       <div className="flex flex-col gap-3 md:mr-0 md:items-center">
         {faqItems.map((item, index) => (
-          <FAQAccordionItem
+          <motion.div
             key={item.question}
-            item={item}
-            isOpen={openIndex === index}
-            onToggle={() => toggleItem(index)}
-          />
+            initial={HIDDEN}
+            whileInView={VISIBLE}
+            viewport={{ once: true, amount: 0.1 }}
+            transition={{ duration: 0.55, delay: index * 0.07, ease: EASE }}
+            className="w-full sm:max-w-200"
+          >
+            <FAQAccordionItem
+              item={item}
+              isOpen={openIndex === index}
+              onToggle={() => toggleItem(index)}
+            />
+          </motion.div>
         ))}
       </div>
     </section>

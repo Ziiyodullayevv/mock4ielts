@@ -3,12 +3,12 @@ import type { HeroSlide } from '../types/home.types';
 export const HERO_SLIDES: HeroSlide[] = [
   {
     id: 1,
-    optimizedPoster: '/assets/home/hero/banner-1.jpg',
+    optimizedPoster: '/assets/home/hero/banner-1.webp',
     prompt: 'IELTS Reading Practice – Discover how technology is transforming modern education.',
   },
   {
     id: 2,
-    optimizedPoster: '/assets/home/hero/banner-2.jpg',
+    optimizedPoster: '/assets/home/hero/banner-2.webp',
     prompt:
       'IELTS Listening Practice – A university student discussing course options with an advisor.',
   },
@@ -19,7 +19,7 @@ export const HERO_SLIDES: HeroSlide[] = [
   },
   {
     id: 4,
-    optimizedPoster: '/assets/home/hero/banner-4.jpg',
+    optimizedPoster: '/assets/home/hero/banner-4.webp',
     prompt: 'IELTS Speaking Part 2 – Describe a place you like to visit in your free time.',
   },
 ];

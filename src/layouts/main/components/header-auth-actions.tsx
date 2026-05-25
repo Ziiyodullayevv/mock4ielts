@@ -6,15 +6,11 @@ import { Button } from '@/src/components/ui/button';
 import { useQueryClient } from '@tanstack/react-query';
 import { TokenIcon } from '@/src/components/icons/token-icon';
 import { useAuthSession } from '@/src/auth/hooks/use-auth-session';
-import { ThemeDropdown } from '@/src/components/theme/theme-dropdown';
 import { useAuthMutations } from '@/src/auth/hooks/use-auth-mutations';
 import { useMyProfileQuery } from '@/src/auth/hooks/use-my-profile-query';
 import { useRouter, usePathname, useSearchParams } from '@/src/routes/hooks';
 import { buildLoginHref, getCurrentReturnTo } from '@/src/auth/utils/return-to';
-import {
-  PRACTICE_HEADER_RING_CLASS,
-  PRACTICE_MENU_PANEL_RING_CLASS,
-} from '@/src/layouts/practice-surface-theme';
+import { PRACTICE_HEADER_RING_CLASS } from '@/src/layouts/practice-surface-theme';
 
 import { HeaderAccountDropdown } from './header-account-dropdown';
 import { HeaderNotificationDropdown } from './header-notification-dropdown';
@@ -68,19 +64,6 @@ export function HeaderAuthActions({
   if (!isAuthenticated) {
     return (
       <div className="flex items-center gap-2">
-        <ThemeDropdown
-          title="Open theme settings"
-          triggerClassName={
-            isHomePage
-              ? 'h-10 rounded-full border border-white/10 bg-white/8 px-3 text-white shadow-[0_10px_24px_rgba(0,0,0,0.28)] backdrop-blur-xl hover:bg-white/12 hover:text-white'
-              : 'h-10 rounded-full border border-transparent bg-[#ededed] px-3 text-black shadow-[0_10px_24px_rgba(15,23,42,0.08)] backdrop-blur-xl hover:bg-[#e3e3e3] hover:text-black dark:border-white/10 dark:bg-white/8 dark:text-white dark:shadow-[0_10px_24px_rgba(0,0,0,0.28)] dark:hover:bg-white/12 dark:hover:text-white'
-          }
-          triggerIconClassName={isHomePage ? 'text-white' : 'text-black dark:text-white'}
-          contentClassName={`w-72 rounded-2xl p-2 text-black shadow-[0_24px_44px_rgba(15,23,42,0.12)] dark:text-white dark:shadow-[0_24px_44px_rgba(0,0,0,0.45)] ${PRACTICE_MENU_PANEL_RING_CLASS}`}
-          labelClassName="px-3 pb-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-black/40 dark:text-white/40"
-          itemClassName="min-h-12 rounded-xl px-3 py-2 text-sm font-medium text-black/95 focus:bg-[#ededed] focus:text-black [&_svg]:text-black/70 dark:text-white/95 dark:focus:bg-white/8 dark:focus:text-white dark:[&_svg]:text-white/70"
-        />
-
         <Button
           asChild
           className={

@@ -2,7 +2,7 @@ import type { ReactNode } from 'react';
 
 import { AuthBackgroundMedia } from './auth-background-media';
 
-const AUTH_BACKGROUND_POSTER = '/assets/auth/posters/auth-1.png';
+const AUTH_BACKGROUND_POSTER = '/assets/auth/posters/banner-1.webp';
 
 type Props = {
   children: ReactNode;

@@ -19,7 +19,6 @@ import {
 } from '@/src/sections/statistics/hooks/use-statistics-queries';
 import {
   subscriptionCardClassName,
-  subscriptionSurfaceClassName,
   subscriptionMutedTextClassName,
 } from '@/src/sections/subscription/constants/subscription';
 
@@ -95,45 +94,41 @@ const formatLastPracticed = (value?: string | null) => {
 
 function StatisticsSkeleton() {
   return (
-    <section className="space-y-4">
-      <div className={cn(subscriptionSurfaceClassName, 'rounded-[28px] px-6 py-6 sm:px-7')}>
-        <div className="h-6 w-32 animate-pulse rounded-full bg-black/8 dark:bg-white/10" />
+    <section className="space-y-3">
+      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+        {Array.from({ length: 4 }).map((_, index) => (
+          <div
+            key={index}
+            className={cn(subscriptionCardClassName, 'rounded-[22px] px-4 py-4')}
+          >
+            <div className="h-4 w-24 animate-pulse rounded-full bg-black/8 dark:bg-white/10" />
+            <div className="mt-4 h-8 w-18 animate-pulse rounded-full bg-black/8 dark:bg-white/10" />
+            <div className="mt-3 h-4 w-28 animate-pulse rounded-full bg-black/8 dark:bg-white/10" />
+          </div>
+        ))}
+      </div>
 
-        <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-          {Array.from({ length: 4 }).map((_, index) => (
-            <div
-              key={index}
-              className={cn(subscriptionCardClassName, 'rounded-[22px] px-4 py-4')}
-            >
-              <div className="h-4 w-24 animate-pulse rounded-full bg-black/8 dark:bg-white/10" />
-              <div className="mt-4 h-8 w-18 animate-pulse rounded-full bg-black/8 dark:bg-white/10" />
-              <div className="mt-3 h-4 w-28 animate-pulse rounded-full bg-black/8 dark:bg-white/10" />
+      <div className="grid gap-3 lg:grid-cols-2">
+        {Array.from({ length: 2 }).map((_, index) => (
+          <div
+            key={index}
+            className={cn(subscriptionCardClassName, 'rounded-[24px] px-5 py-5')}
+          >
+            <div className="h-5 w-28 animate-pulse rounded-full bg-black/8 dark:bg-white/10" />
+            <div className="mt-5 grid gap-3 sm:grid-cols-2">
+              {Array.from({ length: 4 }).map((__, itemIndex) => (
+                <div
+                  key={itemIndex}
+                  className="rounded-[20px] bg-black/[0.03] px-4 py-4 dark:bg-white/[0.03]"
+                >
+                  <div className="h-4 w-20 animate-pulse rounded-full bg-black/8 dark:bg-white/10" />
+                  <div className="mt-4 h-6 w-14 animate-pulse rounded-full bg-black/8 dark:bg-white/10" />
+                  <div className="mt-3 h-4 w-20 animate-pulse rounded-full bg-black/8 dark:bg-white/10" />
+                </div>
+              ))}
             </div>
-          ))}
-        </div>
-
-        <div className="mt-6 grid gap-3 lg:grid-cols-2">
-          {Array.from({ length: 2 }).map((_, index) => (
-            <div
-              key={index}
-              className={cn(subscriptionCardClassName, 'rounded-[24px] px-5 py-5')}
-            >
-              <div className="h-5 w-28 animate-pulse rounded-full bg-black/8 dark:bg-white/10" />
-              <div className="mt-5 grid gap-3 sm:grid-cols-2">
-                {Array.from({ length: 4 }).map((__, itemIndex) => (
-                  <div
-                    key={itemIndex}
-                    className="rounded-[20px] bg-black/[0.03] px-4 py-4 dark:bg-white/[0.03]"
-                  >
-                    <div className="h-4 w-20 animate-pulse rounded-full bg-black/8 dark:bg-white/10" />
-                    <div className="mt-4 h-6 w-14 animate-pulse rounded-full bg-black/8 dark:bg-white/10" />
-                    <div className="mt-3 h-4 w-20 animate-pulse rounded-full bg-black/8 dark:bg-white/10" />
-                  </div>
-                ))}
-              </div>
-            </div>
-          ))}
-        </div>
+          </div>
+        ))}
       </div>
     </section>
   );
@@ -164,87 +159,66 @@ export function StatisticsOverview() {
   }
 
   return (
-    <section>
-      <div className={cn(subscriptionSurfaceClassName, 'rounded-[28px] px-6 py-6 sm:px-7')}>
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div>
-            <h2 className="text-[22px] font-semibold tracking-[-0.04em] text-stone-950 dark:text-white">
-              Statistics
-            </h2>
-            <p className={cn('mt-1 text-sm', subscriptionMutedTextClassName)}>
-              Track your practice progress, section breakdown, and exam performance.
-            </p>
-          </div>
-
-          {myStatisticsQuery.data?.updatedAt || examStatisticsQuery.data?.updatedAt ? (
-            <span className={cn('text-xs font-medium', subscriptionMutedTextClassName)}>
-              Updated{' '}
-              {formatLastPracticed(
-                myStatisticsQuery.data?.updatedAt ?? examStatisticsQuery.data?.updatedAt
-              )}
-            </span>
-          ) : null}
+    <section className="space-y-3">
+      {hasHardError ? (
+        <div
+          className={cn(
+            subscriptionCardClassName,
+            'rounded-[22px] px-5 py-4 text-sm text-stone-700 dark:text-white/70'
+          )}
+        >
+          We could not load your statistics right now.
         </div>
+      ) : null}
 
-        {hasHardError ? (
-          <div
-            className={cn(
-              subscriptionCardClassName,
-              'mt-5 rounded-[22px] px-5 py-4 text-sm text-stone-700 dark:text-white/70'
-            )}
-          >
-            We could not load your statistics right now.
-          </div>
-        ) : null}
-
-        <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-          {[
-            {
-              Icon: ChartColumn,
-              label: 'Solved',
-              muted: 'Completed practice sets',
-              value: formatCount(myStatisticsQuery.data?.totalSolved),
-            },
-            {
-              Icon: Activity,
-              label: 'Overall Band',
-              muted: 'Across available practice',
-              value: formatBand(myStatisticsQuery.data?.overallAvg),
-            },
-            {
-              Icon: Clock3,
-              label: 'Active Time',
-              muted: 'Focused practice time',
-              value: formatDuration(myStatisticsQuery.data?.totalActiveTimeSeconds),
-            },
-            {
-              Icon: Trophy,
-              label: 'Highest Band',
-              muted: 'Best mock or contest result',
-              value: formatBand(examStatisticsQuery.data?.highestOverallBand),
-            },
-          ].map(({ Icon, label, muted, value }) => (
-            <div key={label} className={cn(subscriptionCardClassName, 'rounded-[22px] px-4 py-4')}>
-              <div className="flex items-center gap-2 text-stone-950 dark:text-white">
-                <Icon className="size-4.5 text-[#ffb32b]" />
-                <span className="text-sm font-semibold tracking-[-0.02em]">{label}</span>
-              </div>
-              <div className="mt-4 text-[26px] font-semibold tracking-[-0.05em] text-stone-950 dark:text-white">
-                {value}
-              </div>
-              <p className={cn('mt-2 text-xs', subscriptionMutedTextClassName)}>{muted}</p>
+      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+        {[
+          {
+            Icon: ChartColumn,
+            label: 'Solved',
+            muted: 'Completed practice sets',
+            value: formatCount(myStatisticsQuery.data?.totalSolved),
+          },
+          {
+            Icon: Activity,
+            label: 'Overall Band',
+            muted: 'Across available practice',
+            value: formatBand(myStatisticsQuery.data?.overallAvg),
+          },
+          {
+            Icon: Clock3,
+            label: 'Active Time',
+            muted: 'Focused practice time',
+            value: formatDuration(myStatisticsQuery.data?.totalActiveTimeSeconds),
+          },
+          {
+            Icon: Trophy,
+            label: 'Highest Band',
+            muted: 'Best mock or contest result',
+            value: formatBand(examStatisticsQuery.data?.highestOverallBand),
+          },
+        ].map(({ Icon, label, muted, value }) => (
+          <div key={label} className={cn(subscriptionCardClassName, 'rounded-[22px] px-4 py-4')}>
+            <div className="flex items-center gap-2 text-stone-950 dark:text-white">
+              <Icon className="size-4.5 text-[#ffb32b]" />
+              <span className="text-sm font-semibold tracking-[-0.02em]">{label}</span>
             </div>
-          ))}
-        </div>
+            <div className="mt-4 text-[26px] font-semibold tracking-[-0.05em] text-stone-950 dark:text-white">
+              {value}
+            </div>
+            <p className={cn('mt-2 text-xs', subscriptionMutedTextClassName)}>{muted}</p>
+          </div>
+        ))}
+      </div>
 
-        <div className="mt-6 grid gap-3 xl:grid-cols-[minmax(0,1.45fr)_minmax(0,1fr)]">
-          <div className={cn(subscriptionCardClassName, 'rounded-[24px] px-5 py-5')}>
+      <div className="grid gap-3 xl:grid-cols-[minmax(0,1.45fr)_minmax(0,1fr)]">
+          <div className={cn(subscriptionCardClassName, 'flex flex-col rounded-[24px] px-5 py-5')}>
             <div className="flex items-center gap-3 text-stone-950 dark:text-white">
               <ChartColumn className="size-5 text-[#f0a634]" />
               <h3 className="text-[18px] font-semibold tracking-[-0.035em]">Section Breakdown</h3>
             </div>
 
-            <div className="mt-5 grid gap-3 sm:grid-cols-2">
+            <div className="mt-5 grid flex-1 auto-rows-fr gap-3 sm:grid-cols-2">
               {SECTION_ORDER.map((sectionKey) => {
                 const stat = sectionStatistics.get(sectionKey);
                 const meta = SECTION_META[sectionKey];
@@ -253,7 +227,7 @@ export function StatisticsOverview() {
                 return (
                   <div
                     key={sectionKey}
-                    className="rounded-[20px] bg-black/[0.03] px-4 py-4 dark:bg-white/[0.03]"
+                    className="flex h-full flex-col rounded-[20px] bg-black/[0.03] px-4 py-4 dark:bg-white/[0.03]"
                   >
                     <div className="flex items-center justify-between gap-3">
                       <div className="flex items-center gap-2.5">
@@ -267,7 +241,7 @@ export function StatisticsOverview() {
                       </span>
                     </div>
 
-                    <div className="mt-4 flex items-end justify-between gap-4">
+                    <div className="mt-4 flex flex-1 items-end justify-between gap-4">
                       <div>
                         <p
                           className={cn(
@@ -356,7 +330,7 @@ export function StatisticsOverview() {
 
           </div>
         </div>
-      </div>
     </section>
   );
 }
+

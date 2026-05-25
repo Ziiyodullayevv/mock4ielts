@@ -3,9 +3,14 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { useState } from 'react';
+import { motion } from 'motion/react';
 
 const BANNER_IMAGE = '/assets/home/creative-banner/footer-banner.webp';
 const BANNER_VIDEO = '/assets/home/creative-banner/footer-banner.mp4';
+
+const HIDDEN = { opacity: 0, y: 24, filter: 'blur(8px)' };
+const VISIBLE = { opacity: 1, y: 0, filter: 'blur(0px)' };
+const EASE = [0.22, 1, 0.36, 1] as const;
 
 export function HomeCreativeBanner() {
   const [shouldLoadVideo, setShouldLoadVideo] = useState(false);
@@ -43,18 +48,30 @@ export function HomeCreativeBanner() {
         <div className="absolute inset-0 bg-white/48 dark:bg-black/40" />
 
         <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-6 px-6 text-center">
-          <h2 className="text-[48px] font-medium text-stone-950 max-md:text-[32px] dark:text-white">
+          <motion.h2
+            initial={HIDDEN}
+            whileInView={VISIBLE}
+            viewport={{ once: true, amount: 0.3 }}
+            transition={{ duration: 0.65, ease: EASE }}
+            className="text-[48px] font-medium text-stone-950 max-md:text-[32px] dark:text-white"
+          >
             Real IELTS Exam Experience
-          </h2>
+          </motion.h2>
 
-          <div className="flex gap-4 max-md:flex-col-reverse">
+          <motion.div
+            initial={HIDDEN}
+            whileInView={VISIBLE}
+            viewport={{ once: true, amount: 0.3 }}
+            transition={{ duration: 0.65, delay: 0.16, ease: EASE }}
+            className="flex gap-4 max-md:flex-col-reverse"
+          >
             <Link
               href="/"
               className="flex items-center justify-center gap-2 rounded-full bg-[#006aff] px-10 py-2 text-[16px] font-semibold text-white shadow-lg transition-all hover:shadow-xl max-md:text-[14px] max-md:leading-[28px]"
             >
               Try it now
             </Link>
-          </div>
+          </motion.div>
         </div>
       </div>
 
