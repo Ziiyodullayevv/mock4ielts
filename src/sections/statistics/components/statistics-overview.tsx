@@ -2,6 +2,10 @@
 
 import { cn } from '@/src/lib/utils';
 import {
+  subscriptionCardClassName,
+  subscriptionMutedTextClassName,
+} from '@/src/sections/subscription/constants/subscription';
+import {
   Mic,
   Files,
   Clock3,
@@ -17,10 +21,6 @@ import {
   useMyExamStatisticsQuery,
   useMySectionStatisticsQuery,
 } from '@/src/sections/statistics/hooks/use-statistics-queries';
-import {
-  subscriptionCardClassName,
-  subscriptionMutedTextClassName,
-} from '@/src/sections/subscription/constants/subscription';
 
 const SECTION_META = {
   listening: {
