@@ -4,9 +4,10 @@ import { AuthView } from '@/src/auth/view';
 import { buildPageMetadata } from '@/src/lib/metadata';
 
 export const metadata: Metadata = buildPageMetadata({
-  description: 'Sign in to continue your IELTS practice, full mock exams, and progress tracking.',
+  description:
+    'Sign in to Mock4IELTS to continue your IELTS practice, take full mock exams, and track your band score progress.',
   path: '/login',
-  title: 'Login',
+  title: 'Sign In | Mock4IELTS',
 });
 
 export default function Page() {
