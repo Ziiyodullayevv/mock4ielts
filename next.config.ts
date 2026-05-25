@@ -10,6 +10,9 @@ const nextConfig: NextConfig = {
     BUILD_STATIC_EXPORT: JSON.stringify(isStaticExport),
   },
   images: {
+    deviceSizes: [640, 828, 1080, 1200, 1920, 2560],
+    minimumCacheTTL: 2592000,
+    formats: ['image/avif', 'image/webp'],
     remotePatterns: [
       {
         protocol: 'https',

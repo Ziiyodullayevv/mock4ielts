@@ -12,6 +12,7 @@ export type CommunityImageItem = {
 export type HeroSlide = {
   id: number;
   optimizedPoster: string;
+  blurDataURL: string;
   prompt: string;
 };
 
