@@ -13,14 +13,14 @@ import {
   BookOpenText,
 } from 'lucide-react';
 import {
-  subscriptionCardClassName,
-  subscriptionMutedTextClassName,
-} from '@/src/sections/subscription/constants/subscription';
-import {
   useMyStatisticsQuery,
   useMyExamStatisticsQuery,
   useMySectionStatisticsQuery,
 } from '@/src/sections/statistics/hooks/use-statistics-queries';
+import {
+  subscriptionCardClassName,
+  subscriptionMutedTextClassName,
+} from '@/src/sections/subscription/constants/subscription';
 
 const SECTION_META = {
   listening: {
