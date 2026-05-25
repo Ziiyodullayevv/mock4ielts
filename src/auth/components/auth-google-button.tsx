@@ -65,6 +65,7 @@ export function AuthGoogleButton({
   const containerRef = useRef<HTMLDivElement | null>(null);
   const isInitializedRef = useRef(false);
   const isUnavailable = !clientId || disabled || loading;
+  const isOverlayActive = scriptLoaded && !isUnavailable;
 
   useEffect(() => {
     callbackRef.current = onCredential;
@@ -103,7 +104,6 @@ export function AuthGoogleButton({
         },
         client_id: clientId,
         context: 'signin',
-        use_fedcm_for_button: true,
         ux_mode: 'popup',
       });
 
@@ -188,9 +188,9 @@ export function AuthGoogleButton({
 
         <div
           className={
-            isUnavailable
-              ? 'pointer-events-none absolute inset-0 opacity-0'
-              : 'absolute inset-0 opacity-0'
+            isOverlayActive
+              ? 'absolute inset-0 opacity-0'
+              : 'pointer-events-none absolute inset-0 opacity-0'
           }
         >
           <div ref={containerRef} className="h-12 w-full overflow-hidden rounded-lg" />
