@@ -150,12 +150,12 @@ export function AuthGoogleButton({
       />
 
       {/*
-        Architecture: Google iframe sits BEHIND the custom button at natural z-index.
-        Custom button is on top (z-10) but pointer-events:none when overlay is active,
-        so clicks fall through to the Google iframe below.
-
-        This avoids wrapping the iframe in opacity:0, which Chrome treats as a
-        clickjacking attempt and blocks pointer events + cursor propagation.
+        Layer stack (front → back):
+          [z-20] Custom button  — visual appearance, pointer-events:none when Google active
+          [z-10] White shield   — opaque bg-white, pointer-events:none; hides Google iframe
+                                  so hover/press transparency on custom button never leaks through
+          [z-0 ] Google iframe  — natural opacity (no clickjacking risk), receives all clicks
+                                  when layers above have pointer-events:none
       */}
       <div
         className={cn('relative h-12 w-full', isUnavailable ? 'cursor-not-allowed' : 'cursor-pointer')}
@@ -168,20 +168,22 @@ export function AuthGoogleButton({
         onPointerUp={() => setIsPressed(false)}
         onPointerCancel={() => setIsPressed(false)}
       >
-        {/* Google-rendered iframe — always at base z-index, visible opacity, no clickjacking risk */}
+        {/* Google iframe at base z-index — visible opacity, no clickjacking protection triggered */}
         <div
           ref={containerRef}
           aria-hidden="true"
           className="absolute inset-0 overflow-hidden rounded-lg"
         />
 
-        {/* Custom button — visually covers the Google button */}
+        {/* Opaque white shield — hides the Google iframe visually without blocking clicks */}
+        <div aria-hidden="true" className="pointer-events-none absolute inset-0 z-10 rounded-lg bg-white" />
+
+        {/* Custom button — sits on top of the shield for visual states */}
         <button
           type="button"
           disabled={isUnavailable}
           className={cn(
-            'absolute inset-0 z-10 inline-flex h-full w-full items-center justify-center whitespace-nowrap rounded-lg bg-white px-4 py-2 text-base font-medium text-black shadow-[0_10px_24px_rgba(0,0,0,0.18)] transition-[transform,background-color,box-shadow,opacity] duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/45 focus-visible:ring-offset-0 disabled:cursor-not-allowed disabled:opacity-50 disabled:shadow-none',
-            // Pass pointer events through to the Google iframe when it is ready
+            'absolute inset-0 z-20 inline-flex h-full w-full items-center justify-center whitespace-nowrap rounded-lg bg-white px-4 py-2 text-base font-medium text-black shadow-[0_10px_24px_rgba(0,0,0,0.18)] transition-[transform,background-color,box-shadow,opacity] duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/45 focus-visible:ring-offset-0 disabled:cursor-not-allowed disabled:opacity-50 disabled:shadow-none',
             isOverlayActive ? 'pointer-events-none' : 'cursor-pointer',
             isPressed
               ? 'translate-y-px bg-white/88 shadow-[0_5px_12px_rgba(0,0,0,0.14)]'
