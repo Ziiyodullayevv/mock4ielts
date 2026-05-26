@@ -52,9 +52,6 @@ type AuthGoogleButtonProps = {
   onError: (message: string) => void;
 };
 
-// Module-level flag — persists across component re-mounts so initialize() is called only once
-let googleSdkInitialized = false;
-
 export function AuthGoogleButton({
   clientId,
   disabled = false,
@@ -66,6 +63,7 @@ export function AuthGoogleButton({
   const [isPressed, setIsPressed] = useState(false);
   const callbackRef = useRef(onCredential);
   const containerRef = useRef<HTMLDivElement | null>(null);
+  const isInitializedRef = useRef(false);
   const isUnavailable = !clientId || disabled || loading;
   const isOverlayActive = scriptLoaded && !isUnavailable;
 
@@ -92,7 +90,7 @@ export function AuthGoogleButton({
       return undefined;
     }
 
-    if (!googleSdkInitialized) {
+    if (!isInitializedRef.current) {
       googleIdentity.initialize({
         callback: (response) => {
           const idToken = response.credential;
@@ -106,10 +104,11 @@ export function AuthGoogleButton({
         },
         client_id: clientId,
         context: 'signin',
+        use_fedcm_for_button: false,
         ux_mode: 'popup',
       });
 
-      googleSdkInitialized = true;
+      isInitializedRef.current = true;
     }
 
     const renderButton = () => {
@@ -119,6 +118,11 @@ export function AuthGoogleButton({
 
       containerRef.current.innerHTML = '';
 
+      const width =
+        containerRef.current.getBoundingClientRect().width ||
+        containerRef.current.offsetWidth ||
+        400;
+
       googleIdentity.renderButton(containerRef.current, {
         locale: 'en',
         logo_alignment: 'left',
@@ -126,7 +130,7 @@ export function AuthGoogleButton({
         size: 'large',
         text: 'continue_with',
         theme: 'outline',
-        width: Math.max(containerRef.current.offsetWidth, 280),
+        width: Math.max(width, 280),
       });
     };
 
