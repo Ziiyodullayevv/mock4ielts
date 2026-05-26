@@ -42,11 +42,11 @@ export function SelectionToolbar({
 }: SelectionToolbarProps) {
   const toolbarCardClassName = cn(
     PRACTICE_MENU_PANEL_RING_CLASS,
-    'rounded-full shadow-[0_16px_34px_rgba(15,23,42,0.24)] after:!bg-[#171717] dark:after:!bg-[#171717] dark:shadow-none'
+    'rounded-full shadow-[0_16px_34px_rgba(15,23,42,0.24)] dark:after:!bg-[#171717] dark:shadow-none'
   );
   const toolbarButtonRingClassName = cn(
     PRACTICE_HEADER_RING_CLASS,
-    'inline-flex size-10 shrink-0 items-center justify-center rounded-full p-[3px] after:!bg-[#171717] dark:after:!bg-[#171717]'
+    'inline-flex size-10 shrink-0 items-center justify-center rounded-full p-[3px] dark:after:!bg-[#171717]'
   );
 
   return (
@@ -88,7 +88,7 @@ export function SelectionToolbar({
             type="button"
             aria-label="Drag selection controls"
             onPointerDown={onDragStart}
-            className="inline-flex size-8 items-center justify-center rounded-full text-white/70 transition-colors hover:bg-white/8 hover:text-white"
+            className="inline-flex size-8 items-center justify-center rounded-full text-neutral-500 transition-colors hover:bg-black/5 hover:text-neutral-900 dark:text-white/70 dark:hover:bg-white/8 dark:hover:text-white"
           >
             <Grip className="size-[16px]" strokeWidth={2.1} />
           </button>
@@ -99,7 +99,7 @@ export function SelectionToolbar({
             type="button"
             aria-label="Remove highlight"
             onClick={onClear}
-            className="inline-flex size-8 items-center justify-center rounded-full text-white/70 transition-colors hover:bg-white/8 hover:text-white"
+            className="inline-flex size-8 items-center justify-center rounded-full text-neutral-500 transition-colors hover:bg-black/5 hover:text-neutral-900 dark:text-white/70 dark:hover:bg-white/8 dark:hover:text-white"
           >
             <Eraser className="size-[16px]" strokeWidth={2.1} />
           </button>
