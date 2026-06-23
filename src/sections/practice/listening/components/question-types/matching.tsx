@@ -22,6 +22,12 @@ import {
   PAPER_DIVIDER_CLASS_NAME,
 } from './paper-shell';
 
+const ROMAN_OPTION_REGEX = /^(?:i|ii|iii|iv|v|vi|vii|viii|ix|x)$/i;
+
+function formatOptionValue(value: string) {
+  return ROMAN_OPTION_REGEX.test(value) ? value.toUpperCase() : value;
+}
+
 interface Props extends QuestionTypeAnnotationProps {
   activeQuestionId?: string | null;
   data: MatchingData;
@@ -47,43 +53,46 @@ export function Matching({
 
   return (
     <div className="space-y-5">
-      <PaperSurface>
-        <div className="flex flex-wrap gap-2.5 p-3 sm:p-3.5 md:p-4">
-          {data.options.map((opt) => {
-            const [value, ...labelParts] = opt.label.split(/\s+/);
+      {data.showOptionsPanel !== false ? (
+        <PaperSurface>
+          <div className="flex flex-wrap gap-2.5 p-3 sm:p-3.5 md:p-4">
+            {data.options.map((opt) => {
+                  const [value, ...labelParts] = opt.label.split(/\s+/);
+                  const displayValue = formatOptionValue(value);
 
-            return (
-              <button
-                key={opt.value}
-                type="button"
-                style={getPracticeTextStyle(textSize, 'option')}
-                className="inline-flex items-center gap-2 rounded-full bg-white px-3.5 py-2 text-[0.95rem] leading-5 text-stone-700 transition-all dark:bg-white/8 dark:text-white/78"
-              >
-                <span className="font-semibold">
-                  {value}
-                </span>
-                <span className="whitespace-nowrap">
-                  {renderQuestionText({
-                    as: 'span',
-                    blockId: getQuestionAnnotationBlockId(
-                      annotationBlockIdPrefix,
-                      'option',
-                      opt.value,
-                      'label'
-                    ),
-                    renderAnnotatedTextBlock,
-                    text: labelParts.join(' '),
-                  })}
-                </span>
-              </button>
-            );
-          })}
-        </div>
-      </PaperSurface>
+                  return (
+                <button
+                  key={opt.value}
+                  type="button"
+                  style={getPracticeTextStyle(textSize, 'option')}
+                  className="inline-flex items-center gap-2 rounded-full bg-white px-3.5 py-2 text-[0.95rem] leading-5 text-stone-700 transition-all dark:bg-white/8 dark:text-white/78"
+                >
+                  <span className="font-semibold">
+                    {displayValue}
+                  </span>
+                  <span className="whitespace-nowrap">
+                    {renderQuestionText({
+                      as: 'span',
+                      blockId: getQuestionAnnotationBlockId(
+                        annotationBlockIdPrefix,
+                        'option',
+                        opt.value,
+                        'label'
+                      ),
+                      renderAnnotatedTextBlock,
+                      text: labelParts.join(' '),
+                    })}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        </PaperSurface>
+      ) : null}
 
       <PaperPanel
         title="Questions"
-        titleClassName="px-5 py-4 sm:px-6"
+        titleClassName="px-3 py-2.5 sm:px-4"
         titleContent={renderQuestionText({
           as: 'span',
           blockId: getQuestionAnnotationBlockId(annotationBlockIdPrefix, 'title'),
@@ -101,6 +110,7 @@ export function Matching({
             const selectedLabel = selectedOption
               ? selectedOption.label.split(/\s+/).slice(1).join(' ')
               : '';
+            const selectedDisplayValue = formatOptionValue(val);
             let dropChipClassName =
               'inline-flex min-h-9 items-center justify-center gap-1.5 rounded-md border border-dashed border-sky-400 bg-sky-100 px-3 py-1.5 text-[11px] font-semibold tracking-[0.14em] text-sky-800 whitespace-nowrap shadow-[inset_0_0_0_1px_rgba(125,211,252,0.45)] transition-colors';
 
@@ -121,7 +131,7 @@ export function Matching({
               <div
                 key={pair.id}
                 id={getListeningQuestionAnchorId(pair.id)}
-                className={`${PAPER_ROW_CLASS_NAME} scroll-mt-28 flex flex-col gap-3 px-5 py-4 sm:px-6 lg:flex-row lg:items-center lg:justify-between`}
+                className={`${PAPER_ROW_CLASS_NAME} scroll-mt-28 flex flex-col gap-2 lg:flex-row lg:items-center lg:justify-between`}
               >
                 <div
                   style={getPracticeTextStyle(textSize, 'body')}
@@ -142,12 +152,14 @@ export function Matching({
                   })}
                 </div>
 
-                <div className="w-full max-w-sm space-y-1.5 lg:flex lg:flex-col lg:items-end">
+                <div className="w-full max-w-sm space-y-1.5 lg:flex lg:max-w-64 lg:flex-col lg:items-end">
                   {showAnswer ? (
                     <div className={dropChipClassName}>
                       {val ? (
                         <div className="flex items-center gap-2">
-                          <span className="font-semibold tracking-[0.08em] text-inherit">{val}</span>
+                          <span className="font-semibold tracking-[0.08em] text-inherit">
+                            {selectedDisplayValue}
+                          </span>
                         </div>
                       ) : (
                         <span className="inline-flex items-center gap-1.5">
@@ -157,7 +169,7 @@ export function Matching({
                       )}
                     </div>
                   ) : (
-                    <div className="flex w-full max-w-sm items-center gap-2 lg:justify-end">
+                    <div className="flex w-full max-w-sm items-center gap-2 lg:max-w-64 lg:justify-end">
                       <Select
                         value={val || undefined}
                         onValueChange={(nextValue) =>
@@ -176,7 +188,7 @@ export function Matching({
                           <div className="flex min-w-0 items-center gap-2">
                             {val ? (
                               <span className="inline-flex size-5 shrink-0 items-center justify-center rounded-full bg-stone-900 text-[11px] font-semibold tracking-[0.08em] text-white dark:bg-white/90 dark:text-stone-950">
-                                {val}
+                                {selectedDisplayValue}
                               </span>
                             ) : (
                               <span className="inline-flex size-5 shrink-0 items-center justify-center rounded-full bg-sky-500/14 text-sky-700 dark:bg-sky-400/20 dark:text-sky-200">
@@ -188,20 +200,23 @@ export function Matching({
                             </span>
                           </div>
                         </SelectTrigger>
-                        <SelectContent className="rounded-xl border-stone-300 dark:border-white/10">
+                        <SelectContent className="w-[min(34rem,calc(100vw-2rem))] rounded-xl border-stone-300 dark:border-white/10">
                           <SelectItem value="__clear__" className="rounded-lg text-stone-500 dark:text-white/52">
                             Clear selection
                           </SelectItem>
                           {data.options.map((option) => {
                             const [, ...labelParts] = option.label.split(/\s+/);
+                            const displayValue = formatOptionValue(option.value);
 
                             return (
-                              <SelectItem key={option.value} value={option.value} className="rounded-lg">
-                                <span className="inline-flex items-center gap-2">
+                              <SelectItem key={option.value} value={option.value} className="rounded-lg pr-9">
+                                <span className="flex min-w-0 items-start gap-2">
                                   <span className="inline-flex size-5 shrink-0 items-center justify-center rounded-full bg-stone-900 text-[11px] font-semibold tracking-[0.08em] text-white dark:bg-white/90 dark:text-stone-950">
-                                    {option.value}
+                                    {displayValue}
                                   </span>
-                                  <span className="truncate">{labelParts.join(' ') || option.label}</span>
+                                  <span className="min-w-0 whitespace-normal break-words leading-6">
+                                    {labelParts.join(' ') || option.label}
+                                  </span>
                                 </span>
                               </SelectItem>
                             );

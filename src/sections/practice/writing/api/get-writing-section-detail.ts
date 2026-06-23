@@ -22,6 +22,29 @@ const pickString = (...values: unknown[]) => {
 const pickNumber = (...values: unknown[]) =>
   values.find((v): v is number => typeof v === 'number' && Number.isFinite(v));
 
+const stripHtmlToText = (value: unknown) => {
+  const html = pickString(value);
+
+  if (!html) {
+    return undefined;
+  }
+
+  return html
+    .replace(/<br\s*\/?>/gi, '\n')
+    .replace(/<\/(p|div|h\d|li)>/gi, '\n\n')
+    .replace(/<[^>]+>/g, '')
+    .replace(/&nbsp;/gi, ' ')
+    .replace(/&amp;/gi, '&')
+    .replace(/&quot;/gi, '"')
+    .replace(/&#39;/gi, "'")
+    .replace(/&lt;/gi, '<')
+    .replace(/&gt;/gi, '>')
+    .split(/\n{2,}/)
+    .map((line) => line.replace(/\s+/g, ' ').trim())
+    .filter(Boolean)
+    .join('\n\n');
+};
+
 const normalizeMediaUrl = (value: unknown) => {
   const rawValue = pickString(value);
   if (!rawValue) return undefined;
@@ -52,14 +75,24 @@ export async function getWritingSectionDetail(sectionId: string): Promise<Writin
       const questions = asArray(record.questions);
       const firstQuestion = asRecord(questions[0]) ?? {};
       const metadata = asRecord(firstQuestion.metadata) ?? {};
-      const questionType = pickString(firstQuestion.question_type, firstQuestion.questionType);
+      const questionType = pickString(
+        firstQuestion.question_type,
+        firstQuestion.questionType,
+        metadata.task_type,
+        metadata.taskType
+      );
       const normalizedType: WritingQuestionType =
-        questionType?.toLowerCase().replace(/-/g, '_') === 'graph_description'
+        ['graph_description', 'task_1_academic'].includes(
+          questionType?.toLowerCase().replace(/-/g, '_') ?? ''
+        )
           ? 'graph_description'
           : 'essay';
 
       const backendQuestionId =
         pickString(firstQuestion.id) ?? `${sectionId}-writing-${index + 1}`;
+      const instructionHtml = pickString(metadata.instruction_html, metadata.instructionHtml);
+      const promptText =
+        pickString(firstQuestion.text) ?? stripHtmlToText(instructionHtml) ?? '';
 
       return {
         number: index + 1,
@@ -72,15 +105,23 @@ export async function getWritingSectionDetail(sectionId: string): Promise<Writin
               ? 'You should spend about 20 minutes on this task. Write at least 150 words.'
               : 'You should spend about 40 minutes on this task. Write at least 250 words.'),
           modelAnswer: pickString(metadata.model_answer, metadata.modelAnswer),
-          number: pickNumber(firstQuestion.order) ?? index + 1,
-          prompt: pickString(firstQuestion.text) ?? '',
+          number: index + 1,
+          prompt: promptText,
+          promptHtml: instructionHtml,
           questionType: normalizedType,
           timeRecommendedMinutes: pickNumber(
             metadata.time_recommended_minutes,
-            metadata.timeRecommendedMinutes
+            metadata.timeRecommendedMinutes,
+            metadata.recommended_minutes,
+            metadata.recommendedMinutes
           ),
           wordLimitMin:
-            pickNumber(metadata.word_limit_min, metadata.wordLimitMin) ??
+            pickNumber(
+              metadata.word_limit_min,
+              metadata.wordLimitMin,
+              metadata.min_words,
+              metadata.minWords
+            ) ??
             (index === 0 ? 150 : 250),
         },
         title: pickString(record.title) ?? `Task ${index + 1}`,

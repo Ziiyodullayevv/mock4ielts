@@ -21,6 +21,7 @@ export type WritingTask = {
   modelAnswer?: string;
   number: number;
   prompt: string;
+  promptHtml?: string;
   questionType: WritingQuestionType;
   timeRecommendedMinutes?: number;
   wordLimitMin: number;

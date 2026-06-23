@@ -8,17 +8,20 @@ import { formatCountdown } from '../utils';
 type ContestCountdownChipProps = {
   startsAt: Date;
   endsAt: Date;
+  status?: 'finished' | 'grading' | 'live' | 'scheduled' | 'upcoming';
   variant?: 'desktop' | 'mobile';
 };
 
 export function ContestCountdownChip({
   startsAt,
   endsAt,
+  status,
   variant = 'desktop',
 }: ContestCountdownChipProps) {
   const now = new Date();
-  const isLive = now >= startsAt && now < endsAt;
-  const isCompleted = now >= endsAt;
+  const isLive = status === 'live' || (!status && now >= startsAt && now < endsAt);
+  const isCompleted =
+    status === 'finished' || status === 'grading' || (!status && now >= endsAt);
 
   if (isCompleted) {
     return <CompletedBadge variant={variant} />;

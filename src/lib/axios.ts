@@ -177,7 +177,16 @@ export const endpoints = {
     refresh: 'auth/refresh',
     verifyOtp: 'auth/verify-otp',
   },
-  contests: {},
+  contests: {
+    details: (contestId: string) => `contests/${contestId}`,
+    finish: (contestId: string) => `contests/${contestId}/finish`,
+    leaderboard: (contestId: string) => `contests/${contestId}/leaderboard`,
+    list: 'contests',
+    myResult: (contestId: string) => `contests/${contestId}/my-result`,
+    register: (contestId: string) => `contests/${contestId}/register`,
+    start: (contestId: string) => `contests/${contestId}/start`,
+    submitSection: (contestId: string) => `contests/${contestId}/submit-section`,
+  },
   favorites: {
     list: 'favorites',
     status: (sectionId: string) => `favorites/${sectionId}/status`,
@@ -206,6 +215,10 @@ export const endpoints = {
     exams: 'statistics/me/exams',
     global: 'statistics/global',
     me: 'statistics/me',
+    mockExams: 'statistics/me/mock-exams',
+    overview: 'statistics/me/overview',
+    contests: 'statistics/me/contests',
+    sectionType: (sectionType: string) => `statistics/me/sections/${sectionType}`,
     sections: 'statistics/me/sections',
   },
   sections: {

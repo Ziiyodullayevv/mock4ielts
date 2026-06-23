@@ -8,8 +8,7 @@ import type {
   SpeakingGradingCriterion,
 } from '../types';
 
-// import { endpoints, axiosInstance } from '@/src/lib/axios'; // LOCAL TEST MODE
-import localTestData from './local-ielts-test.json';
+import { endpoints, axiosInstance } from '@/src/lib/axios';
 
 type ApiRecord = Record<string, unknown>;
 
@@ -209,8 +208,9 @@ const toPart = (value: unknown, partIndex: number, sectionId: string): SpeakingP
 };
 
 export async function getSpeakingSectionDetail(sectionId: string): Promise<SpeakingTest> {
-  // LOCAL TEST MODE — backend o'rniga local ielts_test.json ishlatiladi
-  const data = localTestData as unknown as ApiRecord;
+  const response = await axiosInstance.get(endpoints.sections.details(sectionId));
+  const root = asRecord(response.data) ?? {};
+  const data = (asRecord(root.data) ?? root) as ApiRecord;
   const agentConfigRecord = asRecord(data.agent_config ?? data.agentConfig) ?? {};
   const gradingConfigRecord = asRecord(data.grading_config ?? data.gradingConfig) ?? {};
   const partBehaviorsRecord =

@@ -176,6 +176,7 @@ export function QuestionGroupRenderer({
           paragraphs={group.paragraphs}
           summaryTitle={group.summaryTitle}
           wordBank={group.wordBank}
+          wordBankOptions={group.wordBankOptions}
           answers={answers}
           annotationBlockIdPrefix={annotationBlockIdPrefix}
           onChange={onChange}

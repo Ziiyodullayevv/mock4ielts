@@ -14,7 +14,7 @@ import {
   PRACTICE_FOOTER_DARK_BUTTON_RING_CLASS,
 } from '@/src/layouts/practice-footer-theme';
 
-import { getPartQuestions, countPartAnswered } from '../../sections/practice/listening/utils';
+import { getPartQuestions, countPartAnswered, getPartQuestionIds } from '../../sections/practice/listening/utils';
 
 type ListeningTestFooterProps = {
   activePart: ListeningPartNumber;
@@ -95,14 +95,20 @@ export function ListeningTestFooter({
                   {activePartQuestions.map((question) => {
                     const isCurrentQuestion = question.id === activeQuestionId;
                     const isAnswered = Boolean((answers[question.id] ?? '').trim());
+                    const label = question.displayLabel ?? question.number;
+                    const isFraction = Boolean(question.displayLabel);
+                    const [fracTop, fracBottom] = isFraction
+                      ? String(label).split('/')
+                      : [];
 
                     return (
                       <button
-                        key={question.id}
+                        key={question.displayLabel ?? question.id}
                         type="button"
                         onClick={() => onQuestionSelect(activePartEntry.number, question.id)}
                         className={cn(
-                          'flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-[11px] font-semibold transition-colors',
+                          'flex h-7 w-7 shrink-0 items-center justify-center rounded-md font-semibold transition-colors',
+                          isFraction ? 'text-[9px]' : 'text-[11px]',
                           isCurrentQuestion
                             ? PRACTICE_FOOTER_ACTIVE_BUTTON_CLASS
                             : isAnswered
@@ -111,7 +117,15 @@ export function ListeningTestFooter({
                         )}
                         aria-current={isCurrentQuestion ? 'step' : undefined}
                       >
-                        <span>{question.number}</span>
+                        {isFraction ? (
+                          <span className="flex flex-col items-center leading-none gap-px">
+                            <span>{fracTop}</span>
+                            <span className="w-full border-t border-current opacity-60" />
+                            <span>{fracBottom}</span>
+                          </span>
+                        ) : (
+                          <span>{label}</span>
+                        )}
                       </button>
                     );
                   })}
@@ -141,6 +155,7 @@ export function ListeningTestFooter({
           >
             {test.parts.map((part) => {
               const questions = getPartQuestions(part);
+              const totalCount = getPartQuestionIds(part).length;
               const answeredCount = countPartAnswered(part, answers);
               const hasActiveQuestion = questions.some(
                 (question) => question.id === activeQuestionId
@@ -164,7 +179,7 @@ export function ListeningTestFooter({
                     Part {part.number}
                   </span>
                   <span className="mt-1 text-sm font-medium text-stone-900 dark:text-white">
-                    {answeredCount}/{questions.length}
+                    {answeredCount}/{totalCount}
                   </span>
                 </button>
               );
@@ -175,6 +190,7 @@ export function ListeningTestFooter({
         <div className="hidden items-stretch gap-2.5 md:flex">
           {test.parts.map((part) => {
             const questions = getPartQuestions(part);
+            const totalCount = getPartQuestionIds(part).length;
             const answeredCount = countPartAnswered(part, answers);
             const hasActiveQuestion = questions.some(
               (question) => question.id === activeQuestionId
@@ -194,7 +210,7 @@ export function ListeningTestFooter({
                       Part {part.number}:
                     </span>
                     <span className="truncate text-stone-600 dark:text-white/62">
-                      {answeredCount} of {questions.length} questions
+                      {answeredCount} of {totalCount} questions
                     </span>
                   </div>
                 </button>
@@ -222,17 +238,23 @@ export function ListeningTestFooter({
                   {questions.map((question) => {
                     const isCurrentQuestion = question.id === activeQuestionId;
                     const isAnswered = Boolean((answers[question.id] ?? '').trim());
+                    const label = question.displayLabel ?? question.number;
+                    const isFraction = Boolean(question.displayLabel);
+                    const [fracTop, fracBottom] = isFraction
+                      ? String(label).split('/')
+                      : [];
 
                     return (
                       <button
-                        key={question.id}
+                        key={question.displayLabel ?? question.id}
                         type="button"
                         onClick={(event) => {
                           event.stopPropagation();
                           onQuestionSelect(part.number, question.id);
                         }}
                         className={cn(
-                          'flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-[11px] font-semibold transition-colors',
+                          'flex h-7 w-7 shrink-0 items-center justify-center rounded-md font-semibold transition-colors',
+                          isFraction ? 'text-[9px]' : 'text-[11px]',
                           isCurrentQuestion
                             ? PRACTICE_FOOTER_ACTIVE_BUTTON_CLASS
                             : isAnswered
@@ -243,7 +265,15 @@ export function ListeningTestFooter({
                         )}
                         aria-current={isCurrentQuestion ? 'step' : undefined}
                       >
-                        <span>{question.number}</span>
+                        {isFraction ? (
+                          <span className="flex flex-col items-center leading-none gap-px">
+                            <span>{fracTop}</span>
+                            <span className="w-full border-t border-current opacity-60" />
+                            <span>{fracBottom}</span>
+                          </span>
+                        ) : (
+                          <span>{label}</span>
+                        )}
                       </button>
                     );
                   })}

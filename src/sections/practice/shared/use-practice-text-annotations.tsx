@@ -58,6 +58,7 @@ type UsePracticeTextAnnotationsArgs = {
 
 type UsePracticeTextAnnotationsResult = {
   floatingUi: ReactNode;
+  focusedAnnotationId: string | null;
   renderAnnotatedTextBlock: (args: RenderAnnotatedTextBlockArgs) => ReactNode;
   rootRef: RefObject<HTMLDivElement | null>;
 };
@@ -531,6 +532,7 @@ export function usePracticeTextAnnotations({
         ) : null}
       </>
     ),
+    focusedAnnotationId,
     renderAnnotatedTextBlock,
     rootRef,
   };

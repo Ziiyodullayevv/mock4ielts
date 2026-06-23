@@ -81,6 +81,9 @@ const DEFAULT_PAGINATION: Required<PaginationDto> = {
   total: 0,
 };
 
+const DEFAULT_MOCK_EXAM_TOKEN_COST = 10;
+const MAX_MOCK_EXAM_TOKEN_COST = 12;
+
 const SECTION_ORDER: MockExamSectionType[] = [
   'listening',
   'reading',
@@ -97,6 +100,16 @@ const asRecord = (value: unknown): ApiRecord | null =>
 
 const pickNumber = (...values: unknown[]) =>
   values.find((value): value is number => typeof value === 'number' && Number.isFinite(value));
+
+const normalizeMockExamTokenCost = (...values: unknown[]) => {
+  const parsedValue = pickNumber(...values);
+
+  if (!parsedValue || parsedValue <= 0) {
+    return DEFAULT_MOCK_EXAM_TOKEN_COST;
+  }
+
+  return Math.min(parsedValue, MAX_MOCK_EXAM_TOKEN_COST);
+};
 
 const pickString = (...values: unknown[]) => {
   for (const value of values) {
@@ -293,7 +306,7 @@ export async function listMockExams(query?: string): Promise<MockExamListResult>
         sectionCount,
         sections,
         title: pickString(record.title) ?? 'IELTS Mock Exam',
-        tokenCost: pickNumber(record.token_cost, record.tokenCost) ?? 10,
+        tokenCost: normalizeMockExamTokenCost(record.token_cost, record.tokenCost),
       };
     })
     .filter((item): item is MockExamListItem => Boolean(item));
@@ -320,7 +333,7 @@ export async function getMockExamDetail(examId: string): Promise<MockExamDetail>
     id: pickString(data.id) ?? examId,
     sections,
     title: pickString(data.title) ?? 'IELTS Mock Exam',
-    tokenCost: pickNumber(data.token_cost, data.tokenCost) ?? 10,
+    tokenCost: normalizeMockExamTokenCost(data.token_cost, data.tokenCost),
   };
 }
 

@@ -213,6 +213,9 @@ export function resolveSelectionFromDOM(
 
   const blockId = startBlock.dataset.writingBlockId as AnnotationBlockId | undefined;
   if (!blockId) return null;
+  const blockText = textByBlock[blockId];
+
+  if (typeof blockText !== 'string') return null;
 
   const startRange = range.cloneRange();
   startRange.selectNodeContents(startBlock);
@@ -232,6 +235,6 @@ export function resolveSelectionFromDOM(
     end,
     rect: range.getBoundingClientRect(),
     start,
-    text: textByBlock[blockId].slice(start, end),
+    text: blockText.slice(start, end),
   };
 }

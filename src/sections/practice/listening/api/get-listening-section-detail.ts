@@ -6,6 +6,7 @@ import type {
   TableCell,
   MCQuestion,
   BlankField,
+  FormSection,
   NoteSection,
   TableSection,
   CorrectAnswer,
@@ -52,6 +53,12 @@ type ApiSectionDetail = {
 };
 
 const BLANK_MARKER_REGEX = /___(\d+)___/g;
+const HTML_BLANK_MARKER_REGEX = /<b>\s*(\d+)\s*<\/b>\s*'?_{2,}'?/gi;
+
+// Converts explicit backend blank markers to ___N___ so existing parsers work.
+// Do not convert bare "N ____" text: normal content can contain numbers (e.g. £90, Flat 4).
+const preprocessBlankMarkers = (html: string): string =>
+  html.replace(HTML_BLANK_MARKER_REGEX, '___$1___');
 
 const asArray = (value: unknown) => (Array.isArray(value) ? value : []);
 
@@ -67,8 +74,30 @@ const pickString = (value: unknown) => {
   return normalizedValue.length ? normalizedValue : undefined;
 };
 
-const pickNumber = (value: unknown) =>
-  typeof value === 'number' && Number.isFinite(value) ? value : undefined;
+const pickId = (value: unknown): string | undefined => {
+  if (typeof value === 'string') {
+    const trimmed = value.trim();
+    return trimmed || undefined;
+  }
+  if (typeof value === 'number' && Number.isFinite(value)) {
+    return String(value);
+  }
+  return undefined;
+};
+
+const pickNumber = (value: unknown) => {
+  if (typeof value === 'number' && Number.isFinite(value)) {
+    return value;
+  }
+
+  if (typeof value === 'string') {
+    const parsedValue = Number.parseInt(value.trim(), 10);
+
+    return Number.isFinite(parsedValue) ? parsedValue : undefined;
+  }
+
+  return undefined;
+};
 
 const normalizeMediaUrl = (value: unknown) => {
   const rawValue = pickString(value);
@@ -225,6 +254,12 @@ const stripHtmlToLines = (html?: string) => {
     .filter(Boolean);
 };
 
+const extractFirstHeadingText = (html?: string) => {
+  const headingMatch = html?.match(/<h[1-6][^>]*>([\s\S]*?)<\/h[1-6]>/i);
+
+  return headingMatch ? normalizeText(headingMatch[1].replace(/<[^>]+>/g, '')) : undefined;
+};
+
 const splitTextWithBlanks = (
   text: string,
   backendQuestionId: string,
@@ -277,6 +312,43 @@ const splitTextWithBlanks = (
   return segments;
 };
 
+const getBlankMarkerMatches = (text: string) => [...text.matchAll(BLANK_MARKER_REGEX)];
+
+const parseBlankFieldsFromText = (
+  text: string,
+  backendQuestionId: string,
+  answersByNumber: Map<number, CorrectAnswer>,
+  wordLimit?: number
+): BlankField[] => {
+  const matches = getBlankMarkerMatches(text);
+
+  return matches
+    .map((match, index) => {
+      const marker = match[0];
+      const markerIndex = match.index ?? -1;
+
+      if (markerIndex < 0) {
+        return null;
+      }
+
+      const number = Number.parseInt(match[1], 10);
+      const previousMatch = matches[index - 1];
+      const nextMatch = matches[index + 1];
+      const labelStart = previousMatch
+        ? (previousMatch.index ?? 0) + previousMatch[0].length
+        : 0;
+      const suffixEnd = nextMatch?.index ?? text.length;
+      const answer = answersByNumber.get(number);
+
+      return buildBlankField(backendQuestionId, number, answer, {
+        label: normalizeText(text.slice(labelStart, markerIndex)),
+        suffix: normalizeText(text.slice(markerIndex + marker.length, suffixEnd)),
+        wordLimit,
+      });
+    })
+    .filter((field): field is BlankField => field !== null && Number.isFinite(field.number));
+};
+
 const parseNoteSections = (
   backendQuestionId: string,
   sourceHtml: string | undefined,
@@ -284,31 +356,37 @@ const parseNoteSections = (
   answersByNumber: Map<number, CorrectAnswer>,
   wordLimit?: number
 ): { noteTitle?: string; sections: NoteSection[] } => {
-  const lines = stripHtmlToLines(sourceHtml);
-  const noteTitle = normalizeText(lines[0]) || fallbackTitle;
-  const contentLines = lines.filter((line, index) => !(index === 0 && normalizeText(line) === noteTitle));
+  const preprocessed = sourceHtml ? preprocessBlankMarkers(sourceHtml) : sourceHtml;
+  const lines = stripHtmlToLines(preprocessed);
+  const explicitTitle = extractFirstHeadingText(preprocessed);
+  const firstLine = normalizeText(lines[0]);
+  const implicitTitle = firstLine && !firstLine.match(BLANK_MARKER_REGEX) ? firstLine : undefined;
+  const noteTitle = explicitTitle ?? implicitTitle ?? fallbackTitle;
+  const contentLines = lines.filter((line, index) => {
+    if (explicitTitle && normalizeText(line) === explicitTitle) {
+      return false;
+    }
 
-  const bullets = (contentLines.length ? contentLines : [fallbackTitle]).map((line) => {
-    const match = line.match(BLANK_MARKER_REGEX);
+    if (!explicitTitle && implicitTitle && index === 0 && normalizeText(line) === implicitTitle) {
+      return false;
+    }
 
-    if (!match) {
+    return true;
+  });
+
+  const bullets = (contentLines.length ? contentLines : [fallbackTitle]).flatMap((line) => {
+    const fields = parseBlankFieldsFromText(line, backendQuestionId, answersByNumber, wordLimit);
+
+    if (!fields.length) {
       return {
         text: line,
       };
     }
 
-    const [marker] = match;
-    const markerNumber = Number.parseInt(marker.replaceAll('_', ''), 10);
-    const [beforeMarker, afterMarker = ''] = line.split(marker);
-    const answer = answersByNumber.get(markerNumber);
-
-    return {
-      text: normalizeText(beforeMarker),
-      field: buildBlankField(backendQuestionId, markerNumber, answer, {
-        suffix: normalizeText(afterMarker),
-        wordLimit,
-      }),
-    };
+    return fields.map((field) => ({
+      text: field.label,
+      field,
+    }));
   });
 
   return {
@@ -319,6 +397,139 @@ const parseNoteSections = (
       },
     ],
   };
+};
+
+const getFieldNumber = (record: ApiRecord) => {
+  const directNumber =
+    pickNumber(record.order) ??
+    pickNumber(record.number) ??
+    pickNumber(record.question_number) ??
+    pickNumber(record.questionNumber);
+
+  if (typeof directNumber === 'number') {
+    return directNumber;
+  }
+
+  const rawId = pickString(record.id) ?? pickString(record.question_id);
+  const idNumber = rawId?.match(/\d+/)?.[0];
+
+  return idNumber ? Number.parseInt(idNumber, 10) : undefined;
+};
+
+const buildFormFieldFromRecord = (
+  backendQuestionId: string,
+  record: ApiRecord,
+  answersByNumber: Map<number, CorrectAnswer>,
+  wordLimit?: number
+): BlankField | null => {
+  const number = getFieldNumber(record);
+
+  if (typeof number !== 'number' || !Number.isFinite(number)) {
+    return null;
+  }
+
+  const answer = answersByNumber.get(number);
+
+  return buildBlankField(backendQuestionId, number, answer, {
+    label:
+      pickString(record.label) ??
+      pickString(record.prompt) ??
+      pickString(record.text) ??
+      `Question ${number}`,
+    suffix: pickString(record.suffix),
+    wordLimit,
+  });
+};
+
+const parseFormSections = (
+  backendQuestionId: string,
+  question: ApiQuestion,
+  answersByNumber: Map<number, CorrectAnswer>,
+  wordLimit?: number
+): FormSection[] => {
+  const metadata = question.metadata ?? {};
+  const sections = asArray(metadata.sections)
+    .map((section) => asRecord(section))
+    .filter((section): section is ApiRecord => Boolean(section))
+    .map((section) => ({
+      fields: asArray(section.fields)
+        .map((field) => asRecord(field))
+        .filter((field): field is ApiRecord => Boolean(field))
+        .map((field) => buildFormFieldFromRecord(backendQuestionId, field, answersByNumber, wordLimit))
+        .filter((field): field is BlankField => field !== null),
+      heading: pickString(section.heading) ?? pickString(section.title),
+    }))
+    .filter((section) => section.fields.length > 0);
+
+  if (sections.length) {
+    return sections;
+  }
+
+  const fields = asArray(metadata.fields)
+    .map((field) => asRecord(field))
+    .filter((field): field is ApiRecord => Boolean(field))
+    .map((field) => buildFormFieldFromRecord(backendQuestionId, field, answersByNumber, wordLimit))
+    .filter((field): field is BlankField => field !== null);
+
+  if (fields.length) {
+    return [
+      {
+        fields,
+      },
+    ];
+  }
+
+  const formLayoutFields = asArray(metadata.form_layout)
+    .map((field) => asRecord(field))
+    .filter((field): field is ApiRecord => Boolean(field))
+    .flatMap((field) => {
+      const label = pickString(field.label) ?? '';
+      const value = preprocessBlankMarkers(pickString(field.value) ?? '');
+      const parsedFields: BlankField[] = [];
+
+      for (const match of value.matchAll(BLANK_MARKER_REGEX)) {
+        const number = Number.parseInt(match[1], 10);
+        const answer = answersByNumber.get(number);
+
+        parsedFields.push(
+          buildBlankField(backendQuestionId, number, answer, {
+            label: label || `Question ${number}`,
+            suffix: normalizeText(value.replace(match[0], '')),
+            wordLimit,
+          })
+        );
+      }
+
+      return parsedFields;
+    });
+
+  if (formLayoutFields.length) {
+    return [
+      {
+        fields: formLayoutFields,
+      },
+    ];
+  }
+
+  const sourceHtml =
+    pickString(metadata.form_html) ??
+    pickString(metadata.formHtml) ??
+    pickString(metadata.form_layout_html) ??
+    pickString(metadata.formLayoutHtml) ??
+    pickString(metadata.html) ??
+    question.text;
+  const lines = stripHtmlToLines(preprocessBlankMarkers(sourceHtml ?? ''));
+  const parsedFields = lines
+    .flatMap((line) => parseBlankFieldsFromText(line, backendQuestionId, answersByNumber, wordLimit))
+    .filter((field) => Number.isFinite(field.number));
+
+  return parsedFields.length
+    ? [
+        {
+          fields: parsedFields,
+        },
+      ]
+    : [];
 };
 
 const parseSummaryParagraphs = (
@@ -354,8 +565,15 @@ const normalizeQuestion = (value: unknown): ApiQuestion | null => {
   }
 
   return {
-    correctAnswer: record.correct_answer,
-    id: pickString(record.id),
+    correctAnswer:
+      record.correct_answer ??
+      record.correctAnswer ??
+      record.correct_answers ??
+      record.correctAnswers ??
+      record.answer_key ??
+      record.answerKey ??
+      record.correct,
+    id: pickId(record.id) ?? pickId(record.uuid) ?? pickId(record.question_id),
     imageUrl: normalizeMediaUrl(record.image_url),
     metadata: asRecord(record.metadata) ?? undefined,
     options: normalizeChoiceOptions(record.options),
@@ -407,7 +625,7 @@ const buildTableCell = (
   answersByNumber: Map<number, CorrectAnswer>,
   wordLimit?: number
 ): TableCell => {
-  const normalizedText = normalizeText(text);
+  const normalizedText = normalizeText(preprocessBlankMarkers(text));
 
   if (!normalizedText.match(BLANK_MARKER_REGEX)) {
     return {
@@ -519,12 +737,17 @@ const normalizeChoiceQuestion = (
 ): MCQuestion => {
   const correctAnswer = toCorrectAnswer(question.correctAnswer) ?? '';
   const selectCount = pickNumber(question.metadata?.select_count);
+  const numbers =
+    selectCount && selectCount > 1
+      ? Array.from({ length: selectCount }, (_, i) => questionNumber + i)
+      : undefined;
 
   return {
     backendQuestionId,
     id: buildLocalId(backendQuestionId, questionNumber),
     multiSelect: question.questionType === 'multiple_choice' || Array.isArray(correctAnswer),
     number: questionNumber,
+    numbers,
     options: question.options ?? [],
     answer: Array.isArray(correctAnswer) ? correctAnswer.join(',') : correctAnswer,
     selectCount,
@@ -532,14 +755,85 @@ const normalizeChoiceQuestion = (
   };
 };
 
+const parseFlowChartHtml = (
+  html: string,
+  backendQuestionId: string,
+  answersByNumber: Map<number, CorrectAnswer>,
+  wordLimit?: number,
+  selectOptions?: MCOption[]
+): FlowStep[] => {
+  const preprocessed = preprocessBlankMarkers(html);
+  const elementPattern = /<div[^>]*class=['"](?:step|arrow)['"][^>]*>([\s\S]*?)<\/div>/gi;
+  const steps: FlowStep[] = [];
+  let firstStep = true;
+  let match: RegExpExecArray | null;
+
+  while ((match = elementPattern.exec(preprocessed)) !== null) {
+    const fullTag = match[0];
+    const content = match[1];
+    const isArrow = /class=['"]arrow['"]/.test(fullTag);
+
+    if (isArrow) {
+      if (!firstStep) {
+        steps.push({ content: '↓', isBlank: false });
+      }
+      continue;
+    }
+
+    const normalizedContent = normalizeText(content);
+    const blankMatch = normalizedContent.match(BLANK_MARKER_REGEX);
+
+    if (!blankMatch) {
+      steps.push({ content: normalizedContent, isBlank: false });
+    } else {
+      const [marker] = blankMatch;
+      const number = Number.parseInt(marker.replaceAll('_', ''), 10);
+      const answer = answersByNumber.get(number);
+
+      steps.push({
+        answer: answer ?? '',
+        answerLength: estimateAnswerLength(answer, wordLimit),
+        backendQuestionId,
+        content: normalizedContent.replace(marker, '_______'),
+        id: buildLocalId(backendQuestionId, number),
+        isBlank: true,
+        number,
+        selectOptions,
+      });
+    }
+
+    firstStep = false;
+  }
+
+  return steps;
+};
+
+const resolveGroupInstructions = (questions: ApiQuestion[]): Map<string, string> => {
+  const map = new Map<string, string>();
+
+  for (const question of questions) {
+    const groupId = pickString(question.metadata?.group_id);
+    const instruction = pickString(question.metadata?.group_instruction);
+
+    if (groupId && instruction && !map.has(groupId)) {
+      map.set(groupId, instruction);
+    }
+  }
+
+  return map;
+};
+
 const toQuestionGroup = (
   question: ApiQuestion,
-  index: number
+  index: number,
+  groupInstructions?: Map<string, string>
 ): QuestionGroup | null => {
   const backendQuestionId = question.id ?? `question-${index + 1}`;
   const questionNumber = question.order ?? index + 1;
+  const groupId = pickString(question.metadata?.group_id);
   const instructions =
     pickString(question.metadata?.group_instruction) ??
+    (groupId ? groupInstructions?.get(groupId) : undefined) ??
     pickString(question.metadata?.instruction) ??
     'Answer the question.';
   const wordLimit = getWordLimit(question.metadata);
@@ -557,6 +851,7 @@ const toQuestionGroup = (
     const items = asArray(question.metadata?.items)
       .map((item) => asRecord(item))
       .filter((item): item is ApiRecord => Boolean(item));
+    const inputMode = pickString(question.metadata?.input_mode);
 
     return {
       type: 'matching',
@@ -584,7 +879,28 @@ const toQuestionGroup = (
             };
           })
           .filter((pair): pair is NonNullable<typeof pair> => pair !== null),
+        showOptionsPanel: inputMode !== 'select',
       },
+    };
+  }
+
+  if (question.questionType === 'form_completion') {
+    const answersByNumber = parseNumberedAnswers(question.correctAnswer);
+    const sections = parseFormSections(backendQuestionId, question, answersByNumber, wordLimit);
+
+    if (!sections.length) {
+      return null;
+    }
+
+    return {
+      type: 'form-completion',
+      formTitle:
+        pickString(question.metadata?.form_title) ??
+        pickString(question.metadata?.formTitle) ??
+        question.text ??
+        `Questions ${questionNumber}`,
+      instructions,
+      sections,
     };
   }
 
@@ -620,9 +936,7 @@ const toQuestionGroup = (
       instructions,
       tableTitle: question.text,
       data: {
-        headers: asArray(table.headers)
-          .map((header) => pickString(header))
-          .filter((header): header is string => Boolean(header)),
+        headers: asArray(table.headers).map((header) => pickString(header) ?? ''),
         rows: buildTableRows(table.rows, backendQuestionId, answersByNumber, wordLimit),
         sections: buildTableSections(table.sections, backendQuestionId, answersByNumber, wordLimit),
       },
@@ -662,46 +976,54 @@ const toQuestionGroup = (
 
   if (question.questionType === 'flow_chart_completion') {
     const answersByNumber = parseNumberedAnswers(question.correctAnswer);
-    const steps = asArray(question.metadata?.steps)
-      .map((step) => asRecord(step))
-      .filter((step): step is ApiRecord => Boolean(step))
-      .flatMap((step, stepIndex) => {
-        const text = pickString(step.text) ?? `Step ${stepIndex + 1}`;
-        const match = text.match(BLANK_MARKER_REGEX);
-        const items: FlowStep[] = [];
+    const flowChartHtml = pickString(question.metadata?.flow_chart_html);
+    const stepsArray = asArray(question.metadata?.steps);
 
-        if (stepIndex > 0) {
-          items.push({
-            content: '↓',
-            isBlank: false,
-          });
-        }
+    let steps: FlowStep[];
 
-        if (!match) {
+    const inputMode = pickString(question.metadata?.input_mode);
+    const flowChartSelectOptions =
+      inputMode === 'select'
+        ? (question.options ?? []).map((opt) => ({ value: opt.value, text: opt.text }))
+        : undefined;
+
+    if (flowChartHtml) {
+      steps = parseFlowChartHtml(flowChartHtml, backendQuestionId, answersByNumber, wordLimit, flowChartSelectOptions);
+    } else {
+      steps = stepsArray
+        .map((step) => asRecord(step))
+        .filter((step): step is ApiRecord => Boolean(step))
+        .flatMap((step, stepIndex) => {
+          const text = pickString(step.text) ?? `Step ${stepIndex + 1}`;
+          const match = text.match(BLANK_MARKER_REGEX);
+          const items: FlowStep[] = [];
+
+          if (stepIndex > 0) {
+            items.push({ content: '↓', isBlank: false });
+          }
+
+          if (!match) {
+            items.push({ content: text, isBlank: false });
+            return items;
+          }
+
+          const [marker] = match;
+          const number = Number.parseInt(marker.replaceAll('_', ''), 10);
+          const answer = answersByNumber.get(number);
+
           items.push({
-            content: text,
-            isBlank: false,
+            answer: answer ?? '',
+            answerLength: estimateAnswerLength(answer, wordLimit),
+            backendQuestionId,
+            content: text.replace(marker, '_______'),
+            id: buildLocalId(backendQuestionId, number),
+            isBlank: true,
+            number,
           });
 
           return items;
-        }
-
-        const [marker] = match;
-        const number = Number.parseInt(marker.replaceAll('_', ''), 10);
-        const answer = answersByNumber.get(number);
-
-        items.push({
-          answer: answer ?? '',
-          answerLength: estimateAnswerLength(answer, wordLimit),
-          backendQuestionId,
-          content: text.replace(marker, '_______'),
-          id: buildLocalId(backendQuestionId, number),
-          isBlank: true,
-          number,
         });
-
-        return items;
-      });
+    }
 
     return {
       type: 'flow-chart',
@@ -713,7 +1035,12 @@ const toQuestionGroup = (
 
   if (question.questionType === 'summary_completion_free') {
     const answersByNumber = parseNumberedAnswers(question.correctAnswer);
-    const summaryText = pickString(question.metadata?.summary_text) ?? question.text ?? '';
+    const summaryText =
+      pickString(question.metadata?.summary_text) ??
+      pickString(question.metadata?.summary_html) ??
+      pickString(question.metadata?.summaryHtml) ??
+      question.text ??
+      '';
 
     return {
       type: 'summary-completion',
@@ -758,6 +1085,36 @@ const toQuestionGroup = (
       instructions,
       questions,
     };
+  }
+
+  const fallbackAnswersByNumber = parseNumberedAnswers(question.correctAnswer);
+  const fallbackText =
+    pickString(question.metadata?.form_html) ??
+    pickString(question.metadata?.formHtml) ??
+    pickString(question.metadata?.form_layout_html) ??
+    pickString(question.metadata?.formLayoutHtml) ??
+    pickString(question.metadata?.summary_text) ??
+    pickString(question.metadata?.summary_html) ??
+    pickString(question.metadata?.summaryHtml) ??
+    question.text ??
+    '';
+
+  if (preprocessBlankMarkers(fallbackText).match(BLANK_MARKER_REGEX)) {
+    const sections = parseFormSections(
+      backendQuestionId,
+      question,
+      fallbackAnswersByNumber,
+      wordLimit
+    );
+
+    if (sections.length) {
+      return {
+        type: 'form-completion',
+        formTitle: question.text ?? `Questions ${questionNumber}`,
+        instructions,
+        sections,
+      };
+    }
   }
 
   return null;
@@ -852,19 +1209,23 @@ export async function getListeningSectionDetail(sectionId: string): Promise<List
   const response = await axiosInstance.get(endpoints.sections.details(sectionId));
   const section = normalizeSectionDetail(response.data);
 
-  const parts: Part[] = section.parts.map((part, partIndex) => ({
+  const parts: Part[] = section.parts.map((part, partIndex) => {
+    const groupInstructions = resolveGroupInstructions(part.questions);
+
+    return {
     audioEndTime: part.audioEndTime,
     audioStartTime: part.audioStartTime,
     audioUrl: section.audioUrl,
     groups: mergeAdjacentGroups(
       part.questions
-        .map((question, questionIndex) => toQuestionGroup(question, questionIndex))
+        .map((question, questionIndex) => toQuestionGroup(question, questionIndex, groupInstructions))
         .filter((group): group is QuestionGroup => group !== null)
     ),
     number: partIndex + 1,
     scenario: part.instructions ?? section.instructions ?? 'Listen carefully and answer the questions.',
     title: part.title ?? `Part ${partIndex + 1}`,
-  }));
+    };
+  });
 
   return {
     description:

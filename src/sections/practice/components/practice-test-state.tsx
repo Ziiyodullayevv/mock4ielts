@@ -59,8 +59,8 @@ export function PracticePageState({
 
 export function PracticeCountdownOverlay({ value }: { value: number }) {
   return (
-    <div className="fixed inset-0 z-[120] flex items-center justify-center bg-white/92 px-6 text-stone-950 backdrop-blur-md dark:bg-[#0a0a0a]/96 dark:text-white">
-      <h2 className="text-5xl font-semibold tracking-[-0.04em] text-stone-950 sm:text-7xl dark:text-white">
+    <div className="fixed inset-0 z-[120] flex items-center justify-center bg-[radial-gradient(ellipse_104%_64%_at_top_center,rgba(255,179,71,0.20)_0%,rgba(255,179,71,0.10)_42%,transparent_90%),linear-gradient(180deg,rgba(255,248,228,0.96)_0%,rgba(255,253,247,0.96)_54%,rgba(255,255,255,0.96)_100%)] px-6 text-stone-950 backdrop-blur-md dark:bg-[radial-gradient(ellipse_104%_64%_at_top_center,rgba(255,159,47,0.16)_0%,rgba(255,159,47,0.08)_44%,transparent_92%),linear-gradient(180deg,rgba(11,11,9,0.98)_0%,rgba(7,7,7,0.98)_58%,rgba(5,5,5,0.98)_100%)] dark:text-white">
+      <h2 className="text-5xl font-semibold tracking-normal text-[#d97706] sm:text-7xl dark:text-[#ff9f2f]">
         {value}
       </h2>
     </div>

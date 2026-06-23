@@ -3,7 +3,7 @@
 import type { Answers } from '../types';
 
 import { paths } from '@/src/routes/paths';
-import { useState, useEffect } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import { buildLoginHref } from '@/src/auth/utils/return-to';
 import { useRouter, useSearchParams } from '@/src/routes/hooks';
 import { useAuthSession } from '@/src/auth/hooks/use-auth-session';
@@ -22,6 +22,63 @@ type ListeningDetailsViewProps = {
   sectionId: string;
 };
 
+const LISTENING_SUBMITTED_ANSWERS_PREFIX = 'mock4ielts:listening-submitted-answers';
+
+const getSubmittedAnswersStorageKey = (sectionId: string, attemptId: string) =>
+  `${LISTENING_SUBMITTED_ANSWERS_PREFIX}:${sectionId}:${attemptId}`;
+
+const sanitizeAnswers = (answers: Answers): Answers =>
+  Object.fromEntries(
+    Object.entries(answers)
+      .map(([id, value]) => [id, value.trim()] as const)
+      .filter(([, value]) => value.length > 0)
+  );
+
+const readSubmittedAnswers = (sectionId: string, attemptId: string | null): Answers | undefined => {
+  if (!attemptId || typeof window === 'undefined') {
+    return undefined;
+  }
+
+  try {
+    const storedValue = window.sessionStorage.getItem(
+      getSubmittedAnswersStorageKey(sectionId, attemptId)
+    );
+
+    if (!storedValue) {
+      return undefined;
+    }
+
+    const parsedValue = JSON.parse(storedValue);
+
+    if (typeof parsedValue !== 'object' || parsedValue === null || Array.isArray(parsedValue)) {
+      return undefined;
+    }
+
+    return sanitizeAnswers(
+      Object.fromEntries(
+        Object.entries(parsedValue).filter((entry): entry is [string, string] => {
+          const [key, value] = entry;
+
+          return typeof key === 'string' && typeof value === 'string';
+        })
+      )
+    );
+  } catch {
+    return undefined;
+  }
+};
+
+const writeSubmittedAnswers = (sectionId: string, attemptId: string, answers: Answers) => {
+  if (typeof window === 'undefined') {
+    return;
+  }
+
+  window.sessionStorage.setItem(
+    getSubmittedAnswersStorageKey(sectionId, attemptId),
+    JSON.stringify(sanitizeAnswers(answers))
+  );
+};
+
 export function ListeningDetailsView({ sectionId }: ListeningDetailsViewProps) {
   const router = useRouter();
   const queryClient = useQueryClient();
@@ -33,6 +90,10 @@ export function ListeningDetailsView({ sectionId }: ListeningDetailsViewProps) {
   const canLoadListeningSection = isHydrated && isAuthenticated;
   const [countdownValue, setCountdownValue] = useState<number | null>(null);
   const [pendingAttemptId, setPendingAttemptId] = useState<string | null>(null);
+  const submittedAnswers = useMemo(
+    () => readSubmittedAnswers(sectionId, attemptId),
+    [attemptId, sectionId]
+  );
   const { data, error, isLoading } = useListeningSectionDetailQuery(
     sectionId,
     canLoadListeningSection
@@ -45,6 +106,7 @@ export function ListeningDetailsView({ sectionId }: ListeningDetailsViewProps) {
     sectionId,
     attemptId,
     data,
+    submittedAnswers,
     canLoadListeningSection && Boolean(data) && shouldRestoreResult
   );
 
@@ -56,13 +118,18 @@ export function ListeningDetailsView({ sectionId }: ListeningDetailsViewProps) {
   });
 
   const submitAttemptMutation = useMutation({
-    mutationFn: (answers: Answers) =>
-      submitListeningSectionAttempt({
+    mutationFn: (answers: Answers) => {
+      if (attemptId) {
+        writeSubmittedAnswers(sectionId, attemptId, answers);
+      }
+
+      return submitListeningSectionAttempt({
         answers,
         attemptId: attemptId ?? '',
         sectionId,
         test: data!,
-      }),
+      });
+    },
   });
 
   useEffect(() => {

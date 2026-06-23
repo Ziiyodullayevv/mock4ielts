@@ -4,6 +4,7 @@ import type { WritingTextSize } from '@/src/sections/practice/writing/types';
 
 import { cn } from '@/src/lib/utils';
 import { useState, useEffect } from 'react';
+import { PracticeHeaderNotesButton } from '@/src/layouts/practice';
 import {
   WRITING_OPEN_NOTES_EVENT,
 } from '@/src/sections/practice/writing/types';
@@ -45,8 +46,6 @@ type WritingHeaderMoreMenuProps = {
   textSize: WritingTextSize;
 };
 
-type WritingHeaderControl = 'fullscreen' | 'notes' | 'theme' | null;
-
 type WritingTestHeaderProps = {
   isPrimaryActionDisabled?: boolean;
   isPrevDisabled: boolean;
@@ -60,10 +59,6 @@ type WritingTestHeaderProps = {
   textSize: WritingTextSize;
   timeLeftSeconds: number;
 };
-
-function requestOpenNotes() {
-  window.dispatchEvent(new CustomEvent(WRITING_OPEN_NOTES_EVENT));
-}
 
 const WRITING_DESKTOP_HELP_ITEMS = [
   {
@@ -100,36 +95,11 @@ export function WritingTestHeader({
   timeLeftSeconds,
 }: WritingTestHeaderProps) {
   const [isScrolled, setIsScrolled] = useState(false);
-  const [hoveredHeaderControl, setHoveredHeaderControl] = useState<WritingHeaderControl>(null);
   const isExitAction = isPrevDisabled && Boolean(onLogoClick);
   const isSubmitAction = primaryActionLabel.toLowerCase().includes('submit');
   const headerShellShadowClass = isScrolled
     ? 'shadow-[0_12px_26px_rgba(15,23,42,0.12),0_4px_12px_rgba(15,23,42,0.06)] dark:shadow-none'
     : 'shadow-[0_8px_18px_rgba(15,23,42,0.08),0_2px_8px_rgba(15,23,42,0.04)] dark:shadow-none';
-  const isFirstDividerHidden =
-    hoveredHeaderControl === 'fullscreen' || hoveredHeaderControl === 'notes';
-  const isSecondDividerHidden = hoveredHeaderControl === 'notes' || hoveredHeaderControl === 'theme';
-
-  const createHeaderControlHandlers = (control: Exclude<WritingHeaderControl, null>) => ({
-    onBlurCapture: (event: React.FocusEvent<HTMLDivElement>) => {
-      if (!event.currentTarget.contains(event.relatedTarget as Node | null)) {
-        setHoveredHeaderControl((currentValue) =>
-          currentValue === control ? null : currentValue
-        );
-      }
-    },
-    onFocusCapture: () => {
-      setHoveredHeaderControl(control);
-    },
-    onMouseEnter: () => {
-      setHoveredHeaderControl(control);
-    },
-    onMouseLeave: () => {
-      setHoveredHeaderControl((currentValue) =>
-        currentValue === control ? null : currentValue
-      );
-    },
-  });
 
   useEffect(() => {
     const handleScroll = () => {
@@ -145,18 +115,20 @@ export function WritingTestHeader({
   }, []);
 
   return (
-    <header className="sticky top-0 z-40 isolate border-stone-200 bg-linear-to-b from-white from-20% to-transparent to-80% dark:border-white/10 dark:bg-linear-to-b dark:from-background dark:from-20% dark:to-transparent dark:to-80%">
-      <GradualBlur
-        target="parent"
-        position="top"
-        height="6rem"
-        strength={1}
-        divCount={2}
-        curve="bezier"
-        exponential
-        opacity={1}
-        zIndex={0}
-      />
+    <header className="sticky top-0 z-40 isolate border-stone-200 bg-white dark:border-white/10 dark:bg-background sm:bg-linear-to-b sm:from-white sm:from-20% sm:to-transparent sm:to-80% dark:sm:bg-linear-to-b dark:sm:from-background dark:sm:from-20% dark:sm:to-transparent dark:sm:to-80%">
+      <div className="hidden sm:block">
+        <GradualBlur
+          target="parent"
+          position="top"
+          height="6rem"
+          strength={1}
+          divCount={2}
+          curve="bezier"
+          exponential
+          opacity={1}
+          zIndex={0}
+        />
+      </div>
 
       <div className="relative z-10 grid min-h-16 w-full grid-cols-[1fr_auto_1fr] items-center gap-2 px-4 py-2.5 sm:hidden">
         <div className="flex items-center justify-self-start">
@@ -217,8 +189,8 @@ export function WritingTestHeader({
         </div>
       </div>
 
-      <div className="relative z-10 hidden min-h-[72px] w-full grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-3 px-4 py-2.5 sm:grid sm:px-6">
-        <div className="relative -translate-y-1 flex h-full items-center justify-self-start gap-2">
+      <div className="relative z-10 hidden min-h-14 w-full grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-3 px-4 pb-1 pt-3 sm:grid">
+        <div className="relative flex h-full items-center justify-self-start gap-2">
           {isExitAction ? (
             <div
               className={cn(
@@ -334,7 +306,7 @@ export function WritingTestHeader({
           <TimerDisplay isReview={isReview} totalSeconds={timeLeftSeconds} />
         </div>
 
-        <div className="relative -translate-y-1 flex h-full items-center justify-self-end gap-2">
+        <div className="relative flex h-full items-center justify-self-end">
           <div
             className={cn(
               'flex items-center rounded-full p-1 transition-shadow',
@@ -342,36 +314,20 @@ export function WritingTestHeader({
               headerShellShadowClass
             )}
           >
-            <div {...createHeaderControlHandlers('fullscreen')}>
-              <ListeningHeaderFullscreenButton />
-            </div>
+            <ListeningHeaderFullscreenButton />
 
-            <span
-              className={cn(
-                'mx-0.5 h-7 w-px bg-stone-200 transition-opacity dark:bg-white/12',
-                isFirstDividerHidden && 'opacity-0'
-              )}
-            />
+            <span className="mx-0.5 h-7 w-px bg-stone-200 dark:bg-white/12" />
 
-            <div {...createHeaderControlHandlers('notes')}>
-              <WritingHeaderNotesButton />
-            </div>
+            <PracticeHeaderNotesButton eventName={WRITING_OPEN_NOTES_EVENT} />
 
-            <span
-              className={cn(
-                'mx-0.5 h-7 w-px bg-stone-200 transition-opacity dark:bg-white/12',
-                isSecondDividerHidden && 'opacity-0'
-              )}
-            />
+            <span className="mx-0.5 h-7 w-px bg-stone-200 dark:bg-white/12" />
 
-            <div {...createHeaderControlHandlers('theme')}>
-              <ListeningHeaderMoreMenu />
-            </div>
+            <ListeningHeaderMoreMenu />
           </div>
 
           <div
             className={cn(
-              'flex items-center rounded-full p-1 transition-shadow',
+              'ml-2 flex items-center rounded-full p-1 transition-shadow',
               PRACTICE_HEADER_RING_CLASS,
               headerShellShadowClass
             )}
@@ -381,30 +337,6 @@ export function WritingTestHeader({
         </div>
       </div>
     </header>
-  );
-}
-
-function WritingHeaderNotesButton({ mobile = false }: { mobile?: boolean }) {
-  return (
-    <button
-      type="button"
-      data-writing-notes-trigger
-      aria-label="Open notes"
-      title="Open notes"
-      onClick={requestOpenNotes}
-      className={cn(
-        'inline-flex shrink-0 items-center justify-center rounded-full text-stone-800 transition-colors',
-        mobile
-          ? cn(
-              'size-10 shadow-lg hover:bg-stone-50 dark:text-white/78 dark:shadow-none dark:hover:bg-white/8 dark:hover:text-white',
-              PRACTICE_HEADER_RING_CLASS
-            )
-          : 'h-9 w-10 hover:bg-stone-100 dark:text-white/78 dark:hover:bg-white/8 dark:hover:text-white',
-        mobile && 'dark:text-white/78 dark:hover:text-white'
-      )}
-    >
-      <PencilLine className="size-4.5" strokeWidth={2} />
-    </button>
   );
 }
 
@@ -455,7 +387,7 @@ function WritingHeaderMoreMenu({
               ) : null}
               {showNotesControl ? (
                 <PracticeHeaderMenuQuickActionShell>
-                  <WritingHeaderNotesButton />
+                  <PracticeHeaderNotesButton eventName={WRITING_OPEN_NOTES_EVENT} />
                 </PracticeHeaderMenuQuickActionShell>
               ) : null}
               {showNotesControl ? (

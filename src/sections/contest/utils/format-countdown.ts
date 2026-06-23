@@ -24,6 +24,15 @@ export function formatCountdown(parts: CountdownParts): string {
   return `${pad(parts.hours)}:${pad(parts.minutes)}:${pad(parts.seconds)}`;
 }
 
+export function formatClockCountdown(parts: CountdownParts): string {
+  const totalHours = Math.floor(parts.totalMs / 3_600_000);
+  const minutes = Math.floor((parts.totalMs % 3_600_000) / 60_000);
+  const seconds = Math.floor((parts.totalMs % 60_000) / 1000);
+  const pad = (value: number) => String(value).padStart(2, '0');
+
+  return `${pad(totalHours)}:${pad(minutes)}:${pad(seconds)}`;
+}
+
 export function formatStartLabel(date: Date): string {
   const weekday = date.toLocaleDateString('en-US', { weekday: 'short' });
   const month = date.toLocaleDateString('en-US', { month: 'short' });

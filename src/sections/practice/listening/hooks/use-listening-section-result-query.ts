@@ -1,6 +1,6 @@
 'use client';
 
-import type { ListeningTest } from '../types';
+import type { Answers, ListeningTest } from '../types';
 
 import { useQuery } from '@tanstack/react-query';
 
@@ -10,6 +10,7 @@ export function useListeningSectionResultQuery(
   sectionId: string,
   attemptId: string | null,
   test: ListeningTest | undefined,
+  answers?: Answers,
   enabled = true
 ) {
   return useQuery({
@@ -17,9 +18,10 @@ export function useListeningSectionResultQuery(
     queryFn: () =>
       getListeningSectionAttemptResult({
         attemptId: attemptId ?? '',
+        answers,
         sectionId,
         test: test!,
       }),
-    queryKey: ['published-sections', 'listening', sectionId, 'result', attemptId],
+    queryKey: ['published-sections', 'listening', sectionId, 'result', attemptId, answers],
   });
 }

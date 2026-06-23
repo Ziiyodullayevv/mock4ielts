@@ -7,12 +7,15 @@ import type { TestResult, ListeningTest, Answers as ListeningAnswers } from '@/s
 
 import { cn } from '@/src/lib/utils';
 import { paths } from '@/src/routes/paths';
-import { useQuery } from '@tanstack/react-query';
 import { MainFooter } from '@/src/layouts/main/footer';
-import { buildLoginHref } from '@/src/auth/utils/return-to';
 import { useRouter, usePathname } from '@/src/routes/hooks';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useAuthSession } from '@/src/auth/hooks/use-auth-session';
+import { HeaderAccountDropdown } from '@/src/layouts/main/components';
+import { useAuthMutations } from '@/src/auth/hooks/use-auth-mutations';
+import { useMyProfileQuery } from '@/src/auth/hooks/use-my-profile-query';
 import { useRef, useMemo, useState, useEffect, useCallback } from 'react';
+import { buildLoginHref, getCurrentReturnTo } from '@/src/auth/utils/return-to';
 import { computeResult as computeReadingResult } from '@/src/sections/practice/reading/utils';
 import { ReadingTestView } from '@/src/sections/practice/reading/components/reading-test-view';
 import { WritingTestView } from '@/src/sections/practice/writing/components/writing-test-view';
@@ -20,10 +23,6 @@ import { computeResult as computeListeningResult } from '@/src/sections/practice
 import { SpeakingTestView } from '@/src/sections/practice/speaking/components/speaking-test-view';
 import { useMockExamDetailQuery } from '@/src/sections/mock-exams/hooks/use-mock-exam-detail-query';
 import { ListeningTestView } from '@/src/sections/practice/listening/components/listening-test-view';
-import {
-  PracticePageState,
-  PracticeSubmittingOverlay,
-} from '@/src/sections/practice/components';
 import { getReadingSectionDetail } from '@/src/sections/practice/reading/api/get-reading-section-detail';
 import { getWritingSectionDetail } from '@/src/sections/practice/writing/api/get-writing-section-detail';
 import { getSpeakingSectionDetail } from '@/src/sections/practice/speaking/api/get-speaking-section-detail';
@@ -31,6 +30,11 @@ import {
   buildListeningSubmitPayload,
 } from '@/src/sections/practice/listening/api/listening-attempt-api';
 import { getListeningSectionDetail } from '@/src/sections/practice/listening/api/get-listening-section-detail';
+import {
+  PracticePageState,
+  PracticeConfirmDialog,
+  PracticeSubmittingOverlay,
+} from '@/src/sections/practice/components';
 import {
   Sheet,
   SheetClose,
@@ -47,15 +51,10 @@ import {
   Clock3,
   PenTool,
   BookOpen,
-  ArrowLeft,
   Headphones,
+  ChevronLeft,
   type LucideIcon,
 } from 'lucide-react';
-import {
-  contestButtonClassName,
-  contestInsetCardClassName,
-  contestPrimaryButtonClassName,
-} from '@/src/sections/contest/components/contest-theme';
 import {
   finishMockExam,
   getMockExamResult,
@@ -63,6 +62,12 @@ import {
   type MockExamSection,
   submitMockExamSection,
 } from '@/src/sections/mock-exams/api/mock-exams-api';
+import {
+  contestButtonClassName,
+  contestInsetCardClassName,
+  contestIconButtonClassName,
+  contestPrimaryButtonClassName,
+} from '@/src/sections/contest/components/contest-theme';
 
 type MockExamRunnerPageProps = {
   attemptId: string | null;
@@ -214,12 +219,11 @@ function formatCountdownLabel(totalSeconds: number) {
   const safeTotalSeconds = Math.max(0, totalSeconds);
   const hours = Math.floor(safeTotalSeconds / 3600);
   const minutes = Math.floor((safeTotalSeconds % 3600) / 60);
+  const seconds = safeTotalSeconds % 60;
 
-  if (hours > 0) {
-    return `${hours}h ${minutes}m`;
-  }
-
-  return `${minutes}m`;
+  return [hours, minutes, seconds]
+    .map((timePart) => String(timePart).padStart(2, '0'))
+    .join(':');
 }
 
 function buildWritingMockResult(answers: WritingAnswers): WritingTestResult {
@@ -470,6 +474,45 @@ function MockExamSectionInfoSheet({
   );
 }
 
+function MockExamHeaderAccount({
+  onNavigationRequest,
+}: {
+  onNavigationRequest: (nextAction: () => void) => void;
+}) {
+  const router = useRouter();
+  const queryClient = useQueryClient();
+  const { isAuthenticated, isHydrated } = useAuthSession();
+  const { logoutMutation } = useAuthMutations();
+  const { data: profile, isLoading } = useMyProfileQuery(isAuthenticated);
+
+  const handleLogout = async () => {
+    try {
+      await logoutMutation.mutateAsync();
+    } finally {
+      queryClient.removeQueries({ queryKey: ['auth', 'me'] });
+      queryClient.removeQueries({ queryKey: ['favorites'] });
+      queryClient.removeQueries({ queryKey: ['statistics'] });
+      router.replace(buildLoginHref(getCurrentReturnTo()));
+    }
+  };
+
+  if (!isHydrated || !isAuthenticated) {
+    return null;
+  }
+
+  return (
+    <HeaderAccountDropdown
+      avatar={profile?.avatar}
+      email={profile?.email}
+      fullName={profile?.fullName}
+      isLoading={isLoading}
+      isLoggingOut={logoutMutation.isPending}
+      onNavigationRequest={onNavigationRequest}
+      onLogout={handleLogout}
+    />
+  );
+}
+
 function MockExamSectionChooser({
   activeType,
   completedTypes,
@@ -489,28 +532,90 @@ function MockExamSectionChooser({
   sections: MockExamSection[];
   timeLeftSeconds: number;
 }) {
+  const allowNextBrowserNavigationRef = useRef(false);
+  const pendingExitActionRef = useRef<(() => void) | null>(null);
+  const [isExitDialogOpen, setIsExitDialogOpen] = useState(false);
+
+  const requestExit = useCallback((nextAction: () => void) => {
+    pendingExitActionRef.current = nextAction;
+    setIsExitDialogOpen(true);
+  }, []);
+
+  useEffect(() => {
+    const pushGuardState = () => {
+      window.history.pushState(
+        {
+          ...(window.history.state ?? {}),
+          __mockExamExitGuard: true,
+        },
+        '',
+        window.location.href
+      );
+    };
+
+    pushGuardState();
+
+    const handlePopState = () => {
+      if (allowNextBrowserNavigationRef.current) {
+        allowNextBrowserNavigationRef.current = false;
+        return;
+      }
+
+      requestExit(() => {
+        if (window.history.length > 2) {
+          allowNextBrowserNavigationRef.current = true;
+          window.history.go(-2);
+          return;
+        }
+
+        onBack();
+      });
+      pushGuardState();
+    };
+
+    const handleBeforeUnload = (event: BeforeUnloadEvent) => {
+      event.preventDefault();
+      event.returnValue = '';
+    };
+
+    window.addEventListener('popstate', handlePopState);
+    window.addEventListener('beforeunload', handleBeforeUnload);
+
+    return () => {
+      window.removeEventListener('popstate', handlePopState);
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+    };
+  }, [onBack, requestExit]);
+
   return (
-    <div className="min-h-screen bg-white text-stone-950 dark:bg-[#0b0b0b] dark:text-white">
+    <div className="min-h-screen overflow-hidden bg-[radial-gradient(ellipse_104%_64%_at_top_center,rgba(255,179,71,0.20)_0%,rgba(255,179,71,0.10)_42%,transparent_90%),linear-gradient(180deg,#fff8e4_0%,#fffdf7_54%,#ffffff_100%)] text-stone-950 dark:bg-[radial-gradient(ellipse_104%_64%_at_top_center,rgba(255,159,47,0.16)_0%,rgba(255,159,47,0.08)_44%,transparent_92%),linear-gradient(180deg,#0b0b09_0%,#070707_58%,#050505_100%)] dark:text-white">
       <div className="flex min-h-screen flex-col">
-        <header className="sticky top-0 z-30 border-b border-stone-200/70 bg-white/92 backdrop-blur-[30px] dark:border-white/10 dark:bg-[#0b0b0b]/88">
+        <header className="sticky top-0 z-30 border-b border-stone-200/70 bg-white/58 backdrop-blur-[30px] dark:border-white/10 dark:bg-[#0b0b09]/74">
           <div className="mx-auto flex min-h-[72px] w-full max-w-6xl items-center justify-between gap-4 px-4 py-4 sm:px-6">
             <button
               type="button"
-              onClick={onBack}
-              className={cn(contestButtonClassName, 'h-10 gap-2 px-4 text-sm font-semibold')}
+              onClick={() => requestExit(onBack)}
+              className={cn(
+                contestIconButtonClassName,
+                'size-10 rounded-xl bg-white/70 text-stone-700 dark:bg-white/8 dark:text-white/70'
+              )}
+              aria-label="Back to mock exams"
             >
-              <ArrowLeft className="relative z-10 size-4" />
-              <span className="relative z-10">Back</span>
+              <ChevronLeft className="size-5" strokeWidth={2.2} />
             </button>
 
-            <div
-              className={cn(
-                contestButtonClassName,
-                'h-10 gap-2 px-4 text-sm font-semibold text-stone-700 dark:text-white/80'
-              )}
-            >
-              <Clock3 className="relative z-10 size-4" />
-              <span className="relative z-10">{formatCountdownLabel(timeLeftSeconds)}</span>
+            <div className="flex items-center gap-2.5">
+              <div
+                className={cn(
+                  contestButtonClassName,
+                  'h-10 min-w-[118px] gap-2 rounded-xl bg-white/70 px-4 text-sm font-semibold text-stone-700 tabular-nums dark:bg-white/8 dark:text-white/70'
+                )}
+              >
+                <Clock3 className="relative z-10 size-4" />
+                <span className="relative z-10">{formatCountdownLabel(timeLeftSeconds)}</span>
+              </div>
+
+              <MockExamHeaderAccount onNavigationRequest={requestExit} />
             </div>
           </div>
         </header>
@@ -633,6 +738,20 @@ function MockExamSectionChooser({
 
         <MainFooter />
       </div>
+
+      <PracticeConfirmDialog
+        open={isExitDialogOpen}
+        onOpenChange={setIsExitDialogOpen}
+        title="Leave this mock exam?"
+        description="If you leave now, your current mock exam progress may not be saved. This also applies when opening profile, subscription, statistics, or logging out from the avatar menu."
+        cancelLabel="Stay here"
+        confirmLabel="Leave mock exam"
+        onConfirm={() => {
+          const pendingExitAction = pendingExitActionRef.current;
+          pendingExitActionRef.current = null;
+          pendingExitAction?.();
+        }}
+      />
     </div>
   );
 }

@@ -3,6 +3,8 @@
 import type { DiagramData } from '../../types';
 import type { QuestionTypeAnnotationProps } from './annotation-blocks';
 
+import { useMemo, useState } from 'react';
+
 import { CompletionInput } from './completion-input';
 import { getListeningQuestionAnchorId } from '../../utils';
 import { renderQuestionText, getQuestionAnnotationBlockId } from './annotation-blocks';
@@ -21,6 +23,31 @@ interface Props extends QuestionTypeAnnotationProps {
   showAnswer?: boolean;
 }
 
+const BLANK_PROMPT_REGEX = /_{2,}\s*(\d+)\s*_{2,}/;
+
+function buildDiagramQuestionFields(data: DiagramData) {
+  const title = data.title?.trim();
+
+  if (!title || !BLANK_PROMPT_REGEX.test(title)) {
+    return data.questions;
+  }
+
+  return data.questions.map((question) => {
+    const markerRegex = new RegExp(`_{2,}\\s*${question.number}\\s*_{2,}`);
+    const match = markerRegex.exec(title);
+
+    if (!match) {
+      return question;
+    }
+
+    return {
+      ...question,
+      label: question.label || title.slice(0, match.index).trimEnd(),
+      suffix: question.suffix || title.slice(match.index + match[0].length).trimStart(),
+    };
+  });
+}
+
 export function DiagramCompletion({
   activeQuestionId,
   annotationBlockIdPrefix,
@@ -30,29 +57,45 @@ export function DiagramCompletion({
   renderAnnotatedTextBlock,
   showAnswer,
 }: Props) {
+  const [failedImageUrl, setFailedImageUrl] = useState<string | null>(null);
+  const imageUrl = data.imageUrl?.trim();
+  const hasPromptBlank = BLANK_PROMPT_REGEX.test(data.title ?? '');
+  const questions = useMemo(() => buildDiagramQuestionFields(data), [data]);
+  const showImage = Boolean(imageUrl && imageUrl !== failedImageUrl);
+  const panelTitle = showImage && !hasPromptBlank ? (data.title ?? 'Diagram') : undefined;
+
   return (
     <div className="space-y-6">
       <PaperPanel
-        title={data.title ?? 'Diagram'}
-        titleContent={renderQuestionText({
-          as: 'span',
-          blockId: getQuestionAnnotationBlockId(annotationBlockIdPrefix, 'title'),
-          renderAnnotatedTextBlock,
-          text: data.title ?? 'Diagram',
-        })}
+        title={panelTitle}
+        titleContent={
+          panelTitle
+            ? renderQuestionText({
+                as: 'span',
+                blockId: getQuestionAnnotationBlockId(annotationBlockIdPrefix, 'title'),
+                renderAnnotatedTextBlock,
+                text: panelTitle,
+              })
+            : undefined
+        }
       >
-        {data.imageUrl ? (
-          <div className="border-b border-[#dfdfdf] bg-white px-5 py-5 dark:border-white/10 dark:bg-[#131313] sm:px-8 sm:py-8">
+        {showImage ? (
+          <div className="border-b border-[#dfdfdf] bg-white px-4 py-3 dark:border-white/10 dark:bg-[#131313] sm:px-6 sm:py-4">
             <img
-              src={data.imageUrl}
-              alt={data.title ?? 'Diagram completion'}
+              src={imageUrl}
+              alt=""
+              onError={() => {
+                if (imageUrl) {
+                  setFailedImageUrl(imageUrl);
+                }
+              }}
               className="mx-auto max-h-[28rem] w-auto max-w-full object-contain"
             />
           </div>
         ) : null}
 
         <div className={PAPER_DIVIDER_CLASS_NAME}>
-          {data.questions.map((question) => (
+          {questions.map((question) => (
             <div
               key={question.id}
               id={getListeningQuestionAnchorId(question.id)}

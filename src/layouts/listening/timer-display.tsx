@@ -35,26 +35,26 @@ export function TimerDisplay({ isReview, totalSeconds }: TimerDisplayProps) {
 
   return (
     <div className="inline-block [filter:drop-shadow(0_8px_18px_rgba(15,23,42,0.08))_drop-shadow(0_2px_8px_rgba(15,23,42,0.04))] dark:[filter:none]">
-      <div className={cn('inline-block rounded-xl', PRACTICE_TIMER_RING_CLASS)}>
+      <div className={cn('inline-block rounded-lg', PRACTICE_TIMER_RING_CLASS)}>
         <Squircle
           n={4}
-          radius={28}
-          className="inline-grid grid-cols-2 overflow-hidden rounded-xl bg-transparent py-1.5 text-stone-900 sm:py-2 dark:text-white"
+          radius={12}
+          className="inline-grid h-12 grid-cols-2 overflow-hidden rounded-lg bg-transparent py-0 text-stone-900 dark:text-white"
         >
           {segments.map((segment, index) => (
             <div
               key={segment.label}
               className={cn(
-                'flex min-h-10 min-w-[72px] flex-col items-center justify-center text-center sm:min-h-12 sm:min-w-[100px]',
+                'flex min-w-[78px] flex-col items-center justify-center text-center sm:min-w-[92px]',
                 index > 0
-                  ? 'relative before:absolute before:inset-y-2 before:left-0 before:w-px before:bg-black/6 dark:before:bg-white/6'
+                  ? 'relative before:absolute before:inset-y-2.5 before:left-0 before:w-px before:bg-black/6 dark:before:bg-white/6'
                   : ''
               )}
             >
-              <div className="text-base font-bold leading-none tracking-[-0.06em] tabular-nums text-stone-900 sm:text-lg dark:text-white">
+              <div className="text-base font-bold leading-none tracking-[-0.02em] tabular-nums text-stone-900 dark:text-white">
                 {String(segment.value).padStart(2, '0')}
               </div>
-              <div className="mt-0.5 text-[10px]! font-medium text-stone-500 sm:mt-1 sm:text-xs! dark:text-white/68">
+              <div className="mt-1 text-[10px]! font-medium text-stone-500 dark:text-white/68">
                 {segment.label}
               </div>
             </div>

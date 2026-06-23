@@ -98,16 +98,18 @@ function getPerformanceTheme(bandValue: number): PerformanceTheme {
 }
 
 export function buildScoreSummaryViewModel(result: TestResult): ScoreSummaryViewModel {
+  const score = Math.round(result.score);
+  const total = Math.round(result.total);
   const bandValue =
     typeof result.overallBand === 'number' && Number.isFinite(result.overallBand)
       ? result.overallBand
-      : Number.parseFloat(bandScore(result.score, result.total));
+      : Number.parseFloat(bandScore(score, total));
   const displayBand = formatBand(bandValue);
   const answeredCount = Object.keys(result.answers).filter((value) =>
     result.answers[value]?.trim()
   ).length;
-  const accuracy = result.total ? Math.round((result.score / result.total) * 100) : 0;
-  const completionRate = result.total ? Math.round((answeredCount / result.total) * 100) : 0;
+  const accuracy = total ? Math.round((score / total) * 100) : 0;
+  const completionRate = total ? Math.round((answeredCount / total) * 100) : 0;
   const partMetrics = getPartMetrics(result);
   const hasSuccessfulPart = partMetrics.some((part) => part.score > 0);
   const strongestPart = partMetrics.reduce(
@@ -131,12 +133,12 @@ export function buildScoreSummaryViewModel(result: TestResult): ScoreSummaryView
     needsReviewLabel: hasSuccessfulPart ? `Part ${weakestPart.partNumber}` : 'N/A',
     partCount: partMetrics.length || 4,
     partMetrics,
-    remainingCount: Math.max(result.total - result.score, 0),
-    score: result.score,
+    remainingCount: Math.max(total - score, 0),
+    score,
     theme: getPerformanceTheme(bandValue),
     timeSpentDetail:
       result.timeSpentSeconds != null ? 'Recorded session duration' : 'Timer data unavailable',
     timeSpentLabel: formatDuration(result.timeSpentSeconds),
-    total: result.total,
+    total,
   };
 }

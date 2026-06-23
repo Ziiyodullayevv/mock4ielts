@@ -1,13 +1,18 @@
 'use client';
 
-import type { BlankField, SummaryParagraph } from '../../types';
 import type { QuestionTypeAnnotationProps } from './annotation-blocks';
+import type { MCOption, BlankField, SummaryParagraph } from '../../types';
 
-import { useState } from 'react';
+import { Check } from 'lucide-react';
+import {
+  Select,
+  SelectItem,
+  SelectContent,
+  SelectTrigger,
+} from '@/src/components/ui/select';
 import { usePracticeTextSize, getPracticeTextStyle } from '@/src/sections/practice/shared/practice-text-size';
 
 import { CompletionInput } from './completion-input';
-import { useDragAutoScroll } from './use-drag-auto-scroll';
 import { PaperPanel, QuestionNumberBadge } from './paper-shell';
 import { renderQuestionText, getQuestionAnnotationBlockId } from './annotation-blocks';
 import { isAnswerCorrect, getPrimaryAnswer, getListeningQuestionAnchorId } from '../../utils';
@@ -17,6 +22,7 @@ interface Props extends QuestionTypeAnnotationProps {
   paragraphs: SummaryParagraph[];
   summaryTitle?: string;
   wordBank?: string[];
+  wordBankOptions?: MCOption[];
   answers: Record<string, string>;
   onChange: (id: string, value: string) => void;
   showAnswer?: boolean;
@@ -28,71 +34,26 @@ export function SummaryCompletion({
   paragraphs,
   summaryTitle,
   wordBank = [],
+  wordBankOptions = [],
   answers,
   onChange,
   renderAnnotatedTextBlock,
   showAnswer,
 }: Props) {
   const textSize = usePracticeTextSize();
-  const [dragging, setDragging] = useState<string | null>(null);
-  const hasWordBank = wordBank.length > 0;
-  const fields = paragraphs.flatMap((paragraph) =>
-    paragraph.segments.flatMap((segment) => (segment.type === 'blank' ? [segment.field] : []))
-  );
-  const usedWords = fields.map((field) => answers[field.id]).filter(Boolean);
-
-  useDragAutoScroll(Boolean(dragging) && !showAnswer && hasWordBank);
-
-  const handleDrop = (fieldId: string, word: string) => {
-    const existing = answers[fieldId];
-    if (existing) onChange(fieldId, '');
-    onChange(fieldId, word);
-    setDragging(null);
-  };
+  const selectOptions = wordBankOptions.length
+    ? wordBankOptions.map((option) => ({
+        label: `${option.value} ${option.text}`,
+        value: option.text,
+      }))
+    : wordBank.map((word, wordIndex) => ({
+        label: `${String.fromCharCode(65 + wordIndex)} ${word}`,
+        value: word,
+      }));
+  const hasWordBank = selectOptions.length > 0;
 
   return (
     <div className="space-y-5">
-      {hasWordBank && !showAnswer ? (
-        <div className="bg-[#f7f7f7] p-4 dark:bg-[#131313] sm:p-5">
-          {renderQuestionText({
-            as: 'p',
-            blockId: getQuestionAnnotationBlockId(annotationBlockIdPrefix, 'word-bank-title'),
-            className: 'mb-3 font-semibold uppercase tracking-[0.2em] text-stone-500 dark:text-white/42',
-            renderAnnotatedTextBlock,
-            style: getPracticeTextStyle(textSize, 'eyebrow'),
-            text: 'Word bank',
-          })}
-          <div className="flex flex-wrap gap-2">
-            {wordBank.map((word, wordIndex) => (
-              <div
-                key={word}
-                draggable
-                onDragStart={() => setDragging(word)}
-                onDragEnd={() => setDragging(null)}
-                className={`px-4 py-2 text-sm font-medium select-none transition-all ${
-                  usedWords.includes(word)
-                    ? 'cursor-not-allowed bg-white/25 text-stone-400 opacity-30'
-                    : dragging === word
-                      ? 'cursor-grabbing bg-stone-900 text-white opacity-50'
-                      : 'cursor-grab bg-white/55 text-stone-700 hover:bg-white dark:bg-white/10 dark:text-white/78 dark:hover:bg-white/14'
-                }`}
-              >
-                {renderQuestionText({
-                  as: 'span',
-                  blockId: getQuestionAnnotationBlockId(
-                    annotationBlockIdPrefix,
-                    'word-bank-word',
-                    wordIndex
-                  ),
-                  renderAnnotatedTextBlock,
-                  text: word,
-                })}
-              </div>
-            ))}
-          </div>
-        </div>
-      ) : null}
-
       <PaperPanel
         title={summaryTitle ?? 'Summary'}
         titleContent={renderQuestionText({
@@ -106,7 +67,7 @@ export function SummaryCompletion({
           {paragraphs.map((paragraph, paragraphIndex) => (
             <section key={`${paragraph.heading ?? 'summary'}-${paragraphIndex}`}>
               {paragraph.heading ? (
-                <div className="border-b border-[#dfdfdf] px-5 py-4 dark:border-white/10 sm:px-8">
+                <div className="border-b border-[#dfdfdf] px-3 py-2.5 dark:border-white/10 sm:px-4">
                   {renderQuestionText({
                     as: 'p',
                     blockId: getQuestionAnnotationBlockId(
@@ -123,7 +84,7 @@ export function SummaryCompletion({
                 </div>
               ) : null}
 
-              <div className="px-5 py-4 sm:px-8 sm:py-5">
+              <div className="px-3 py-2.5 sm:px-4 sm:py-3">
                 <p
                   style={getPracticeTextStyle(textSize, 'body')}
                   className="text-stone-800 dark:text-white/84"
@@ -150,13 +111,12 @@ export function SummaryCompletion({
                         activeQuestionId={activeQuestionId}
                         answers={answers}
                         annotationBlockIdPrefix={annotationBlockIdPrefix}
-                        dragging={dragging}
                         field={segment.field}
                         hasWordBank={hasWordBank}
                         onChange={onChange}
-                        onDrop={handleDrop}
                         renderAnnotatedTextBlock={renderAnnotatedTextBlock}
                         showAnswer={showAnswer}
+                        selectOptions={selectOptions}
                       />
                     )
                   )}
@@ -174,31 +134,33 @@ type SummaryBlankProps = {
   activeQuestionId?: string | null;
   answers: Record<string, string>;
   annotationBlockIdPrefix?: string;
-  dragging: string | null;
   field: BlankField;
   hasWordBank: boolean;
   onChange: (id: string, value: string) => void;
-  onDrop: (fieldId: string, word: string) => void;
   renderAnnotatedTextBlock?: QuestionTypeAnnotationProps['renderAnnotatedTextBlock'];
   showAnswer?: boolean;
+  selectOptions: Array<{ label: string; value: string }>;
 };
 
 function SummaryBlank({
   activeQuestionId,
   answers,
   annotationBlockIdPrefix,
-  dragging,
   field,
   hasWordBank,
   onChange,
-  onDrop,
   renderAnnotatedTextBlock,
   showAnswer,
+  selectOptions,
 }: SummaryBlankProps) {
+  const textSize = usePracticeTextSize();
   const value = answers[field.id] ?? '';
   const isActive = field.id === activeQuestionId;
   const isCorrect = showAnswer ? isAnswerCorrect(value, field.answer) : undefined;
   const primaryAnswer = getPrimaryAnswer(field.answer);
+  const selectedOption = selectOptions.find((option) => option.value === value);
+  const [selectedDisplayValue = '', ...selectedLabelParts] = selectedOption?.label.split(/\s+/) ?? [];
+  const selectedLabel = selectedLabelParts.join(' ');
 
   if (!hasWordBank) {
     return (
@@ -234,43 +196,69 @@ function SummaryBlank({
       'inline-flex min-h-10 min-w-[10rem] items-center justify-between rounded-sm border border-stone-300 bg-white px-3 py-1.5 text-sm font-medium text-stone-900 align-baseline dark:border-white/10 dark:bg-white/8 dark:text-white';
   }
 
-  if (!showAnswer && dragging && !value) {
-    blankClassName =
-      'inline-flex min-h-10 min-w-[10rem] items-center justify-center gap-1.5 rounded-md border-2 border-dashed border-sky-600 bg-sky-100 px-3 py-1.5 text-[11px] font-semibold tracking-[0.16em] text-sky-950 align-baseline shadow-[0_0_0_4px_rgba(56,189,248,0.14)] transition-all';
-  }
-
   return (
     <span
       id={getListeningQuestionAnchorId(field.id)}
-      onDragOver={(event) => event.preventDefault()}
-      onDrop={() => dragging && onDrop(field.id, dragging)}
-      className="inline-flex scroll-mt-28 items-center gap-2 align-baseline"
+      className="mx-1 inline-flex scroll-mt-28 items-center gap-2 align-baseline"
     >
       <QuestionNumberBadge isActive={isActive} number={field.number} size="xs" />
 
-      <button
-        type="button"
-        data-question-focus={!showAnswer ? 'true' : undefined}
-        tabIndex={showAnswer ? -1 : 0}
-        onClick={() => {
-          if (!showAnswer && value) {
-            onChange(field.id, '');
-          }
-        }}
-        className={blankClassName}
-      >
-        <span>
-          {value ? (
-            value
-          ) : (
-            <span className="inline-flex items-center gap-1.5">
-              <span className="size-1.5 rounded-full bg-current opacity-70" />
-              <span>DROP HERE</span>
-            </span>
-          )}
-        </span>
-        {!showAnswer && value ? <span className="ml-2 text-stone-400 dark:text-white/34">✕</span> : null}
-      </button>
+      {showAnswer ? (
+        <span className={blankClassName}>{value || 'NO ANSWER'}</span>
+      ) : (
+        <Select
+          value={value || undefined}
+          onValueChange={(nextValue) => onChange(field.id, nextValue === '__clear__' ? '' : nextValue)}
+        >
+          <SelectTrigger
+            data-question-focus="true"
+            style={getPracticeTextStyle(textSize, 'body-compact')}
+            className={`min-h-11 min-w-[18rem] rounded-xl border px-3 py-2 text-left shadow-none ${
+              isActive
+                ? 'border-sky-400 bg-sky-50 text-sky-900 dark:border-sky-400/70 dark:bg-sky-500/12 dark:text-sky-100'
+                : 'border-stone-300 bg-[#f7f7f7] text-stone-800 dark:border-white/10 dark:bg-white/8 dark:text-white/78'
+            }`}
+          >
+            <div className="flex min-w-0 items-center gap-2">
+              {selectedOption ? (
+                <span className="inline-flex size-5 shrink-0 items-center justify-center rounded-full bg-stone-900 text-[11px] font-semibold tracking-[0.08em] text-white dark:bg-white/90 dark:text-stone-950">
+                  {selectedDisplayValue}
+                </span>
+              ) : (
+                <span className="inline-flex size-5 shrink-0 items-center justify-center rounded-full bg-sky-500/14 text-sky-700 dark:bg-sky-400/20 dark:text-sky-200">
+                  <Check className="size-3" strokeWidth={2.6} />
+                </span>
+              )}
+              <span className="truncate">{selectedLabel || 'Select answer'}</span>
+            </div>
+          </SelectTrigger>
+          <SelectContent className="w-[min(34rem,calc(100vw-2rem))] rounded-xl border-stone-300 dark:border-white/10">
+            <SelectItem value="__clear__" className="rounded-lg text-stone-500 dark:text-white/52">
+              Clear selection
+            </SelectItem>
+            {selectOptions.map((option) => {
+              const [displayValue = '', ...labelParts] = option.label.split(/\s+/);
+
+              return (
+                <SelectItem
+                  key={`${option.label}-${option.value}`}
+                  value={option.value}
+                  className="rounded-lg pr-9"
+                >
+                  <span className="flex min-w-0 items-start gap-2">
+                    <span className="inline-flex size-5 shrink-0 items-center justify-center rounded-full bg-stone-900 text-[11px] font-semibold tracking-[0.08em] text-white dark:bg-white/90 dark:text-stone-950">
+                      {displayValue}
+                    </span>
+                    <span className="min-w-0 whitespace-normal break-words leading-6">
+                      {labelParts.join(' ') || option.label}
+                    </span>
+                  </span>
+                </SelectItem>
+              );
+            })}
+          </SelectContent>
+        </Select>
+      )}
 
       {showAnswer && !isCorrect ? (
         <span className="text-sm font-medium text-green-700">✓ {primaryAnswer}</span>

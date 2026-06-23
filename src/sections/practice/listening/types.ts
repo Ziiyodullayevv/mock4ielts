@@ -26,6 +26,7 @@ export interface MCQuestion {
   backendQuestionId?: string;
   id: string;
   number: number;
+  numbers?: number[]; // all question numbers this block covers (e.g. [17, 18] for "Questions 17 and 18")
   text: string;
   options: MCOption[];
   answer: CorrectAnswer;
@@ -52,6 +53,7 @@ export interface MatchingPair {
 export interface MatchingData {
   options: MatchingOption[];
   pairs: MatchingPair[];
+  showOptionsPanel?: boolean; // false hides the top options box (e.g. when input_mode=select)
 }
 
 // ─── Completion (Form / Note / Sentence / Short Answer) ───────────────────────
@@ -137,6 +139,7 @@ export interface FlowStep {
   content?: string;
   answerLength?: number;
   answer?: CorrectAnswer;
+  selectOptions?: MCOption[]; // set when input_mode=select — renders dropdown instead of text input
 }
 
 // ─── Map Labelling ────────────────────────────────────────────────────────────
@@ -191,6 +194,7 @@ export type QuestionGroup = GroupBase &
     | {
         type: 'summary-completion';
         summaryTitle?: string;
+        wordBankOptions?: MCOption[];
         wordBank?: string[];
         paragraphs: SummaryParagraph[];
       }

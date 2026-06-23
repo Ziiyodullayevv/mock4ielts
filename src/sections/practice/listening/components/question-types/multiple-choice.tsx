@@ -55,6 +55,11 @@ export function MultipleChoice({
             .split(',')
             .map((value) => value.trim())
             .filter(Boolean);
+          const optionTextStyle = {
+            ...getPracticeTextStyle(textSize, 'option'),
+            fontSize: `${Math.max(12, textSize - 2)}px`,
+            lineHeight: `${Math.max(12, textSize - 2) + 7}px`,
+          };
 
           const handleSelect = (optionValue: string) => {
             if (showAnswer) {
@@ -86,14 +91,27 @@ export function MultipleChoice({
             <section
               key={q.id}
               id={getListeningQuestionAnchorId(q.id)}
-              className={`${PAPER_ROW_CLASS_NAME} scroll-mt-28 space-y-4 !py-4 sm:!py-5`}
+              className={`${PAPER_ROW_CLASS_NAME} scroll-mt-28 space-y-2`}
             >
               <div className="flex items-start gap-2.5">
-                <QuestionNumberBadge
-                  className={isActiveQuestion ? 'bg-stone-900 text-white' : undefined}
-                  isActive={isActiveQuestion}
-                  number={q.number}
-                />
+                {q.numbers && q.numbers.length > 1 ? (
+                  <span
+                    className={[
+                      'inline-flex h-8 shrink-0 items-center justify-center rounded-full px-2.5 text-[0.8rem] font-semibold tabular-nums tracking-[-0.03em] align-middle transition-colors',
+                      isActiveQuestion
+                        ? 'border border-[#ffb347] bg-[linear-gradient(135deg,#ffc85a_0%,#ff9f2f_55%,#ff784b_100%)] text-white'
+                        : 'bg-[#e8e8ec] text-stone-800 dark:bg-white/10 dark:text-white/74',
+                    ].join(' ')}
+                  >
+                    {q.numbers[0]}/{q.numbers[q.numbers.length - 1]}
+                  </span>
+                ) : (
+                  <QuestionNumberBadge
+                    className={isActiveQuestion ? 'bg-stone-900 text-white' : undefined}
+                    isActive={isActiveQuestion}
+                    number={q.number}
+                  />
+                )}
                 {renderQuestionText({
                   as: 'p',
                   blockId: getQuestionAnnotationBlockId(
@@ -109,7 +127,7 @@ export function MultipleChoice({
                 })}
               </div>
 
-              <div className="space-y-2 pl-1">
+              <div className="space-y-1.5">
                 {q.multiSelect && q.selectCount ? (
                   renderQuestionText({
                     as: 'p',
@@ -131,23 +149,23 @@ export function MultipleChoice({
                   const isCorrect = correctValues.includes(opt.value);
                   const isQuestionCorrect = isAnswerCorrect(answers[q.id], q.answer, q.multiSelect);
                   let optionClassName =
-                    'rounded-2xl py-1.5 text-stone-700 dark:text-white/78';
+                    'rounded-2xl py-1 text-stone-700 dark:text-white/78';
                   let markerClassName =
                     'border-[#dfdfdf] bg-[#dfdfdf] dark:border-white/10 dark:bg-white/8';
                   let markerValueClassName = 'text-stone-500 dark:text-white/52';
 
                   if (showAnswer) {
                     if (isCorrect) {
-                      optionClassName = 'rounded-2xl bg-green-50/80 py-1.5 text-green-800';
+                      optionClassName = 'rounded-2xl bg-green-50/80 py-1 text-green-800';
                       markerClassName = 'border-green-600 bg-green-600';
                       markerValueClassName = 'text-white';
                     } else if (isSelected && !isQuestionCorrect) {
-                      optionClassName = 'rounded-2xl bg-red-50/80 py-1.5 text-red-700';
+                      optionClassName = 'rounded-2xl bg-red-50/80 py-1 text-red-700';
                       markerClassName = 'border-red-500 bg-red-500';
                       markerValueClassName = 'text-white';
                     }
                   } else if (isSelected) {
-                    optionClassName = 'rounded-2xl py-1.5 text-stone-900 dark:text-white';
+                    optionClassName = 'rounded-2xl py-1 text-stone-900 dark:text-white';
                     markerClassName = 'border-blue-600 bg-blue-600';
                     markerValueClassName = 'text-white';
                   }
@@ -166,14 +184,14 @@ export function MultipleChoice({
                       disabled={showAnswer}
                       aria-pressed={isSelected}
                       style={getPracticeTextStyle(textSize, 'option')}
-                      className={`flex w-full items-start gap-3 text-left transition-colors ${optionClassName} ${showAnswer ? 'cursor-default' : 'cursor-pointer'}`}
+                      className={`relative flex min-h-10 w-full items-center gap-2 rounded-full px-0 text-left transition-colors before:pointer-events-none before:absolute before:inset-y-[-2px] before:left-[-6px] before:right-0 before:rounded-full before:border-2 before:border-transparent focus-visible:outline-none focus-visible:before:border-sky-500/80 ${optionClassName} ${showAnswer ? 'cursor-default' : 'cursor-pointer'}`}
                     >
                       <span
-                        className={`mt-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-full border text-[0.92rem] font-semibold uppercase tracking-[0.04em] transition-colors ${markerClassName} ${markerValueClassName}`}
+                        className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full border text-[0.74rem] font-semibold uppercase tracking-[0.04em] transition-colors ${markerClassName} ${markerValueClassName}`}
                       >
                         {opt.value}
                       </span>
-                      <span className="min-w-0 flex-1 pt-1">
+                      <span className="min-w-0 flex-1">
                         {renderQuestionText({
                           as: 'span',
                           blockId: getQuestionAnnotationBlockId(
@@ -184,6 +202,7 @@ export function MultipleChoice({
                             opt.value
                           ),
                           renderAnnotatedTextBlock,
+                          style: optionTextStyle,
                           text: opt.text,
                         })}
                       </span>

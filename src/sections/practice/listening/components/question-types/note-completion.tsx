@@ -50,7 +50,7 @@ export function NoteCompletion({
         {sections.map((section, sectionIndex) => (
           <div key={sectionIndex}>
             {section.heading ? (
-              <div className="border-b border-[#dfdfdf] px-5 py-4 dark:border-white/10 sm:px-8">
+              <div className="border-b border-[#dfdfdf] px-3 py-2.5 dark:border-white/10 sm:px-4">
                 {renderQuestionText({
                   as: 'p',
                   blockId: getQuestionAnnotationBlockId(
@@ -72,7 +72,7 @@ export function NoteCompletion({
                 <li
                   key={bulletIndex}
                   id={bullet.field ? getListeningQuestionAnchorId(bullet.field.id) : undefined}
-                  className={`${PAPER_ROW_CLASS_NAME} scroll-mt-28 !py-4`}
+                  className={`${PAPER_ROW_CLASS_NAME} scroll-mt-28`}
                 >
                   <div
                     style={getPracticeTextStyle(textSize, 'body')}

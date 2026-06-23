@@ -6,9 +6,9 @@ import type { WritingPart, WritingAnswers, WritingTextSize } from '../types';
 
 import { cn } from '@/src/lib/utils';
 import { useRef, useState, useEffect, useCallback } from 'react';
-import { PaperSurface } from '@/src/sections/practice/listening/components/question-types/paper-shell';
 
 import { countWords } from '../utils';
+import { WritingPanelHeader } from './writing-panel-header';
 import { PromptContent } from './writing-task-prompt-content';
 import { WritingResponsePanel } from './writing-response-panel';
 import { getWritingUITextStyle } from './writing-task-panel.shared';
@@ -26,7 +26,7 @@ type MobileTab = 'prompt' | 'answer';
 type WritingPromptPaperProps = {
   annotations: TextAnnotation[];
   contentClassName?: string;
-  headingVariant?: 'desktop' | 'mobile';
+  framed?: boolean;
   isReview?: boolean;
   onAnnotationsChange: (annotations: TextAnnotation[]) => void;
   part: WritingPart;
@@ -39,44 +39,38 @@ const DEFAULT_SPLIT_PERCENT = 50;
 function WritingPromptPaper({
   annotations,
   contentClassName,
-  headingVariant = 'desktop',
+  framed = true,
   isReview = false,
   onAnnotationsChange,
   part,
   textSize,
 }: WritingPromptPaperProps) {
-  return (
-    <PaperSurface className="overflow-hidden">
-      <div className="border-b border-[#dfdfdf] px-5 py-4 dark:border-white/10 sm:px-6">
-        <div className="space-y-1">
-          <p
-            style={getWritingUITextStyle(textSize, 'eyebrow')}
-            className="font-semibold uppercase tracking-[0.18em] text-stone-500 dark:text-white/45"
-          >
-            {part.title}
-          </p>
-          <h2
-            style={getWritingUITextStyle(
-              textSize,
-              headingVariant === 'mobile' ? 'heading-large' : 'heading'
-            )}
-            className="font-semibold tracking-[-0.03em] text-stone-900 dark:text-white"
-          >
-            Task Prompt
-          </h2>
-        </div>
-      </div>
+  const content = (
+    <PromptContent
+      annotations={annotations}
+      isReview={isReview}
+      onAnnotationsChange={onAnnotationsChange}
+      part={part}
+      textSize={textSize}
+    />
+  );
 
-      <div className={cn('px-5 py-5 sm:px-6', contentClassName)}>
-        <PromptContent
-          annotations={annotations}
-          isReview={isReview}
-          onAnnotationsChange={onAnnotationsChange}
-          part={part}
-          textSize={textSize}
-        />
+  if (!framed) {
+    return <div className={cn('py-3', contentClassName)}>{content}</div>;
+  }
+
+  return (
+    <section className="flex h-full min-h-0 flex-col overflow-hidden rounded-lg border border-stone-200/80 bg-white dark:border-white/10 dark:bg-[#1f1f1f]">
+      <WritingPanelHeader
+        description={part.title}
+        textSize={textSize}
+        title="Task Prompt"
+      />
+
+      <div className={cn('min-h-0 flex-1 overflow-y-auto px-3 py-3 sm:px-4', contentClassName)}>
+        {content}
       </div>
-    </PaperSurface>
+    </section>
   );
 }
 
@@ -148,7 +142,7 @@ export function WritingTaskPanel({
   return (
     <>
       <div className="flex flex-col gap-0 lg:hidden">
-        <div className="sticky top-11 z-10 flex border-b border-stone-200 bg-white dark:border-white/10 dark:bg-background">
+        <div className="sticky top-16 z-30 flex border-b border-stone-200 bg-white dark:border-white/10 dark:bg-background">
           <button
             type="button"
             onClick={() => setMobileTab('prompt')}
@@ -189,11 +183,11 @@ export function WritingTaskPanel({
           </button>
         </div>
 
-        <div className="pt-4">
+        <div className="pt-2">
           {mobileTab === 'prompt' ? (
             <WritingPromptPaper
               annotations={currentAnnotations}
-              headingVariant="mobile"
+              framed={false}
               isReview={isReview}
               onAnnotationsChange={handleAnnotationsChange}
               part={part}
@@ -213,22 +207,17 @@ export function WritingTaskPanel({
 
       <div
         ref={containerRef}
-        className={cn('relative hidden lg:flex lg:items-start', isDragging && 'select-none')}
+        className={cn(
+          'relative hidden h-full overflow-hidden lg:flex lg:items-stretch',
+          isDragging && 'select-none'
+        )}
       >
         <div
-          className={cn(
-            'pointer-events-none absolute bottom-0 w-0.5 -translate-x-1/2 transition-colors duration-150',
-            isDragging
-              ? 'bg-[linear-gradient(180deg,#ffb347_0%,#ff9f2f_55%,#ffb347_100%)]'
-              : 'bg-stone-200 dark:bg-white/12'
-          )}
-          style={{ left: `${splitPercent}%`, top: '-6rem' }}
-        />
-
-        <div className="sticky top-28 shrink-0" style={{ width: `calc(${splitPercent}% - 10px)` }}>
+          className="min-h-0 shrink-0"
+          style={{ width: `calc(${splitPercent}% - 6px)` }}
+        >
           <WritingPromptPaper
             annotations={currentAnnotations}
-            contentClassName="max-h-[calc(100vh-11rem)] overflow-y-auto"
             isReview={isReview}
             onAnnotationsChange={handleAnnotationsChange}
             part={part}
@@ -241,32 +230,21 @@ export function WritingTaskPanel({
           aria-label="Drag to resize panels"
           aria-orientation="vertical"
           onMouseDown={handleResizerMouseDown}
-          className="group sticky top-[calc(50vh-22px)] flex w-5 shrink-0 cursor-col-resize items-center justify-center"
+          className="group relative flex w-3 shrink-0 cursor-col-resize items-center justify-center"
         >
           <div
             className={cn(
-              'relative z-10 flex flex-col items-center gap-0.75 rounded-full border bg-white px-0.75 py-2 shadow-sm transition-all duration-150 dark:bg-[#141414] dark:shadow-none',
+              'w-[3px] rounded-full group-hover:h-full group-hover:rounded-none',
               isDragging
-                ? 'border-[#ffb347] bg-[linear-gradient(135deg,#ffb347_0%,#ff9f2f_52%,#ffb347_100%)] shadow-[0_0_0_1px_rgba(255,179,71,0.24)] dark:shadow-[0_0_0_1px_rgba(255,179,71,0.24)]'
-                : 'border-stone-200 group-hover:border-stone-300 group-hover:shadow-md dark:border-white/10 dark:group-hover:border-white/18 dark:group-hover:shadow-none'
+                ? 'h-full rounded-none bg-[#0a84ff]'
+                : 'h-10 bg-stone-300 group-hover:bg-stone-400 dark:bg-[#3f3f3f] dark:group-hover:bg-[#5a5a5a]'
             )}
-          >
-            {Array.from({ length: 5 }).map((_, index) => (
-              <div
-                key={index}
-                className={cn(
-                  'h-0.75 w-0.75 rounded-full transition-colors',
-                  isDragging
-                    ? 'bg-white/80'
-                    : 'bg-stone-400 group-hover:bg-stone-600 dark:bg-white/32 dark:group-hover:bg-white/55'
-                )}
-              />
-            ))}
-          </div>
+          />
         </div>
 
         <div className="min-w-0 flex-1">
           <WritingResponsePanel
+            className="h-full"
             isReview={isReview}
             onChange={(text) => onChange(task.id, text)}
             task={task}

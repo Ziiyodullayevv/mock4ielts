@@ -32,8 +32,8 @@ export function WritingTestLayout({
 
   return (
     <PracticeShell
-      rootClassName="bg-background text-foreground"
-      mainClassName="max-w-345"
+      rootClassName="bg-background text-foreground lg:h-svh lg:overflow-hidden"
+      mainClassName="w-full max-w-none pt-0 pb-28 sm:pb-4 lg:box-border lg:h-[calc(100svh-4.5rem)] lg:min-h-0 lg:overflow-hidden lg:px-4 lg:pb-4 lg:pt-2"
       header={
         <WritingTestHeader
           isPrimaryActionDisabled={isPrimaryActionDisabled}

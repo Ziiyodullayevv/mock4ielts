@@ -18,6 +18,7 @@ function toReadingTest(listeningTest: any, originalTest: ReadingTest): ReadingTe
   const parts: ReadingPart[] = (listeningTest.parts ?? []).map(
     (part: ReadingPart, index: number) => ({
       ...part,
+      passageHtml: originalTest.parts[index]?.passageHtml,
       passageText: originalTest.parts[index]?.passageText ?? '',
     })
   );

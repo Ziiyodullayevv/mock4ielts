@@ -57,8 +57,8 @@ export function OverallScoreCard({ viewModel }: OverallScoreCardProps) {
           value={`${viewModel.score} answers`}
         />
         <LegendRow
-          accent="rgba(255,255,255,0.14)"
-          label="Need review"
+          accent="#ff4d4f"
+          label="Wrong"
           value={`${viewModel.remainingCount} answers`}
         />
       </div>

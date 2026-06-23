@@ -13,12 +13,32 @@ import { contestPanelClassName, contestInsetCardClassName } from '../contest-the
 
 type PastContestsPanelProps = {
   entries: PastContestEntry[];
+  isLoading?: boolean;
+  myEntries?: PastContestEntry[];
+  myEntriesLoading?: boolean;
+  onPageChange?: (page: number) => void;
+  page?: number;
   totalPages?: number;
 };
 
-export function PastContestsPanel({ entries, totalPages = 86 }: PastContestsPanelProps) {
+export function PastContestsPanel({
+  entries,
+  isLoading = false,
+  myEntries = [],
+  myEntriesLoading = false,
+  onPageChange,
+  page: controlledPage,
+  totalPages = 1,
+}: PastContestsPanelProps) {
   const [tab, setTab] = useState<PastContestTab>('past');
-  const [page, setPage] = useState(1);
+  const [internalPage, setInternalPage] = useState(1);
+  const page = controlledPage ?? internalPage;
+  const visibleEntries = tab === 'past' ? entries : myEntries;
+  const visibleLoading = tab === 'past' ? isLoading : myEntriesLoading;
+  const handlePageChange = (nextPage: number) => {
+    setInternalPage(nextPage);
+    onPageChange?.(nextPage);
+  };
 
   return (
     <div
@@ -33,9 +53,11 @@ export function PastContestsPanel({ entries, totalPages = 86 }: PastContestsPane
       </div>
 
       <div className="relative pt-6">
-        {tab === 'past' ? (
+        {visibleLoading ? (
+          <PastContestSkeleton />
+        ) : visibleEntries.length > 0 ? (
           <div className="flex flex-col gap-4">
-            {entries.map((entry) => (
+            {visibleEntries.map((entry) => (
               <PastContestRow key={entry.id} entry={entry} />
             ))}
           </div>
@@ -44,7 +66,24 @@ export function PastContestsPanel({ entries, totalPages = 86 }: PastContestsPane
         )}
       </div>
 
-      <ContestPagination page={page} totalPages={totalPages} onChange={setPage} />
+      <ContestPagination page={page} totalPages={totalPages} onChange={handlePageChange} />
+    </div>
+  );
+}
+
+function PastContestSkeleton() {
+  return (
+    <div className="flex flex-col gap-4">
+      {Array.from({ length: 5 }).map((_, index) => (
+        <div key={index} className="flex items-center gap-4">
+          <div className="h-12 w-16 animate-pulse rounded-lg bg-black/8 dark:bg-white/8 lg:h-[72px] lg:w-[110px]" />
+          <div className="min-w-0 flex-1 space-y-2">
+            <div className="h-4 w-36 animate-pulse rounded-full bg-black/8 dark:bg-white/8" />
+            <div className="h-3 w-24 animate-pulse rounded-full bg-black/8 dark:bg-white/8" />
+          </div>
+          <div className="h-8 w-16 animate-pulse rounded-full bg-black/8 dark:bg-white/8" />
+        </div>
+      ))}
     </div>
   );
 }

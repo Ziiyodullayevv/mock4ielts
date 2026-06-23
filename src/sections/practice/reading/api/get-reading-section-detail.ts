@@ -2,7 +2,6 @@ import type {
   MCOption,
   TableCell,
   MCQuestion,
-  NoteSection,
   ReadingTest,
   QuestionGroup,
   CorrectAnswer,
@@ -64,6 +63,9 @@ type OptionEntry = {
 
 const BLANK_MARKER_REGEX = /___(\d+)___/g;
 
+const preprocessBlankMarkers = (html: string): string =>
+  html.replace(/<b>(\d+)<\/b>\s*'?_{2,}'?/gi, '___$1___');
+
 const asArray = (value: unknown) => (Array.isArray(value) ? value : []);
 
 const asRecord = (value: unknown): ApiRecord | null =>
@@ -76,6 +78,22 @@ const pickString = (...values: unknown[]) => {
     }
 
     const normalizedValue = value.replace(/\s+/g, ' ').trim();
+
+    if (normalizedValue.length) {
+      return normalizedValue;
+    }
+  }
+
+  return undefined;
+};
+
+const pickRawString = (...values: unknown[]) => {
+  for (const value of values) {
+    if (typeof value !== 'string') {
+      continue;
+    }
+
+    const normalizedValue = value.trim();
 
     if (normalizedValue.length) {
       return normalizedValue;
@@ -98,6 +116,42 @@ const normalizeText = (value?: string) =>
     ?.replace(/&gt;/gi, '>')
     ?.replace(/\s+/g, ' ')
     ?.trim() ?? '';
+
+const stripHtmlToLines = (html?: string) => {
+  if (!html) {
+    return [] as string[];
+  }
+
+  const text = preprocessBlankMarkers(html)
+    .replace(/<br\s*\/?>/gi, '\n')
+    .replace(/<\/(h\d|p|li|tr|div|ul|ol|table|tbody|thead)>/gi, '\n')
+    .replace(/<\/(td|th)>/gi, ' ')
+    .replace(/<[^>]+>/g, '')
+    .replace(/\n{2,}/g, '\n');
+
+  return text
+    .split('\n')
+    .map((line) => normalizeText(line))
+    .filter((line) => line && line !== '↓');
+};
+
+const htmlToParagraphText = (value?: string) => {
+  const html = pickString(value);
+
+  if (!html) {
+    return '';
+  }
+
+  return preprocessBlankMarkers(html)
+    .replace(/<br\s*\/?>/gi, '\n')
+    .replace(/<\/(p|div|h\d|li)>/gi, '\n\n')
+    .replace(/<\/(strong|b)>/gi, ' ')
+    .replace(/<[^>]+>/g, '')
+    .split(/\n{2,}/)
+    .map((paragraph) => normalizeText(paragraph))
+    .filter(Boolean)
+    .join('\n\n');
+};
 
 const normalizeMediaUrl = (value: unknown) => {
   const rawValue = pickString(value);
@@ -219,20 +273,23 @@ const buildBlankField = (
 
 const splitPromptByBlankMarker = (text: string, markerNumber: number) => {
   const marker = `___${markerNumber}___`;
-  const markerIndex = text.indexOf(marker);
+  const normalizedText = text.includes(marker)
+    ? text
+    : text.replace(/_{2,}/, marker);
+  const markerIndex = normalizedText.indexOf(marker);
 
   if (markerIndex === -1) {
     return {
       label: '',
       suffix: undefined,
-      textBefore: normalizeText(text),
+      textBefore: normalizeText(normalizedText),
     };
   }
 
   return {
     label: '',
-    suffix: normalizeText(text.slice(markerIndex + marker.length)),
-    textBefore: normalizeText(text.slice(0, markerIndex)),
+    suffix: normalizeText(normalizedText.slice(markerIndex + marker.length)),
+    textBefore: normalizeText(normalizedText.slice(0, markerIndex)),
   };
 };
 
@@ -283,6 +340,42 @@ const splitTextWithBlanks = (
   }
 
   return segments;
+};
+
+const getBlankMarkerMatches = (text: string) => [...text.matchAll(BLANK_MARKER_REGEX)];
+
+const parseBlankFieldsFromText = (
+  text: string,
+  backendQuestionId: string,
+  answersByNumber: Map<number, CorrectAnswer>,
+  wordLimit?: number
+) => {
+  const matches = getBlankMarkerMatches(text);
+
+  return matches
+    .map((match, index) => {
+      const marker = match[0];
+      const markerIndex = match.index ?? -1;
+
+      if (markerIndex < 0) {
+        return null;
+      }
+
+      const number = Number.parseInt(match[1], 10);
+      const previousMatch = matches[index - 1];
+      const nextMatch = matches[index + 1];
+      const labelStart = previousMatch
+        ? (previousMatch.index ?? 0) + previousMatch[0].length
+        : 0;
+      const suffixEnd = nextMatch?.index ?? text.length;
+
+      return buildBlankField(backendQuestionId, number, answersByNumber.get(number), {
+        label: normalizeText(text.slice(labelStart, markerIndex)),
+        suffix: normalizeText(text.slice(markerIndex + marker.length, suffixEnd)),
+        wordLimit,
+      });
+    })
+    .filter((field): field is NonNullable<typeof field> => field !== null && Number.isFinite(field.number));
 };
 
 const buildOptionEntries = (value: unknown): OptionEntry[] =>
@@ -385,116 +478,33 @@ const parseNotesHtml = (
   answersByNumber: Map<number, CorrectAnswer>,
   wordLimit?: number
 ) => {
-  const fallback = {
-    noteTitle: undefined as string | undefined,
-    sections: [] as NoteSection[],
-  };
+  const headingMatch = preprocessBlankMarkers(html).match(/<h[1-6][^>]*>(.*?)<\/h[1-6]>/i);
+  const noteTitle = headingMatch ? normalizeText(headingMatch[1].replace(/<[^>]+>/g, '')) : undefined;
+  const lines = stripHtmlToLines(html);
+  const contentLines = lines.filter((line, index) => !(index === 0 && line === noteTitle));
+  const bullets = contentLines.flatMap((line) => {
+    const fields = parseBlankFieldsFromText(line, backendQuestionId, answersByNumber, wordLimit);
 
-  if (typeof DOMParser === 'undefined') {
-    return fallback;
-  }
-
-  const parser = new DOMParser();
-  const document = parser.parseFromString(html, 'text/html');
-  const bodyChildren = Array.from(document.body.children);
-  const sections: NoteSection[] = [];
-  let noteTitle: string | undefined;
-  let currentSection: NoteSection = { heading: undefined, bullets: [] };
-
-  const flushSection = () => {
-    if (currentSection.heading || currentSection.bullets.length) {
-      sections.push(currentSection);
+    if (!fields.length) {
+      return { text: line };
     }
 
-    currentSection = { heading: undefined, bullets: [] };
-  };
-
-  const addBullet = (text: string) => {
-    const normalizedLine = normalizeText(text);
-
-    if (!normalizedLine) {
-      return;
-    }
-
-    const marker = normalizedLine.match(BLANK_MARKER_REGEX);
-
-    if (!marker?.[0]) {
-      currentSection.bullets.push({ text: normalizedLine });
-      return;
-    }
-
-    const markerNumber = Number.parseInt(marker[0].replaceAll('_', ''), 10);
-    const markerIndex = normalizedLine.indexOf(marker[0]);
-
-    if (!Number.isFinite(markerNumber) || markerIndex === -1) {
-      currentSection.bullets.push({ text: normalizedLine });
-      return;
-    }
-
-    currentSection.bullets.push({
-      text: normalizeText(normalizedLine.slice(0, markerIndex)),
-      field: buildBlankField(backendQuestionId, markerNumber, answersByNumber.get(markerNumber), {
-        suffix: normalizeText(normalizedLine.slice(markerIndex + marker[0].length)),
-        wordLimit,
-      }),
-    });
-  };
-
-  bodyChildren.forEach((child) => {
-    const tagName = child.tagName.toLowerCase();
-    const textContent = normalizeText(child.textContent ?? '');
-
-    if (!textContent) {
-      return;
-    }
-
-    if (/^h[1-6]$/.test(tagName)) {
-      if (!noteTitle) {
-        noteTitle = textContent;
-        return;
-      }
-
-      if (currentSection.heading || currentSection.bullets.length) {
-        flushSection();
-      }
-
-      currentSection.heading = textContent;
-      return;
-    }
-
-    if (tagName === 'ul' || tagName === 'ol') {
-      Array.from(child.children).forEach((item) => {
-        if (item.tagName.toLowerCase() === 'li') {
-          addBullet(item.textContent ?? '');
-        }
-      });
-      return;
-    }
-
-    if (tagName === 'li') {
-      addBullet(child.textContent ?? '');
-      return;
-    }
-
-    if (!currentSection.heading && !currentSection.bullets.length) {
-      currentSection.heading = textContent;
-      return;
-    }
-
-    addBullet(textContent);
+    return fields.map((field) => ({
+      text: field.label,
+      field,
+    }));
   });
-
-  flushSection();
 
   return {
     noteTitle,
-    sections,
+    sections: bullets.length ? [{ bullets }] : [],
   };
 };
 
 const buildMatchingGroup = (question: ApiQuestion, backendQuestionId: string): QuestionGroup | null => {
   const metadata = asRecord(question.metadata) ?? {};
   const items = asArray(metadata.items);
+  const inputMode = pickString(metadata.input_mode, metadata.inputMode);
   const options = buildOptionEntries(question.options).map(
     (option): MatchingOption => ({
       label: option.text === option.displayLabel ? option.displayLabel : `${option.displayLabel} ${option.text}`,
@@ -529,6 +539,7 @@ const buildMatchingGroup = (question: ApiQuestion, backendQuestionId: string): Q
           };
         })
         .filter((pair): pair is NonNullable<typeof pair> => pair !== null),
+      showOptionsPanel: inputMode !== 'select',
     },
     instructions: buildInstruction(question.text, pickString(metadata.instruction)),
     type: 'matching',
@@ -550,7 +561,9 @@ const buildSentenceCompletionGroup = (question: ApiQuestion, backendQuestionId: 
     questions: sentences
       .map((sentence) => {
         const record = asRecord(sentence) ?? {};
-        const number = pickNumber(record.order);
+        const number =
+          pickNumber(record.order) ??
+          (typeof record.id === 'string' ? Number.parseInt(record.id, 10) : pickNumber(record.id));
         const text = pickString(record.text);
 
         if (typeof number !== 'number' || !text) {
@@ -574,7 +587,20 @@ const buildShortAnswerGroup = (question: ApiQuestion, backendQuestionId: string)
   const metadata = asRecord(question.metadata) ?? {};
   const wordLimit = getWordLimit(metadata);
   const answersByNumber = parseNumberedAnswers(question.correct_answer ?? question.correctAnswer);
-  const subQuestions = asArray(metadata.sub_questions);
+  const subQuestions = asArray(metadata.sub_questions).length
+    ? asArray(metadata.sub_questions)
+    : asArray(metadata.questions_list ?? metadata.questionsList).map((item) => {
+        const record = asRecord(item) ?? {};
+        const number =
+          pickNumber(record.order) ??
+          (typeof record.id === 'string' ? Number.parseInt(record.id, 10) : pickNumber(record.id));
+        const text = pickString(record.text);
+
+        return {
+          slots: typeof number === 'number' && Number.isFinite(number) ? [number] : [],
+          text,
+        };
+      });
 
   if (!subQuestions.length) {
     return null;
@@ -610,7 +636,10 @@ const buildDiagramCompletionGroup = (question: ApiQuestion, backendQuestionId: s
   const metadata = asRecord(question.metadata) ?? {};
   const wordLimit = getWordLimit(metadata);
   const answersByNumber = parseNumberedAnswers(question.correct_answer ?? question.correctAnswer);
-  const blanks = asArray(metadata.blanks)
+  const blanksSource = asArray(metadata.blanks).length
+    ? asArray(metadata.blanks)
+    : asArray(metadata.slot_ids ?? metadata.slotIds);
+  const blanks = blanksSource
     .map((item) =>
       typeof item === 'number'
         ? item
@@ -632,7 +661,9 @@ const buildDiagramCompletionGroup = (question: ApiQuestion, backendQuestionId: s
           wordLimit,
         })
       ),
-      title: question.text,
+      title:
+        stripHtmlToLines(pickString(metadata.instruction_html, metadata.instructionHtml)).join(' ') ||
+        question.text,
     },
     instructions: buildInstruction(question.text, pickString(metadata.instruction)),
     type: 'diagram-completion',
@@ -669,7 +700,7 @@ const buildTableCell = (
   answersByNumber: Map<number, CorrectAnswer>,
   wordLimit?: number
 ): TableCell => {
-  const text = pickString(value) ?? '';
+  const text = preprocessBlankMarkers(pickString(value) ?? '');
   const matches = [...text.matchAll(BLANK_MARKER_REGEX)];
 
   if (!matches.length) {
@@ -796,7 +827,11 @@ const buildMapLabellingGroup = (question: ApiQuestion, backendQuestionId: string
 
 const buildSummaryCompletionGroup = (question: ApiQuestion, backendQuestionId: string): QuestionGroup | null => {
   const metadata = asRecord(question.metadata) ?? {};
-  const summaryText = pickString(metadata.summary_text, metadata.summaryText);
+  const summaryText = pickString(
+    metadata.summary_text,
+    metadata.summaryText,
+    stripHtmlToLines(pickString(metadata.summary_html, metadata.summaryHtml)).join(' ')
+  );
   const optionEntries = buildOptionEntries(question.options);
   const answersByNumber = parseNumberedAnswers(question.correct_answer ?? question.correctAnswer);
 
@@ -855,6 +890,10 @@ const buildSummaryCompletionGroup = (question: ApiQuestion, backendQuestionId: s
     paragraphs: [{ segments }],
     summaryTitle: question.text,
     type: 'summary-completion',
+    wordBankOptions: optionEntries.map((option) => ({
+      text: option.text,
+      value: option.value,
+    })),
     wordBank: optionEntries.map((option) => option.text),
   };
 };
@@ -874,10 +913,13 @@ const buildDirectMultipleChoiceGroup = (
   const answerValue = question.correct_answer ?? question.correctAnswer;
   const selectCount = pickNumber(metadata.select_count, metadata.selectCount);
   const multiSelect = Boolean(selectCount && selectCount > 1);
+  const order = pickNumber(question.order) ?? 1;
+  const numbers = multiSelect
+    ? Array.from({ length: selectCount ?? 1 }, (_, index) => order + index)
+    : undefined;
   const resolvedAnswer = Array.isArray(answerValue)
     ? answerValue.map((item) => resolveChoiceValue(item, optionEntries)).filter(Boolean)
     : resolveChoiceValue(answerValue, optionEntries);
-  const order = pickNumber(question.order) ?? 1;
   const scoreWeight = pickNumber(question.points);
 
   return {
@@ -891,6 +933,7 @@ const buildDirectMultipleChoiceGroup = (
         id: buildLocalId(backendQuestionId, order),
         multiSelect: Boolean(multiSelect),
         number: order,
+        numbers,
         options: optionEntries.map((option): MCOption => ({
           text: option.text,
           value: option.value,
@@ -986,7 +1029,9 @@ export async function getReadingSectionDetail(sectionId: string): Promise<Readin
         if (
           questionType === 'matching_information' ||
           questionType === 'matching_headings' ||
-          questionType === 'matching_sentence_endings'
+          questionType === 'matching_sentence_endings' ||
+          questionType === 'matching_features' ||
+          questionType === 'matching'
         ) {
           group = buildMatchingGroup(question, backendQuestionId);
         } else if (questionType === 'diagram_completion') {
@@ -1001,7 +1046,10 @@ export async function getReadingSectionDetail(sectionId: string): Promise<Readin
           group = buildTableCompletionGroup(question, backendQuestionId);
         } else if (questionType === 'map_labeling' || questionType === 'map_labelling') {
           group = buildMapLabellingGroup(question, backendQuestionId);
-        } else if (questionType === 'summary_completion_list') {
+        } else if (
+          questionType === 'summary_completion_list' ||
+          questionType === 'summary_completion_free'
+        ) {
           group = buildSummaryCompletionGroup(question, backendQuestionId);
         } else if (questionType === 'multiple_choice' || questionType === 'single_choice') {
           group = buildDirectMultipleChoiceGroup(question, backendQuestionId, questionType);
@@ -1014,13 +1062,16 @@ export async function getReadingSectionDetail(sectionId: string): Promise<Readin
 
       flushGroupedStatementChoice();
 
+      const passageHtml = pickRawString(record.passage_text, record.passageText);
+
       return {
         audioUrl: undefined,
         groups,
         number: index + 1,
-        passageText: normalizeText(
-          pickString(record.passage_text, record.passageText) ?? '[Passage content unavailable]'
-        ),
+        passageHtml,
+        passageText:
+          htmlToParagraphText(passageHtml) ||
+          '[Passage content unavailable]',
         scenario:
           pickString(record.instructions) ??
           `Read the passage and answer the questions in Section ${index + 1}.`,

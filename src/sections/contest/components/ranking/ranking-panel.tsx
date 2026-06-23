@@ -12,12 +12,14 @@ import { RankingPodium } from './ranking-podium';
 import { contestButtonClassName } from '../contest-theme';
 
 type RankingPanelProps = {
+  isLoading?: boolean;
   podium: RankingUser[];
   list: RankingUser[];
   showMoreHref?: string;
 };
 
 export function RankingPanel({
+  isLoading = false,
   podium,
   list,
   showMoreHref = '/contest/globalranking/?tab=global',
@@ -32,7 +34,15 @@ export function RankingPanel({
 
       <RankingPodium users={podium} />
 
-      <RankingList users={list} />
+      {isLoading ? (
+        <RankingSkeleton />
+      ) : podium.length === 0 && list.length === 0 ? (
+        <div className="rounded-2xl bg-black/5 px-4 py-8 text-center text-sm text-black/55 dark:bg-white/7 dark:text-white/55">
+          No leaderboard data yet.
+        </div>
+      ) : (
+        <RankingList users={list} />
+      )}
 
       <div className="mt-1 flex w-full items-center justify-center">
         <Link
@@ -42,6 +52,19 @@ export function RankingPanel({
           <span>Show More</span>
         </Link>
       </div>
+    </div>
+  );
+}
+
+function RankingSkeleton() {
+  return (
+    <div className="flex w-full flex-col gap-1.5">
+      {Array.from({ length: 5 }).map((_, index) => (
+        <div
+          key={index}
+          className="h-16 w-full animate-pulse rounded-2xl bg-black/8 dark:bg-white/8"
+        />
+      ))}
     </div>
   );
 }

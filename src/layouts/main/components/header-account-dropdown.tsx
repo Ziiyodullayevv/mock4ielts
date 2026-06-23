@@ -1,9 +1,12 @@
 'use client';
 
+import type { MouseEvent } from 'react';
+
 import Link from 'next/link';
 import { cn } from '@/src/lib/utils';
 import { useTheme } from 'next-themes';
 import { paths } from '@/src/routes/paths';
+import { useRouter } from '@/src/routes/hooks';
 import { Avatar, AvatarImage, AvatarFallback } from '@/src/components/ui/avatar';
 import {
   PRACTICE_HEADER_RING_CLASS,
@@ -43,6 +46,7 @@ type HeaderAccountDropdownProps = {
   isGlass?: boolean;
   isLoading?: boolean;
   isLoggingOut?: boolean;
+  onNavigationRequest?: (nextAction: () => void) => void;
   onLogout: () => Promise<void> | void;
 };
 
@@ -70,14 +74,37 @@ export function HeaderAccountDropdown({
   isGlass = false,
   isLoading = false,
   isLoggingOut = false,
+  onNavigationRequest,
   onLogout,
 }: HeaderAccountDropdownProps) {
+  const router = useRouter();
   const { setTheme, theme } = useTheme();
   const fallback = getInitials(fullName, email);
   const activeTheme = getSafeTheme(theme);
   const themeLabel =
     activeTheme === 'system' ? 'System Default' : activeTheme === 'dark' ? 'Dark' : 'Light';
   const ThemeIcon = activeTheme === 'system' ? SunMoon : activeTheme === 'dark' ? Moon : Sun;
+  const handleGuardedRoute = (href: string) => (event: MouseEvent<HTMLAnchorElement>) => {
+    if (!onNavigationRequest) {
+      return;
+    }
+
+    event.preventDefault();
+    onNavigationRequest(() => {
+      router.push(href);
+    });
+  };
+
+  const handleGuardedLogout = () => {
+    if (onNavigationRequest) {
+      onNavigationRequest(() => {
+        void onLogout();
+      });
+      return;
+    }
+
+    void onLogout();
+  };
 
   if (isLoading) {
     return (
@@ -141,7 +168,7 @@ export function HeaderAccountDropdown({
           asChild
           className="h-11 rounded-xl px-3 text-sm font-medium text-black/95 focus:bg-[#ededed] focus:text-black dark:text-white/95 dark:focus:bg-white/8 dark:focus:text-white"
         >
-          <Link href={paths.profile.root}>
+          <Link href={paths.profile.root} onClick={handleGuardedRoute(paths.profile.root)}>
             <UserRound className="size-5 text-black/90 dark:text-white/90" />
             My Profile
           </Link>
@@ -151,7 +178,7 @@ export function HeaderAccountDropdown({
           asChild
           className="h-11 rounded-xl px-3 text-sm font-medium text-black/95 focus:bg-[#ededed] focus:text-black dark:text-white/95 dark:focus:bg-white/8 dark:focus:text-white"
         >
-          <Link href={paths.favorites.root}>
+          <Link href={paths.favorites.root} onClick={handleGuardedRoute(paths.favorites.root)}>
             <Star className="size-5 text-black/90 dark:text-white/90" />
             Favorites
           </Link>
@@ -161,7 +188,7 @@ export function HeaderAccountDropdown({
           asChild
           className="h-11 rounded-xl px-3 text-sm font-medium text-black/95 focus:bg-[#ededed] focus:text-black dark:text-white/95 dark:focus:bg-white/8 dark:focus:text-white"
         >
-          <Link href={paths.statistics.root}>
+          <Link href={paths.statistics.root} onClick={handleGuardedRoute(paths.statistics.root)}>
             <ChartColumn className="size-5 text-black/90 dark:text-white/90" />
             My Statistics
           </Link>
@@ -171,7 +198,7 @@ export function HeaderAccountDropdown({
           asChild
           className="h-11 rounded-xl px-3 text-sm font-medium text-black/95 focus:bg-[#ededed] focus:text-black dark:text-white/95 dark:focus:bg-white/8 dark:focus:text-white"
         >
-          <Link href={paths.subscription.root}>
+          <Link href={paths.subscription.root} onClick={handleGuardedRoute(paths.subscription.root)}>
             <BadgePlus className="size-5 text-black/90 dark:text-white/90" />
             My Subscription
           </Link>
@@ -230,7 +257,7 @@ export function HeaderAccountDropdown({
           disabled={isLoggingOut}
           onSelect={(event) => {
             event.preventDefault();
-            void onLogout();
+            handleGuardedLogout();
           }}
         >
           <LogOut className="size-5 text-black/90 dark:text-white/90" />

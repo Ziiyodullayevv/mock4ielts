@@ -56,7 +56,7 @@ export function MapLabelling({
   };
 
   const legendPanel = hasLegendOptions ? (
-    <PaperSurface className="p-4 sm:p-5">
+    <PaperSurface className="p-3 sm:p-4">
       {renderQuestionText({
         as: 'p',
         blockId: getQuestionAnnotationBlockId(annotationBlockIdPrefix, 'legend-title'),
@@ -310,7 +310,7 @@ export function MapLabelling({
 
       <div className="min-w-0 space-y-5">
         {hasWordBank && !showAnswer && !hasLegendOptions && (
-          <PaperSurface className="p-4 sm:p-5">
+          <PaperSurface className="p-3 sm:p-4">
           {renderQuestionText({
             as: 'p',
             blockId: getQuestionAnnotationBlockId(annotationBlockIdPrefix, 'word-bank-inline-title'),

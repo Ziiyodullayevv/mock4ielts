@@ -10,6 +10,7 @@ import type {
 export type PartQuestionMeta = {
   id: string;
   number: number;
+  displayLabel?: string; // e.g. "17/18" for multi-select blocks
 };
 
 export function getPrimaryAnswer(answer: CorrectAnswer): string {
@@ -17,19 +18,25 @@ export function getPrimaryAnswer(answer: CorrectAnswer): string {
 }
 
 export function isAnswerCorrect(userAnswer: string | undefined, correctAnswer: CorrectAnswer, multiSelect?: boolean) {
+  const normalizedUserAnswer = userAnswer?.trim();
+
+  if (!normalizedUserAnswer) {
+    return false;
+  }
+
   if (multiSelect) {
     const expectedAnswers = Array.isArray(correctAnswer)
       ? correctAnswer.map((answer) => normalizeMultiSelectAnswer(answer))
       : [normalizeMultiSelectAnswer(correctAnswer)];
 
-    return expectedAnswers.includes(normalizeMultiSelectAnswer(userAnswer ?? ''));
+    return expectedAnswers.includes(normalizeMultiSelectAnswer(normalizedUserAnswer));
   }
 
   const expectedAnswers = Array.isArray(correctAnswer)
     ? correctAnswer.map((answer) => normalizeAnswer(answer))
     : [normalizeAnswer(correctAnswer)];
 
-  return expectedAnswers.includes(normalizeAnswer(userAnswer ?? ''));
+  return expectedAnswers.includes(normalizeAnswer(normalizedUserAnswer));
 }
 
 /** Collect all blank fields from a test with their correct answers */
@@ -103,11 +110,28 @@ export function computeResult(test: ListeningTest, answers: Answers): TestResult
     for (const group of part.groups) {
       if (group.type === 'multiple-choice') {
         for (const question of group.questions) {
-          const scoreWeight = question.scoreWeight ?? 1;
+          if (question.multiSelect && question.numbers && question.numbers.length > 1) {
+            const correctValues =
+              typeof question.answer === 'string'
+                ? question.answer.split(',').map((s) => s.trim()).filter(Boolean)
+                : question.answer;
+            const userValues = (answers[question.id] ?? '')
+              .split(',')
+              .map((s) => s.trim())
+              .filter(Boolean);
 
-          pTotal += scoreWeight;
-          if (isAnswerCorrect(answers[question.id], question.answer, question.multiSelect)) {
-            pScore += scoreWeight;
+            pTotal += correctValues.length;
+            for (const correct of correctValues) {
+              if (userValues.map((v) => v.toLowerCase()).includes(correct.toLowerCase())) {
+                pScore++;
+              }
+            }
+          } else {
+            const scoreWeight = question.scoreWeight ?? 1;
+            pTotal += scoreWeight;
+            if (isAnswerCorrect(answers[question.id], question.answer, question.multiSelect)) {
+              pScore += scoreWeight;
+            }
           }
         }
       } else if (group.type === 'matching') {
@@ -192,7 +216,10 @@ export function computeResult(test: ListeningTest, answers: Answers): TestResult
 
 /** Get all question IDs from a group */
 export function getGroupIds(group: QuestionGroup): string[] {
-  if (group.type === 'multiple-choice') return group.questions.map((q) => q.id);
+  if (group.type === 'multiple-choice')
+    return group.questions.flatMap((q) =>
+      q.numbers ? q.numbers.map(() => q.id) : [q.id]
+    );
   if (group.type === 'matching') return group.data.pairs.map((p) => p.id);
   if (group.type === 'form-completion')
     return group.sections.flatMap((s) => s.fields.map((f) => f.id));
@@ -227,7 +254,14 @@ export function getGroupIds(group: QuestionGroup): string[] {
 
 export function getGroupQuestions(group: QuestionGroup): PartQuestionMeta[] {
   if (group.type === 'multiple-choice') {
-    return group.questions.map((question) => ({ id: question.id, number: question.number }));
+    return group.questions.map((question) => ({
+      id: question.id,
+      number: question.number,
+      displayLabel:
+        question.numbers && question.numbers.length > 1
+          ? `${question.numbers[0]}/${question.numbers[question.numbers.length - 1]}`
+          : undefined,
+    }));
   }
 
   if (group.type === 'matching') {

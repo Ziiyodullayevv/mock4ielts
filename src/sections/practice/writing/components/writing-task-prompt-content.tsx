@@ -1,10 +1,11 @@
 'use client';
 
-import type { MouseEvent as ReactMouseEvent } from 'react';
+import type { ReactNode, MouseEvent as ReactMouseEvent } from 'react';
 import type { WritingPart, WritingTextSize } from '../types';
-import type { TextAnnotation } from './writing-task-panel.shared';
+import type { TextAnnotation, AnnotationColor } from './writing-task-panel.shared';
 import type { ToolbarState, NoteSheetState } from './writing-task-panel.annotation-utils';
 
+import { cn } from '@/src/lib/utils';
 import { createPortal } from 'react-dom';
 import { toast } from '@/src/components/ui/sonner';
 import { useRef, useMemo, useState, useEffect, useCallback } from 'react';
@@ -41,6 +42,180 @@ type PromptContentProps = {
   textSize: WritingTextSize;
 };
 
+const ALLOWED_PROMPT_TAGS = new Set(['B', 'BR', 'DIV', 'EM', 'I', 'LI', 'OL', 'P', 'STRONG', 'UL']);
+
+const ANNOTATION_STYLES: Record<AnnotationColor, string> = {
+  blue: 'bg-[#1ea7fd]/30 decoration-[#1ea7fd]',
+  green: 'bg-[#18dd78]/28 decoration-[#18dd78]',
+  red: 'bg-[#ff5d5d]/32 decoration-[#ff5d5d]',
+  yellow: 'bg-[#ffc62b]/36 decoration-[#ffc62b]',
+};
+
+function sanitizePromptHtml(html: string) {
+  return html
+    .replace(/<script[\s\S]*?<\/script>/gi, '')
+    .replace(/<style[\s\S]*?<\/style>/gi, '')
+    .replace(/<!--[\s\S]*?-->/g, '')
+    .replace(/<\/?([a-z][a-z0-9]*)\b[^>]*>/gi, (match, tagName: string) => {
+      const normalizedTag = tagName.toUpperCase();
+
+      if (!ALLOWED_PROMPT_TAGS.has(normalizedTag)) {
+        return '';
+      }
+
+      const slash = match.startsWith('</') ? '/' : '';
+      const tag = normalizedTag.toLowerCase();
+
+      return tag === 'br' ? '<br>' : `<${slash}${tag}>`;
+    });
+}
+
+function getHtmlTextContent(html: string) {
+  if (typeof document === 'undefined') {
+    return html.replace(/<[^>]*>/g, '');
+  }
+
+  const container = document.createElement('div');
+  container.innerHTML = html;
+  return container.textContent ?? '';
+}
+
+function renderTextWithAnnotations({
+  annotations,
+  focusedAnnotationId,
+  text,
+  textStart,
+}: {
+  annotations: TextAnnotation[];
+  focusedAnnotationId?: string | null;
+  text: string;
+  textStart: number;
+}) {
+  const textEnd = textStart + text.length;
+  const relevantAnnotations = annotations
+    .filter((annotation) => annotation.start < textEnd && annotation.end > textStart)
+    .sort((left, right) => left.start - right.start);
+
+  if (relevantAnnotations.length === 0) {
+    return text;
+  }
+
+  const nodes: ReactNode[] = [];
+  let cursor = 0;
+
+  relevantAnnotations.forEach((annotation) => {
+    const localStart = Math.max(0, annotation.start - textStart);
+    const localEnd = Math.min(text.length, annotation.end - textStart);
+
+    if (localStart > cursor) {
+      nodes.push(text.slice(cursor, localStart));
+    }
+
+    const highlightedText = text.slice(localStart, localEnd);
+    if (highlightedText) {
+      nodes.push(
+        <span
+          key={`${annotation.id}-${textStart}-${localStart}-${localEnd}`}
+          data-writing-annotation-id={annotation.id}
+          className={cn(
+            'rounded-[0.45rem] px-0.5 py-0.5 text-inherit transition-[color,box-shadow,background-color] duration-200',
+            ANNOTATION_STYLES[annotation.color],
+            annotation.note && 'underline decoration-dotted decoration-2 underline-offset-[0.28em]',
+            focusedAnnotationId === annotation.id &&
+              'shadow-[0_0_0_2px_rgba(255,179,71,0.6)] dark:shadow-[0_0_0_2px_rgba(255,200,90,0.45)]'
+          )}
+          title={annotation.note ? 'This highlight has a note' : undefined}
+        >
+          {highlightedText}
+        </span>
+      );
+    }
+
+    cursor = localEnd;
+  });
+
+  if (cursor < text.length) {
+    nodes.push(text.slice(cursor));
+  }
+
+  return nodes;
+}
+
+function AnnotatedHtmlContent({
+  annotations,
+  focusedAnnotationId,
+  html,
+}: {
+  annotations: TextAnnotation[];
+  focusedAnnotationId?: string | null;
+  html: string;
+}) {
+  const renderedNodes = useMemo(() => {
+    if (typeof document === 'undefined') return null;
+
+    const container = document.createElement('div');
+    container.innerHTML = html;
+    let textOffset = 0;
+
+    const renderNode = (node: Node, key: string): ReactNode => {
+      if (node.nodeType === Node.TEXT_NODE) {
+        const text = node.textContent ?? '';
+        const currentOffset = textOffset;
+        textOffset += text.length;
+
+        return (
+          <span key={key}>
+            {renderTextWithAnnotations({
+              annotations,
+              focusedAnnotationId,
+              text,
+              textStart: currentOffset,
+            })}
+          </span>
+        );
+      }
+
+      if (!(node instanceof HTMLElement)) {
+        return null;
+      }
+
+      const tagName = node.tagName.toLowerCase();
+      const children = Array.from(node.childNodes).map((childNode, index) =>
+        renderNode(childNode, `${key}-${index}`)
+      );
+
+      switch (tagName) {
+        case 'b':
+          return <b key={key}>{children}</b>;
+        case 'br':
+          return <br key={key} />;
+        case 'div':
+          return <div key={key}>{children}</div>;
+        case 'em':
+          return <em key={key}>{children}</em>;
+        case 'i':
+          return <i key={key}>{children}</i>;
+        case 'li':
+          return <li key={key}>{children}</li>;
+        case 'ol':
+          return <ol key={key}>{children}</ol>;
+        case 'p':
+          return <p key={key}>{children}</p>;
+        case 'strong':
+          return <strong key={key}>{children}</strong>;
+        case 'ul':
+          return <ul key={key}>{children}</ul>;
+        default:
+          return children;
+      }
+    };
+
+    return Array.from(container.childNodes).map((node, index) => renderNode(node, `${index}`));
+  }, [annotations, focusedAnnotationId, html]);
+
+  return <>{renderedNodes}</>;
+}
+
 export function PromptContent({
   annotations,
   isReview,
@@ -58,6 +233,14 @@ export function PromptContent({
   const [focusedAnnotationId, setFocusedAnnotationId] = useState<string | null>(null);
 
   const portalTarget = typeof document !== 'undefined' ? document.body : null;
+  const sanitizedPromptHtml = useMemo(
+    () => (task.promptHtml ? sanitizePromptHtml(task.promptHtml) : ''),
+    [task.promptHtml]
+  );
+  const sanitizedPromptText = useMemo(
+    () => (sanitizedPromptHtml ? getHtmlTextContent(sanitizedPromptHtml) : ''),
+    [sanitizedPromptHtml]
+  );
 
   const isPromptContentVisible = useCallback(() => {
     const promptRoot = promptRootRef.current;
@@ -73,9 +256,9 @@ export function PromptContent({
     () => ({
       instructions: task.instructions,
       'model-answer': task.modelAnswer ?? '',
-      prompt: task.prompt,
+      prompt: sanitizedPromptText || task.prompt,
     }),
-    [task.instructions, task.modelAnswer, task.prompt]
+    [sanitizedPromptText, task.instructions, task.modelAnswer, task.prompt]
   );
 
   const savedNotes = useMemo(
@@ -448,21 +631,36 @@ export function PromptContent({
       </div>
 
       {task.imageUrl ? (
-        <div className="overflow-hidden rounded-xl border border-stone-200 bg-stone-50 dark:border-white/10 dark:bg-white/4">
+        <div className="max-w-[500px] overflow-hidden">
           <img src={task.imageUrl} alt="Task graphic" className="h-auto w-full object-contain" />
         </div>
       ) : null}
 
-      <div className="rounded-xl border border-stone-200 bg-white p-4 dark:border-white/10 dark:bg-[#111111]">
-        <AnnotatedTextBlock
-          blockId="prompt"
-          text={task.prompt}
-          focusedAnnotationId={focusedAnnotationId}
-          onMouseUp={handleTextMouseUp}
-          annotations={annotations.filter((annotation) => annotation.blockId === 'prompt')}
-          className="text-stone-800 dark:text-white"
-          style={getWritingTextStyle(textSize, 'prompt')}
-        />
+      <div>
+        {sanitizedPromptHtml ? (
+          <div
+            data-writing-block-id="prompt"
+            onMouseUp={handleTextMouseUp}
+            style={getWritingTextStyle(textSize, 'prompt')}
+            className="select-text space-y-4 break-words text-stone-800 dark:text-white [&_em]:italic [&_i]:italic [&_li]:ml-5 [&_li]:list-disc [&_ol>li]:list-decimal [&_p]:m-0 [&_strong]:font-semibold [&_ul]:space-y-2"
+          >
+            <AnnotatedHtmlContent
+              annotations={annotations.filter((annotation) => annotation.blockId === 'prompt')}
+              focusedAnnotationId={focusedAnnotationId}
+              html={sanitizedPromptHtml}
+            />
+          </div>
+        ) : (
+          <AnnotatedTextBlock
+            blockId="prompt"
+            text={task.prompt}
+            focusedAnnotationId={focusedAnnotationId}
+            onMouseUp={handleTextMouseUp}
+            annotations={annotations.filter((annotation) => annotation.blockId === 'prompt')}
+            className="text-stone-800 dark:text-white"
+            style={getWritingTextStyle(textSize, 'prompt')}
+          />
+        )}
       </div>
 
       {isReview && task.modelAnswer ? (

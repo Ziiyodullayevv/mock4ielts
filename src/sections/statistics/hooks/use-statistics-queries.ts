@@ -6,8 +6,12 @@ import {
   getMyStatistics,
   getMyExamStatistics,
   getMySectionStatistics,
+  getMyStatisticsOverview,
+  getMySectionTypeStatistics,
   getGlobalSectionStatistics,
 } from '../api/statistics-api';
+
+type SectionType = Parameters<typeof getMySectionTypeStatistics>[0];
 
 export function useMyStatisticsQuery(enabled: boolean) {
   return useQuery({
@@ -18,11 +22,29 @@ export function useMyStatisticsQuery(enabled: boolean) {
   });
 }
 
+export function useMyStatisticsOverviewQuery(enabled: boolean) {
+  return useQuery({
+    enabled,
+    queryFn: getMyStatisticsOverview,
+    queryKey: ['statistics', 'me', 'overview'],
+    staleTime: 1000 * 60 * 5,
+  });
+}
+
 export function useMySectionStatisticsQuery(enabled: boolean) {
   return useQuery({
     enabled,
     queryFn: getMySectionStatistics,
     queryKey: ['statistics', 'me', 'sections'],
+    staleTime: 1000 * 60 * 5,
+  });
+}
+
+export function useMySectionTypeStatisticsQuery(sectionType: SectionType, enabled: boolean) {
+  return useQuery({
+    enabled,
+    queryFn: () => getMySectionTypeStatistics(sectionType),
+    queryKey: ['statistics', 'me', 'sections', sectionType],
     staleTime: 1000 * 60 * 5,
   });
 }

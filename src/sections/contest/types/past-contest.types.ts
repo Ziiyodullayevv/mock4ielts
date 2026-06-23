@@ -7,4 +7,6 @@ export type PastContestEntry = {
   bannerUrl: string;
   startsAt: string;
   score: string;
+  totalParticipants?: number;
+  userRank?: number | null;
 };

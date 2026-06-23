@@ -27,7 +27,7 @@ type AnnotatedTextBlockProps = {
   text: string;
 };
 
-const ANNOTATION_STYLES: Record<AnnotationColor, string> = {
+export const ANNOTATION_STYLES: Record<AnnotationColor, string> = {
   blue: 'bg-[#1ea7fd]/30 decoration-[#1ea7fd]',
   green: 'bg-[#18dd78]/28 decoration-[#18dd78]',
   red: 'bg-[#ff5d5d]/32 decoration-[#ff5d5d]',

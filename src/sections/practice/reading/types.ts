@@ -20,6 +20,7 @@ export type {
 } from '../listening/types';
 
 export type ReadingPart = Part & {
+  passageHtml?: string;
   passageText: string;
 };
 

@@ -29,6 +29,8 @@
 .tilted-card-inner {
   position: relative;
   transform-style: preserve-3d;
+  border-radius: 32px;
+  overflow: hidden;
 }
 
 .tilted-card-img {
@@ -52,6 +54,8 @@
   left: 0;
   width: 100%;
   height: 100%;
+  border-radius: 32px;
+  overflow: hidden;
   z-index: 2;
   will-change: transform;
   transform: translateZ(30px);

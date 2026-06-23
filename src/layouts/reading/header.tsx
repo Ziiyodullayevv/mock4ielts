@@ -182,8 +182,8 @@ export function ReadingTestHeader({
         </div>
       </div>
 
-      <div className="relative z-10 hidden min-h-[72px] w-full grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-3 px-4 py-2.5 sm:grid sm:px-6">
-        <div className="relative -translate-y-1 flex h-full items-center justify-self-start gap-2">
+      <div className="relative z-10 hidden min-h-14 w-full grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-3 px-4 pb-1 pt-3 sm:grid">
+        <div className="relative flex h-full items-center justify-self-start gap-2">
           {isExitAction ? (
             <div
               className={cn(
@@ -298,7 +298,7 @@ export function ReadingTestHeader({
           <TimerDisplay isReview={isReview} totalSeconds={timeLeftSeconds} />
         </div>
 
-        <div className="relative -translate-y-1 flex h-full items-center justify-self-end">
+        <div className="relative flex h-full items-center justify-self-end">
           <div
             className={cn(
               'flex items-center rounded-full p-1 transition-shadow',

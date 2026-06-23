@@ -20,6 +20,7 @@ import {
   useMyStatisticsQuery,
   useMyExamStatisticsQuery,
   useMySectionStatisticsQuery,
+  useMyStatisticsOverviewQuery,
 } from '@/src/sections/statistics/hooks/use-statistics-queries';
 
 const SECTION_META = {
@@ -135,21 +136,30 @@ function StatisticsSkeleton() {
 }
 
 export function StatisticsOverview() {
+  const overviewQuery = useMyStatisticsOverviewQuery(true);
+  const shouldUseFallbackQueries = overviewQuery.isError;
   const myStatisticsQuery = useMyStatisticsQuery(true);
-  const sectionStatisticsQuery = useMySectionStatisticsQuery(true);
-  const examStatisticsQuery = useMyExamStatisticsQuery(true);
+  const sectionStatisticsQuery = useMySectionStatisticsQuery(shouldUseFallbackQueries);
+  const examStatisticsQuery = useMyExamStatisticsQuery(shouldUseFallbackQueries);
+  const myStatistics = myStatisticsQuery.data ?? overviewQuery.data?.me;
+  const examStatistics = overviewQuery.data?.exams ?? examStatisticsQuery.data;
+  const sectionStatisticsItems = overviewQuery.data?.sections ?? sectionStatisticsQuery.data ?? [];
 
   const sectionStatistics = new Map(
-    (sectionStatisticsQuery.data ?? []).map((entry) => [entry.section, entry])
+    sectionStatisticsItems.map((entry) => [entry.section, entry])
   );
   const isInitialLoading =
+    !overviewQuery.data &&
     !myStatisticsQuery.data &&
-    !sectionStatisticsQuery.data &&
-    !examStatisticsQuery.data &&
-    myStatisticsQuery.isLoading &&
-    sectionStatisticsQuery.isLoading &&
-    examStatisticsQuery.isLoading;
+    (overviewQuery.isLoading ||
+      myStatisticsQuery.isLoading ||
+      (shouldUseFallbackQueries &&
+        !sectionStatisticsQuery.data &&
+        !examStatisticsQuery.data &&
+        sectionStatisticsQuery.isLoading &&
+        examStatisticsQuery.isLoading));
   const hasHardError =
+    overviewQuery.error instanceof Error &&
     myStatisticsQuery.error instanceof Error &&
     sectionStatisticsQuery.error instanceof Error &&
     examStatisticsQuery.error instanceof Error;
@@ -177,25 +187,25 @@ export function StatisticsOverview() {
             Icon: ChartColumn,
             label: 'Solved',
             muted: 'Completed practice sets',
-            value: formatCount(myStatisticsQuery.data?.totalSolved),
+            value: formatCount(myStatistics?.totalSolved),
           },
           {
             Icon: Activity,
             label: 'Overall Band',
             muted: 'Across available practice',
-            value: formatBand(myStatisticsQuery.data?.overallAvg),
+            value: formatBand(myStatistics?.overallAvg),
           },
           {
             Icon: Clock3,
             label: 'Active Time',
             muted: 'Focused practice time',
-            value: formatDuration(myStatisticsQuery.data?.totalActiveTimeSeconds),
+            value: formatDuration(myStatistics?.totalActiveTimeSeconds),
           },
           {
             Icon: Trophy,
             label: 'Highest Band',
             muted: 'Best mock or contest result',
-            value: formatBand(examStatisticsQuery.data?.highestOverallBand),
+            value: formatBand(examStatistics?.highestOverallBand),
           },
         ].map(({ Icon, label, muted, value }) => (
           <div key={label} className={cn(subscriptionCardClassName, 'rounded-[22px] px-4 py-4')}>
@@ -294,7 +304,7 @@ export function StatisticsOverview() {
                     Mock Exams Taken
                   </p>
                   <p className="mt-2 text-2xl font-semibold tracking-[-0.045em] text-stone-950 dark:text-white">
-                    {formatCount(examStatisticsQuery.data?.totalMocksTaken)}
+                    {formatCount(examStatistics?.totalMocksTaken)}
                   </p>
                 </div>
 
@@ -308,7 +318,7 @@ export function StatisticsOverview() {
                     Contests Joined
                   </p>
                   <p className="mt-2 text-2xl font-semibold tracking-[-0.045em] text-stone-950 dark:text-white">
-                    {formatCount(examStatisticsQuery.data?.contestsParticipated)}
+                    {formatCount(examStatistics?.contestsParticipated)}
                   </p>
                 </div>
 
@@ -322,7 +332,7 @@ export function StatisticsOverview() {
                     Avg Exam Band
                   </p>
                   <p className="mt-2 text-2xl font-semibold tracking-[-0.045em] text-stone-950 dark:text-white">
-                    {formatBand(examStatisticsQuery.data?.averageOverallBand)}
+                    {formatBand(examStatistics?.averageOverallBand)}
                   </p>
                 </div>
               </div>
@@ -333,4 +343,3 @@ export function StatisticsOverview() {
     </section>
   );
 }
-

@@ -11,6 +11,22 @@ import { usePracticeTextSize, getPracticeTextStyle } from '@/src/sections/practi
 import { QuestionGroupRenderer } from './question-types/index';
 import { buildQuestionGroupAnnotationBlocks } from './question-types/annotation-blocks';
 
+function escapeHtml(value: string) {
+  return value
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+function renderScenarioHtml(scenario: string) {
+  return escapeHtml(scenario).replace(
+    /^(Questions\s+\d+\s*(?:[-–]\s*\d+)?\.)/i,
+    '<strong>$1</strong>'
+  );
+}
+
 interface Props {
   activeQuestionId?: string | null;
   part: Part;
@@ -80,13 +96,12 @@ export function PartPanel({ activeQuestionId, part, answers, onChange, showAnswe
             text: part.title,
           })}
         </h2>
-        {renderAnnotatedTextBlock({
-          as: 'p',
-          blockId: `listening-part-${part.number}-scenario`,
-          className: 'max-w-5xl text-stone-600 dark:text-white/62',
-          style: getPracticeTextStyle(textSize, 'body-compact'),
-          text: part.scenario,
-        })}
+        <p
+          data-writing-block-id={`listening-part-${part.number}-scenario`}
+          style={getPracticeTextStyle(textSize, 'body-compact')}
+          className="max-w-5xl text-stone-600 dark:text-white/62 [&_strong]:font-semibold [&_strong]:text-stone-800 dark:[&_strong]:text-white"
+          dangerouslySetInnerHTML={{ __html: renderScenarioHtml(part.scenario) }}
+        />
       </div>
 
       <div className="space-y-8">

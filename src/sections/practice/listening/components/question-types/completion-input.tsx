@@ -39,7 +39,7 @@ export function CompletionInput({
             field.id,
             'label'
           ),
-          className: 'whitespace-nowrap text-stone-700 dark:text-white/72',
+          className: 'whitespace-normal break-words text-stone-700 dark:text-white/72',
           renderAnnotatedTextBlock,
           style: getPracticeTextStyle(textSize, 'body'),
           text: field.label,
@@ -86,7 +86,7 @@ export function CompletionInput({
             field.id,
             'suffix'
           ),
-          className: 'whitespace-nowrap text-stone-700 dark:text-white/72',
+          className: 'whitespace-normal break-words text-stone-700 dark:text-white/72',
           renderAnnotatedTextBlock,
           style: getPracticeTextStyle(textSize, 'body'),
           text: field.suffix,

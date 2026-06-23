@@ -19,6 +19,7 @@ type ListeningQuestionResult = {
   correctAnswer?: unknown;
   explanation?: string;
   isCorrect?: boolean;
+  number?: number;
   questionId: string;
   score?: number;
   userAnswer?: unknown;
@@ -36,8 +37,19 @@ const asRecord = (value: unknown): ApiRecord | null =>
 
 const pickBoolean = (value: unknown) => (typeof value === 'boolean' ? value : undefined);
 
-const pickNumber = (value: unknown) =>
-  typeof value === 'number' && Number.isFinite(value) ? value : undefined;
+const pickNumber = (value: unknown) => {
+  if (typeof value === 'number' && Number.isFinite(value)) {
+    return value;
+  }
+
+  if (typeof value === 'string') {
+    const parsedValue = Number.parseInt(value.trim(), 10);
+
+    return Number.isFinite(parsedValue) ? parsedValue : undefined;
+  }
+
+  return undefined;
+};
 
 const pickString = (...values: unknown[]) => {
   for (const value of values) {
@@ -94,6 +106,13 @@ const toMultiSelectAnswer = (value: unknown) => {
   return toAnswerString(value);
 };
 
+const sanitizeAnswers = (answers: Answers): Answers =>
+  Object.fromEntries(
+    Object.entries(answers)
+      .map(([id, value]) => [id, value.trim()] as const)
+      .filter(([, value]) => value.length > 0)
+  );
+
 const toQuestionResult = (value: unknown): ListeningQuestionResult | null => {
   const record = asRecord(value);
 
@@ -101,16 +120,31 @@ const toQuestionResult = (value: unknown): ListeningQuestionResult | null => {
     return null;
   }
 
-  const questionId = pickString(record.question_id, record.id);
+  const number =
+    pickNumber(record.question_number) ??
+    pickNumber(record.questionNumber) ??
+    pickNumber(record.order) ??
+    pickNumber(record.number);
+  const questionId =
+    pickString(record.question_id, record.questionId, record.id) ??
+    (typeof number === 'number' ? `question-${number}` : undefined);
 
   if (!questionId) {
     return null;
   }
 
   return {
-    correctAnswer: record.correct_answer ?? record.correctAnswer,
+    correctAnswer:
+      record.correct_answer ??
+      record.correctAnswer ??
+      record.correct_answers ??
+      record.correctAnswers ??
+      record.answer_key ??
+      record.answerKey ??
+      record.correct,
     explanation: pickString(record.explanation),
     isCorrect: pickBoolean(record.is_correct ?? record.isCorrect),
+    number,
     questionId,
     score: pickNumber(record.score),
     userAnswer:
@@ -118,6 +152,30 @@ const toQuestionResult = (value: unknown): ListeningQuestionResult | null => {
       record.userAnswer ??
       (record.correct_answer == null && record.correctAnswer == null ? record.answer : undefined),
   };
+};
+
+const buildQuestionResultNumberMap = (questionResults: ListeningQuestionResult[]) =>
+  new Map(
+    questionResults
+      .filter((result): result is ListeningQuestionResult & { number: number } =>
+        typeof result.number === 'number'
+      )
+      .map((result) => [result.number, result])
+  );
+
+const findQuestionResult = (
+  resultMap: Map<string, ListeningQuestionResult>,
+  resultNumberMap: Map<number, ListeningQuestionResult>,
+  backendQuestionId: string | undefined,
+  targetNumber?: number
+) => {
+  const result = backendQuestionId ? resultMap.get(backendQuestionId) : undefined;
+
+  if (result) {
+    return result;
+  }
+
+  return typeof targetNumber === 'number' ? resultNumberMap.get(targetNumber) : undefined;
 };
 
 const collectQuestionResults = (value: unknown): ListeningQuestionResult[] => {
@@ -163,35 +221,13 @@ const parseTimeSpentSeconds = (payload: unknown) => {
   return pickNumber(data.time_spent_seconds) ?? pickNumber(data.duration_seconds) ?? null;
 };
 
-const parseScore = (payload: unknown) => {
-  const root = asRecord(payload) ?? {};
-  const data = asRecord(root.data) ?? root;
-
-  return (
-    pickNumber(data.score) ??
-    pickNumber(data.correct_count) ??
-    pickNumber(data.correct_answers) ??
-    pickNumber(data.total_score)
-  );
-};
-
-const parseTotal = (payload: unknown) => {
-  const root = asRecord(payload) ?? {};
-  const data = asRecord(root.data) ?? root;
-
-  return pickNumber(data.total) ?? pickNumber(data.total_questions) ?? pickNumber(data.max_score);
-};
-
 const setCorrectAnswerForResult = (
   resultMap: Map<string, ListeningQuestionResult>,
+  resultNumberMap: Map<number, ListeningQuestionResult>,
   backendQuestionId: string | undefined,
   targetNumber: number
 ) => {
-  if (!backendQuestionId) {
-    return undefined;
-  }
-
-  const result = resultMap.get(backendQuestionId);
+  const result = findQuestionResult(resultMap, resultNumberMap, backendQuestionId, targetNumber);
 
   if (!result) {
     return undefined;
@@ -211,15 +247,12 @@ const cloneTest = (test: ListeningTest): ListeningTest =>
 
 const getUserAnswerForResult = (
   resultMap: Map<string, ListeningQuestionResult>,
+  resultNumberMap: Map<number, ListeningQuestionResult>,
   backendQuestionId: string | undefined,
   targetNumber?: number,
   multiSelect?: boolean
 ) => {
-  if (!backendQuestionId) {
-    return undefined;
-  }
-
-  const result = resultMap.get(backendQuestionId);
+  const result = findQuestionResult(resultMap, resultNumberMap, backendQuestionId, targetNumber);
 
   if (!result) {
     return undefined;
@@ -244,6 +277,7 @@ const buildAnswersFromQuestionResults = (
 ): Answers => {
   const answers: Answers = {};
   const resultMap = new Map(questionResults.map((result) => [result.questionId, result]));
+  const resultNumberMap = buildQuestionResultNumberMap(questionResults);
 
   for (const part of test.parts) {
     for (const group of part.groups) {
@@ -251,6 +285,7 @@ const buildAnswersFromQuestionResults = (
         group.questions.forEach((question) => {
           const userAnswer = getUserAnswerForResult(
             resultMap,
+            resultNumberMap,
             question.backendQuestionId,
             question.number,
             question.multiSelect
@@ -268,6 +303,7 @@ const buildAnswersFromQuestionResults = (
         group.data.pairs.forEach((pair) => {
           const userAnswer = getUserAnswerForResult(
             resultMap,
+            resultNumberMap,
             pair.backendQuestionId,
             pair.number
           );
@@ -285,6 +321,7 @@ const buildAnswersFromQuestionResults = (
           section.fields.forEach((field) => {
             const userAnswer = getUserAnswerForResult(
               resultMap,
+              resultNumberMap,
               field.backendQuestionId,
               field.number
             );
@@ -307,6 +344,7 @@ const buildAnswersFromQuestionResults = (
 
             const userAnswer = getUserAnswerForResult(
               resultMap,
+              resultNumberMap,
               bullet.field.backendQuestionId,
               bullet.field.number
             );
@@ -331,6 +369,7 @@ const buildAnswersFromQuestionResults = (
             if (cell.isBlank && cell.id) {
               const userAnswer = getUserAnswerForResult(
                 resultMap,
+                resultNumberMap,
                 cell.backendQuestionId,
                 cell.number
               );
@@ -347,6 +386,7 @@ const buildAnswersFromQuestionResults = (
 
               const userAnswer = getUserAnswerForResult(
                 resultMap,
+                resultNumberMap,
                 segment.field.backendQuestionId,
                 segment.field.number
               );
@@ -369,6 +409,7 @@ const buildAnswersFromQuestionResults = (
 
           const userAnswer = getUserAnswerForResult(
             resultMap,
+            resultNumberMap,
             step.backendQuestionId,
             step.number
           );
@@ -385,6 +426,7 @@ const buildAnswersFromQuestionResults = (
         group.questions.forEach((question) => {
           const userAnswer = getUserAnswerForResult(
             resultMap,
+            resultNumberMap,
             question.backendQuestionId,
             question.number
           );
@@ -401,6 +443,7 @@ const buildAnswersFromQuestionResults = (
         group.data.pins.forEach((pin) => {
           const userAnswer = getUserAnswerForResult(
             resultMap,
+            resultNumberMap,
             pin.backendQuestionId,
             pin.number
           );
@@ -417,6 +460,7 @@ const buildAnswersFromQuestionResults = (
         group.data.questions.forEach((question) => {
           const userAnswer = getUserAnswerForResult(
             resultMap,
+            resultNumberMap,
             question.backendQuestionId,
             question.number
           );
@@ -438,6 +482,7 @@ const buildAnswersFromQuestionResults = (
 
             const userAnswer = getUserAnswerForResult(
               resultMap,
+              resultNumberMap,
               segment.field.backendQuestionId,
               segment.field.number
             );
@@ -460,12 +505,18 @@ const applyQuestionResultsToTest = (
 ): ListeningTest => {
   const nextTest = cloneTest(test);
   const resultMap = new Map(questionResults.map((result) => [result.questionId, result]));
+  const resultNumberMap = buildQuestionResultNumberMap(questionResults);
 
   for (const part of nextTest.parts) {
     for (const group of part.groups) {
       if (group.type === 'multiple-choice') {
         group.questions = group.questions.map((question) => {
-          const result = resultMap.get(question.backendQuestionId ?? '');
+          const result = findQuestionResult(
+            resultMap,
+            resultNumberMap,
+            question.backendQuestionId,
+            question.number
+          );
 
           if (!result) {
             return question;
@@ -489,7 +540,13 @@ const applyQuestionResultsToTest = (
       if (group.type === 'matching') {
         group.data.pairs = group.data.pairs.map((pair) => ({
           ...pair,
-          answer: setCorrectAnswerForResult(resultMap, pair.backendQuestionId, pair.number) ?? pair.answer,
+          answer:
+            setCorrectAnswerForResult(
+              resultMap,
+              resultNumberMap,
+              pair.backendQuestionId,
+              pair.number
+            ) ?? pair.answer,
         }));
 
         continue;
@@ -500,7 +557,13 @@ const applyQuestionResultsToTest = (
           ...section,
           fields: section.fields.map((field) => ({
             ...field,
-            answer: setCorrectAnswerForResult(resultMap, field.backendQuestionId, field.number) ?? field.answer,
+            answer:
+              setCorrectAnswerForResult(
+                resultMap,
+                resultNumberMap,
+                field.backendQuestionId,
+                field.number
+              ) ?? field.answer,
           })),
         }));
 
@@ -519,6 +582,7 @@ const applyQuestionResultsToTest = (
                     answer:
                       setCorrectAnswerForResult(
                         resultMap,
+                        resultNumberMap,
                         bullet.field.backendQuestionId,
                         bullet.field.number
                       ) ?? bullet.field.answer,
@@ -538,7 +602,12 @@ const applyQuestionResultsToTest = (
               ...cell,
               answer:
                 cell.isBlank && cell.number
-                  ? setCorrectAnswerForResult(resultMap, cell.backendQuestionId, cell.number) ?? cell.answer
+                  ? setCorrectAnswerForResult(
+                      resultMap,
+                      resultNumberMap,
+                      cell.backendQuestionId,
+                      cell.number
+                    ) ?? cell.answer
                   : cell.answer,
               segments: cell.segments?.map((segment) =>
                 segment.type === 'blank'
@@ -549,6 +618,7 @@ const applyQuestionResultsToTest = (
                         answer:
                           setCorrectAnswerForResult(
                             resultMap,
+                            resultNumberMap,
                             segment.field.backendQuestionId,
                             segment.field.number
                           ) ?? segment.field.answer,
@@ -573,7 +643,12 @@ const applyQuestionResultsToTest = (
           ...step,
           answer:
             step.isBlank && step.number
-              ? setCorrectAnswerForResult(resultMap, step.backendQuestionId, step.number) ?? step.answer
+              ? setCorrectAnswerForResult(
+                  resultMap,
+                  resultNumberMap,
+                  step.backendQuestionId,
+                  step.number
+                ) ?? step.answer
               : step.answer,
         }));
 
@@ -584,7 +659,12 @@ const applyQuestionResultsToTest = (
         group.questions = group.questions.map((question) => ({
           ...question,
           answer:
-            setCorrectAnswerForResult(resultMap, question.backendQuestionId, question.number) ?? question.answer,
+            setCorrectAnswerForResult(
+              resultMap,
+              resultNumberMap,
+              question.backendQuestionId,
+              question.number
+            ) ?? question.answer,
         }));
 
         continue;
@@ -593,7 +673,13 @@ const applyQuestionResultsToTest = (
       if (group.type === 'map-labelling') {
         group.data.pins = group.data.pins.map((pin) => ({
           ...pin,
-          answer: setCorrectAnswerForResult(resultMap, pin.backendQuestionId, pin.number) ?? pin.answer,
+          answer:
+            setCorrectAnswerForResult(
+              resultMap,
+              resultNumberMap,
+              pin.backendQuestionId,
+              pin.number
+            ) ?? pin.answer,
         }));
 
         continue;
@@ -603,7 +689,12 @@ const applyQuestionResultsToTest = (
         group.data.questions = group.data.questions.map((question) => ({
           ...question,
           answer:
-            setCorrectAnswerForResult(resultMap, question.backendQuestionId, question.number) ?? question.answer,
+            setCorrectAnswerForResult(
+              resultMap,
+              resultNumberMap,
+              question.backendQuestionId,
+              question.number
+            ) ?? question.answer,
         }));
 
         continue;
@@ -621,6 +712,7 @@ const applyQuestionResultsToTest = (
                     answer:
                       setCorrectAnswerForResult(
                         resultMap,
+                        resultNumberMap,
                         segment.field.backendQuestionId,
                         segment.field.number
                       ) ?? segment.field.answer,
@@ -652,7 +744,13 @@ const collectCompletionAnswerMap = (
     }
 
     const currentGroup = grouped.get(field.backendQuestionId) ?? {};
-    currentGroup[String(field.number)] = answers[field.id] ?? '';
+    const answer = answers[field.id]?.trim() ?? '';
+
+    if (!answer) {
+      continue;
+    }
+
+    currentGroup[String(field.number)] = answer;
     grouped.set(field.backendQuestionId, currentGroup);
   }
 
@@ -661,6 +759,7 @@ const collectCompletionAnswerMap = (
 
 export function buildListeningSubmitPayload(test: ListeningTest, answers: Answers, attemptId: string): SubmitPayload {
   const answerEntries = new Map<string, unknown>();
+  const submittedAnswers = sanitizeAnswers(answers);
 
   for (const part of test.parts) {
     for (const group of part.groups) {
@@ -670,7 +769,11 @@ export function buildListeningSubmitPayload(test: ListeningTest, answers: Answer
             return;
           }
 
-          const value = answers[question.id] ?? '';
+          const value = submittedAnswers[question.id] ?? '';
+
+          if (!value) {
+            return;
+          }
 
           answerEntries.set(
             question.backendQuestionId,
@@ -692,7 +795,7 @@ export function buildListeningSubmitPayload(test: ListeningTest, answers: Answer
             id: pair.id,
             number: pair.number,
           })),
-          answers
+          submittedAnswers
         );
 
         grouped.forEach((value, questionId) => answerEntries.set(questionId, value));
@@ -702,7 +805,7 @@ export function buildListeningSubmitPayload(test: ListeningTest, answers: Answer
       if (group.type === 'form-completion') {
         const grouped = collectCompletionAnswerMap(
           group.sections.flatMap((section) => section.fields),
-          answers
+          submittedAnswers
         );
 
         grouped.forEach((value, questionId) => answerEntries.set(questionId, value));
@@ -716,7 +819,7 @@ export function buildListeningSubmitPayload(test: ListeningTest, answers: Answer
               .filter((bullet) => bullet.field)
               .map((bullet) => bullet.field!)
           ),
-          answers
+          submittedAnswers
         );
 
         grouped.forEach((value, questionId) => answerEntries.set(questionId, value));
@@ -757,7 +860,7 @@ export function buildListeningSubmitPayload(test: ListeningTest, answers: Answer
           ) ?? []),
         ];
 
-        const grouped = collectCompletionAnswerMap(fields, answers);
+        const grouped = collectCompletionAnswerMap(fields, submittedAnswers);
         grouped.forEach((value, questionId) => answerEntries.set(questionId, value));
         continue;
       }
@@ -771,7 +874,7 @@ export function buildListeningSubmitPayload(test: ListeningTest, answers: Answer
               id: step.id!,
               number: step.number!,
             })),
-          answers
+          submittedAnswers
         );
 
         grouped.forEach((value, questionId) => answerEntries.set(questionId, value));
@@ -779,19 +882,19 @@ export function buildListeningSubmitPayload(test: ListeningTest, answers: Answer
       }
 
       if (group.type === 'sentence-completion' || group.type === 'short-answer') {
-        const grouped = collectCompletionAnswerMap(group.questions, answers);
+        const grouped = collectCompletionAnswerMap(group.questions, submittedAnswers);
         grouped.forEach((value, questionId) => answerEntries.set(questionId, value));
         continue;
       }
 
       if (group.type === 'map-labelling') {
-        const grouped = collectCompletionAnswerMap(group.data.pins, answers);
+        const grouped = collectCompletionAnswerMap(group.data.pins, submittedAnswers);
         grouped.forEach((value, questionId) => answerEntries.set(questionId, value));
         continue;
       }
 
       if (group.type === 'diagram-completion') {
-        const grouped = collectCompletionAnswerMap(group.data.questions, answers);
+        const grouped = collectCompletionAnswerMap(group.data.questions, submittedAnswers);
         grouped.forEach((value, questionId) => answerEntries.set(questionId, value));
         continue;
       }
@@ -803,7 +906,7 @@ export function buildListeningSubmitPayload(test: ListeningTest, answers: Answer
               .filter((segment) => segment.type === 'blank')
               .map((segment) => segment.field)
           ),
-          answers
+          submittedAnswers
         );
 
         grouped.forEach((value, questionId) => answerEntries.set(questionId, value));
@@ -827,7 +930,7 @@ const buildBackendResult = (
   answers?: Answers
 ): SubmitResult => {
   const questionResults = collectQuestionResults(payload);
-  const resolvedAnswers = answers ?? buildAnswersFromQuestionResults(test, questionResults);
+  const resolvedAnswers = sanitizeAnswers(answers ?? buildAnswersFromQuestionResults(test, questionResults));
   const reviewTest = applyQuestionResultsToTest(test, questionResults);
   const computedResult = computeResult(reviewTest, resolvedAnswers);
 
@@ -836,9 +939,9 @@ const buildBackendResult = (
       ...computedResult,
       attemptId,
       overallBand: parseOverallBand(payload),
-      score: parseScore(payload) ?? computedResult.score,
+      score: computedResult.score,
       source: 'backend',
-      total: parseTotal(payload) ?? computedResult.total,
+      total: computedResult.total,
       timeSpentSeconds: parseTimeSpentSeconds(payload),
     },
     reviewTest,
@@ -861,20 +964,23 @@ export async function startListeningSectionAttempt(sectionId: string) {
 export async function getListeningSectionResult(sectionId: string, attemptId: string) {
   const response = await axiosInstance.get(endpoints.sections.result(sectionId, attemptId));
 
+  console.log('[result payload raw]', JSON.stringify(response.data, null, 2));
+
   return response.data;
 }
 
 export async function getListeningSectionAttemptResult(params: {
+  answers?: Answers;
   attemptId: string;
   sectionId: string;
   test: ListeningTest;
 }): Promise<SubmitResult | null> {
-  const { attemptId, sectionId, test } = params;
+  const { answers, attemptId, sectionId, test } = params;
 
   try {
     const resultPayload = await getListeningSectionResult(sectionId, attemptId);
 
-    return buildBackendResult(test, resultPayload, attemptId);
+    return buildBackendResult(test, resultPayload, attemptId, answers);
   } catch (error) {
     if (axios.isAxiosError(error)) {
       const status = error.response?.status;
@@ -896,7 +1002,9 @@ export async function submitListeningSectionAttempt(params: {
 }): Promise<SubmitResult> {
   const { answers, attemptId, sectionId, test } = params;
   const payload = buildListeningSubmitPayload(test, answers, attemptId);
+  console.log('[submit payload]', JSON.stringify(payload, null, 2));
   const submitResponse = await axiosInstance.post(endpoints.sections.submit(sectionId), payload);
+  console.log('[submit response]', JSON.stringify(submitResponse.data, null, 2));
 
   try {
     const resultPayload = await getListeningSectionResult(sectionId, attemptId);

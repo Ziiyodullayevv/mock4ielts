@@ -16,6 +16,7 @@ import { PRACTICE_HEADER_RING_CLASS } from '@/src/layouts/practice-surface-theme
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/src/components/ui/tooltip';
 import { Popover, PopoverContent, PopoverTrigger } from '@/src/components/ui/popover';
 import { useFavoriteToggleMutation } from '@/src/sections/practice/hooks/use-favorite-toggle-mutation';
+import { useMySectionTypeStatisticsQuery } from '@/src/sections/statistics/hooks/use-statistics-queries';
 import {
   Dialog,
   DialogClose,
@@ -88,6 +89,8 @@ const OVERVIEW_THEME = {
   },
 } as const;
 
+const PRACTICE_STAT_SECTION_TYPES = ['listening', 'reading', 'writing', 'speaking'] as const;
+
 function getSectionHref(sectionType?: PracticeOverview['sectionType']) {
   switch (sectionType) {
     case 'listening':
@@ -105,6 +108,40 @@ function getSectionHref(sectionType?: PracticeOverview['sectionType']) {
     default:
       return paths.practice.listening.root;
   }
+}
+
+function isPracticeStatSectionType(
+  sectionType: PracticeOverview['sectionType']
+): sectionType is (typeof PRACTICE_STAT_SECTION_TYPES)[number] {
+  return PRACTICE_STAT_SECTION_TYPES.some((item) => item === sectionType);
+}
+
+function formatUpdatedAt(value?: string | null) {
+  if (!value) {
+    return 'Live';
+  }
+
+  const parsedDate = new Date(value);
+
+  if (Number.isNaN(parsedDate.getTime())) {
+    return 'Live';
+  }
+
+  return new Intl.DateTimeFormat('en', {
+    day: 'numeric',
+    month: 'short',
+  }).format(parsedDate);
+}
+
+function StatSkeleton({ className }: { className?: string }) {
+  return (
+    <span
+      className={cn(
+        'inline-block animate-pulse rounded-full bg-black/10 dark:bg-white/12',
+        className
+      )}
+    />
+  );
 }
 
 type OverviewShareButtonProps = {
@@ -244,18 +281,33 @@ export function PracticeOverviewCard({
   const { isAuthenticated } = useAuthSession();
   const favoriteToggleMutation = useFavoriteToggleMutation();
   const [isProgressOpen, setIsProgressOpen] = useState(false);
-  const solvedRatio =
-    overview.totalQuestions > 0 ? (overview.totalSolved / overview.totalQuestions) * 100 : 0;
-  const solvedPercent = Math.max(0, Math.min(100, Math.round(solvedRatio)));
-  const avgBandScore = overview.avgBandScore ?? 7.5;
   const numberFormatter = new Intl.NumberFormat('en');
   const sectionType = overview.sectionType ?? 'listening';
+  const statSectionType = isPracticeStatSectionType(sectionType) ? sectionType : 'listening';
+  const sectionStatsQuery = useMySectionTypeStatisticsQuery(
+    statSectionType,
+    isAuthenticated && isPracticeStatSectionType(sectionType)
+  );
+  const sectionStats = sectionStatsQuery.data;
+  const isSectionStatsLoading =
+    sectionStatsQuery.isLoading && isAuthenticated && isPracticeStatSectionType(sectionType);
+  const totalSections = sectionStats?.totalSections ?? overview.totalAttempting;
+  const totalQuestions = sectionStats?.totalQuestions ?? overview.totalQuestions;
+  const completedSections = sectionStats?.completedCount ?? overview.totalSolved;
+  const solvedRatio =
+    totalSections > 0 ? (completedSections / totalSections) * 100 : 0;
+  const solvedPercent = Math.max(0, Math.min(100, Math.round(solvedRatio)));
+  const avgBandScore = sectionStats?.averageBand ?? overview.avgBandScore ?? 0;
   const theme = OVERVIEW_THEME[sectionType];
   const OverviewIcon = theme.Icon;
   const canSaveCurrentQuestion = Boolean(currentQuestion?.remoteId);
+  const hasSummaryStats = totalSections > 0 || totalQuestions > 0;
   const summaryText =
     overview.summaryLabel ??
-    `${overview.sourceLabel} · ${numberFormatter.format(overview.totalQuestions)} questions`;
+    `${overview.sourceLabel} · ${numberFormatter.format(totalSections)} tests · ${numberFormatter.format(totalQuestions)} questions`;
+  const updatedAtLabel = sectionStats?.lastUpdatedAt
+    ? formatUpdatedAt(sectionStats.lastUpdatedAt)
+    : overview.updatedAtLabel;
   const actionShellClassName = 'rounded-full p-px shadow-sm transition-shadow dark:shadow-none';
   const iconActionButtonClassName =
     'grid place-items-center rounded-full bg-stone-100 text-black/78 transition-colors hover:bg-stone-200 dark:bg-white/8 dark:text-white/78 dark:hover:bg-white/12';
@@ -342,8 +394,14 @@ export function PracticeOverviewCard({
                   <div className="pointer-events-none absolute inset-0 grid place-items-center">
                     <div className="text-center">
                       <span className="block text-2xl font-semibold leading-none tracking-[-0.03em] text-black dark:text-white">
-                        {overview.totalSolved}
-                        <span className="text-sm opacity-70"> / {overview.totalQuestions}</span>
+                        {isSectionStatsLoading ? (
+                          <StatSkeleton className="h-7 w-16" />
+                        ) : (
+                          <>
+                            {completedSections}
+                            <span className="text-sm opacity-70"> / {totalSections}</span>
+                          </>
+                        )}
                       </span>
                       <span className="block text-xs leading-none tracking-[0.08em] text-black/62 dark:text-white/55">
                         Completed
@@ -358,7 +416,11 @@ export function PracticeOverviewCard({
                   </p>
                   <p className="mt-2 whitespace-nowrap text-black dark:text-white">
                     <span className="text-[1.9rem] font-semibold leading-none tracking-[-0.03em]">
-                      {avgBandScore.toFixed(1)}
+                      {isSectionStatsLoading ? (
+                        <StatSkeleton className="h-8 w-16 align-middle" />
+                      ) : (
+                        avgBandScore.toFixed(1)
+                      )}
                     </span>
                     <span className="ml-1 text-[1.15rem] leading-none text-black/80 dark:text-white/80">
                       Band
@@ -395,9 +457,15 @@ export function PracticeOverviewCard({
               {overview.title}
             </h2>
 
-            <p className="mt-4 text-center text-base text-black/72 dark:text-white/72">
-              {summaryText}
-            </p>
+            {isSectionStatsLoading ? (
+              <p className="mt-4 text-center">
+                <StatSkeleton className="h-5 w-64 max-w-full" />
+              </p>
+            ) : hasSummaryStats ? (
+              <p className="mt-4 text-center text-base text-black/72 dark:text-white/72">
+                {summaryText}
+              </p>
+            ) : null}
 
             <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
               <div className={cn(actionShellClassName, PRACTICE_HEADER_RING_CLASS)}>
@@ -476,7 +544,7 @@ export function PracticeOverviewCard({
                     />
                   </span>
                   <span className="truncate text-[1.05rem] font-semibold leading-none tracking-[-0.03em] text-black dark:text-white">
-                    {overview.totalSolved}
+                    {isSectionStatsLoading ? <StatSkeleton className="h-5 w-8" /> : completedSections}
                   </span>
                   <span className="truncate text-[0.95rem] text-black/82 dark:text-white/82">
                     Solved
@@ -506,7 +574,13 @@ export function PracticeOverviewCard({
               {overview.title}
             </h2>
 
-            <p className="mt-3 text-sm text-black/72 dark:text-white/72">{summaryText}</p>
+            {isSectionStatsLoading ? (
+              <p className="mt-3">
+                <StatSkeleton className="h-4 w-52" />
+              </p>
+            ) : hasSummaryStats ? (
+              <p className="mt-3 text-sm text-black/72 dark:text-white/72">{summaryText}</p>
+            ) : null}
 
             <div className="mt-5 flex flex-wrap items-center gap-2.5">
               <div className={cn(actionShellClassName, PRACTICE_HEADER_RING_CLASS)}>
@@ -569,7 +643,11 @@ export function PracticeOverviewCard({
 
             <div className="mt-5 flex items-center gap-2 text-sm text-black/72 dark:text-white/72">
               <Zap className="size-4 text-black/72 dark:text-white/72" strokeWidth={2} />
-              <span>Updated: {overview.updatedAtLabel}</span>
+              {isSectionStatsLoading ? (
+                <StatSkeleton className="h-4 w-24" />
+              ) : (
+                <span>Updated: {updatedAtLabel}</span>
+              )}
             </div>
 
             <div className="my-6 h-px bg-black/10 dark:bg-white/10" />
@@ -589,8 +667,14 @@ export function PracticeOverviewCard({
                   <div className="pointer-events-none absolute inset-0 grid place-items-center">
                     <div className="text-center">
                       <span className="block text-2xl font-semibold leading-none tracking-[-0.03em] text-black dark:text-white">
-                        {overview.totalSolved}
-                        <span className="text-sm opacity-70"> / {overview.totalQuestions}</span>
+                        {isSectionStatsLoading ? (
+                          <StatSkeleton className="h-7 w-16" />
+                        ) : (
+                          <>
+                            {completedSections}
+                            <span className="text-sm opacity-70"> / {totalSections}</span>
+                          </>
+                        )}
                       </span>
                       <span className="block text-xs leading-none tracking-[0.08em] text-black/62 dark:text-white/55">
                         Completed
@@ -606,7 +690,11 @@ export function PracticeOverviewCard({
                     </p>
                     <p className="mt-2 text-black dark:text-white">
                       <span className="text-2xl font-semibold leading-none tracking-[-0.03em]">
-                        {avgBandScore.toFixed(1)}
+                        {isSectionStatsLoading ? (
+                          <StatSkeleton className="h-7 w-14 align-middle" />
+                        ) : (
+                          avgBandScore.toFixed(1)
+                        )}
                       </span>
                       <span className="ml-1 text-base leading-none text-black/80 dark:text-white/80">
                         Band

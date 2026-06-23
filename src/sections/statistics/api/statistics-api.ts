@@ -27,6 +27,15 @@ export type MySectionStatisticsItem = {
   solvedCount: number;
 };
 
+export type MySectionTypeStatistics = {
+  averageBand?: number | null;
+  completedCount: number;
+  lastUpdatedAt?: string | null;
+  section: PracticeSectionKey;
+  totalQuestions: number;
+  totalSections: number;
+};
+
 export type MyExamStatistics = {
   averageOverallBand?: number | null;
   contestsParticipated: number;
@@ -39,6 +48,14 @@ export type GlobalSectionStatisticsItem = {
   section: PracticeSectionKey;
   totalQuestions: number;
 };
+
+export type MyStatisticsOverview = {
+  exams: MyExamStatistics;
+  me: MyStatistics;
+  sections: MySectionStatisticsItem[];
+};
+
+const PRACTICE_SECTIONS: PracticeSectionKey[] = ['listening', 'reading', 'writing', 'speaking'];
 
 const asArray = (value: unknown) => (Array.isArray(value) ? value : []);
 
@@ -143,6 +160,33 @@ const toSectionKey = (value: unknown): PracticeSectionKey | null => {
   return null;
 };
 
+const averageNullableBands = (values: Array<number | null | undefined>) => {
+  const validValues = values.filter(
+    (value): value is number => typeof value === 'number' && Number.isFinite(value)
+  );
+
+  if (!validValues.length) {
+    return null;
+  }
+
+  return validValues.reduce((sum, value) => sum + value, 0) / validValues.length;
+};
+
+const getOverviewSectionRecord = (data: ApiRecord, section: PracticeSectionKey) =>
+  asRecord(data[section]) ?? {};
+
+const getHighestMockBand = (mockExamsData: ApiRecord) => {
+  const bands = asArray(mockExamsData.mock_exams)
+    .map((item) => toBandNumber(asRecord(item)?.user_overall_band))
+    .filter((value): value is number => typeof value === 'number' && Number.isFinite(value));
+
+  if (!bands.length) {
+    return null;
+  }
+
+  return Math.max(...bands);
+};
+
 export async function getMyStatistics(): Promise<MyStatistics> {
   const response = await axiosInstance.get(endpoints.statistics.me);
   const data = getDataRecord(response.data);
@@ -202,6 +246,23 @@ export async function getMySectionStatistics(): Promise<MySectionStatisticsItem[
     });
 }
 
+export async function getMySectionTypeStatistics(
+  sectionType: PracticeSectionKey
+): Promise<MySectionTypeStatistics> {
+  const response = await axiosInstance.get(endpoints.statistics.sectionType(sectionType));
+  const data = getDataRecord(response.data);
+  const section = toSectionKey(data.section_type) ?? sectionType;
+
+  return {
+    averageBand: toBandNumber(data.average_band) ?? null,
+    completedCount: toCount(data.completed_count),
+    lastUpdatedAt: pickString(data.last_updated_at) ?? null,
+    section,
+    totalQuestions: toCount(data.total_tokens),
+    totalSections: toCount(data.total_sections),
+  };
+}
+
 export async function getMyExamStatistics(): Promise<MyExamStatistics> {
   const response = await axiosInstance.get(endpoints.statistics.exams);
   const data = getDataRecord(response.data);
@@ -233,4 +294,52 @@ export async function getGlobalSectionStatistics(): Promise<GlobalSectionStatist
       };
     })
     .filter((value): value is GlobalSectionStatisticsItem => value !== null);
+}
+
+export async function getMyStatisticsOverview(): Promise<MyStatisticsOverview> {
+  const response = await axiosInstance.get(endpoints.statistics.overview);
+  const data = getDataRecord(response.data);
+  const sectionRecords = Object.fromEntries(
+    PRACTICE_SECTIONS.map((section) => [section, getOverviewSectionRecord(data, section)])
+  ) as Record<PracticeSectionKey, ApiRecord>;
+  const sections = PRACTICE_SECTIONS.map((section): MySectionStatisticsItem => {
+    const record = sectionRecords[section];
+
+    return {
+      averageBand: toBandNumber(record.average_band) ?? null,
+      lastPracticedAt: pickString(record.last_updated_at) ?? null,
+      section,
+      solvedCount: toCount(record.completed_count),
+    };
+  });
+  const sectionBands = PRACTICE_SECTIONS.map((section) =>
+    toBandNumber(sectionRecords[section].average_band)
+  );
+  const mockExams = asRecord(data.mock_exams) ?? {};
+  const contests = asRecord(data.contests) ?? {};
+  const highestMockBand = getHighestMockBand(mockExams);
+
+  return {
+    exams: {
+      averageOverallBand: toBandNumber(mockExams.average_overall_band) ?? null,
+      contestsParticipated: toCount(contests.contests_attended),
+      highestOverallBand: highestMockBand ?? toBandNumber(mockExams.average_overall_band) ?? null,
+      totalMocksTaken: toCount(mockExams.completed_count),
+      updatedAt: pickString(mockExams.last_updated_at, contests.last_updated_at) ?? null,
+    },
+    me: {
+      listeningAvg: toBandNumber(sectionRecords.listening.average_band) ?? null,
+      overallAvg: averageNullableBands(sectionBands),
+      readingAvg: toBandNumber(sectionRecords.reading.average_band) ?? null,
+      speakingAvg: toBandNumber(sectionRecords.speaking.average_band) ?? null,
+      totalActiveTimeSeconds: 0,
+      totalSolved: sections.reduce((sum, item) => sum + item.solvedCount, 0),
+      updatedAt:
+        pickString(
+          ...PRACTICE_SECTIONS.map((section) => sectionRecords[section].last_updated_at)
+        ) ?? null,
+      writingAvg: toBandNumber(sectionRecords.writing.average_band) ?? null,
+    },
+    sections,
+  };
 }

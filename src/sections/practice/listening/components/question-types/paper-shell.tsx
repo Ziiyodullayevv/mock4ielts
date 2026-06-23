@@ -3,16 +3,22 @@
 import type { ReactNode, ElementType, CSSProperties } from 'react';
 
 import { cn } from '@/src/lib/utils';
-import { Squircle } from '@/src/components/squircle/squircle';
 import { usePracticeTextSize, getPracticeTextStyle } from '@/src/sections/practice/shared/practice-text-size';
 
 export const PAPER_PANEL_CLASS_NAME =
-  'relative overflow-hidden bg-[#f7f7f7] shadow-lg dark:bg-[#131313] dark:shadow-[0_18px_40px_rgba(0,0,0,0.32)]';
+  'relative overflow-hidden rounded-lg bg-[#f7f7f7] dark:bg-[#131313]';
 
 export const PAPER_DIVIDER_CLASS_NAME =
-  "[&>*+*]:relative [&>*+*]:before:absolute [&>*+*]:before:top-0 [&>*+*]:before:left-5 [&>*+*]:before:right-5 sm:[&>*+*]:before:left-8 sm:[&>*+*]:before:right-8 [&>*+*]:before:h-px [&>*+*]:before:bg-[#dfdfdf] dark:[&>*+*]:before:bg-white/10 [&>*+*]:before:content-['']";
+  "[&>*+*]:relative [&>*+*]:before:absolute [&>*+*]:before:top-0 [&>*+*]:before:left-3 [&>*+*]:before:right-3 sm:[&>*+*]:before:left-4 sm:[&>*+*]:before:right-4 [&>*+*]:before:h-px [&>*+*]:before:bg-[#dfdfdf] dark:[&>*+*]:before:bg-white/10 [&>*+*]:before:content-['']";
 
-export const PAPER_ROW_CLASS_NAME = 'px-5 py-4 text-stone-800 dark:text-white/84 sm:px-8 sm:py-6';
+export const PAPER_ROW_CLASS_NAME = 'px-3 py-2 text-stone-800 dark:text-white/84 sm:px-4 sm:py-3';
+
+const COUNT_WORD_PATTERN = 'ONE|TWO|THREE|FOUR|FIVE|SIX|SEVEN|EIGHT|NINE|TEN|\\d+';
+const ROMAN_NUMERAL_PATTERN = 'i|ii|iii|iv|v|vi|vii|viii|ix|x';
+const ROMAN_NUMERAL_RANGE_REGEX = new RegExp(
+  `^(?:${ROMAN_NUMERAL_PATTERN})[–-](?:${ROMAN_NUMERAL_PATTERN})$`,
+  'i'
+);
 
 const INSTRUCTION_EMPHASIS_PATTERNS = [
   {
@@ -20,9 +26,15 @@ const INSTRUCTION_EMPHASIS_PATTERNS = [
     pattern: /Choose the correct letter,\s*([A-Z](?:,\s*[A-Z])*(?:\s+or\s+[A-Z])?)/gi,
   },
   {
+    groups: [1],
+    pattern: /Choose the correct letter\s+([A-Z](?:,\s*[A-Z])*(?:\s+or\s+[A-Z])?)/gi,
+  },
+  {
     groups: [1, 2],
-    pattern:
-      /Choose\s+(ONE|TWO|THREE|FOUR|FIVE|\d+)\s+(?:letters?|answers?)(?:\s+from the box)?(?:,\s*([A-Z](?:[–-][A-Z])?|[A-Z](?:,\s*[A-Z])*(?:\s+or\s+[A-Z])?))?/gi,
+    pattern: new RegExp(
+      `Choose\\s+((?:${COUNT_WORD_PATTERN})\\s+(?:letters?|answers?))(?:\\s+from the box)?(?:\\s+and\\s+write\\s+the\\s+correct\\s+letter)?(?:,\\s*([A-Z](?:[–-][A-Z])?|[A-Z](?:,\\s*[A-Z])*(?:\\s+or\\s+[A-Z])?))?`,
+      'gi'
+    ),
   },
   {
     groups: [1],
@@ -30,11 +42,52 @@ const INSTRUCTION_EMPHASIS_PATTERNS = [
   },
   {
     groups: [1],
+    pattern: /\b(?:paragraphs?|letters?|options?)\s+([A-Z][–-][A-Z])\b/g,
+  },
+  {
+    groups: [1],
+    pattern: /\bcorrect\s+letter,\s*([A-Z][–-][A-Z])\b/gi,
+  },
+  {
+    groups: [1],
     pattern: /Choose\s+(NO MORE THAN ONE WORD from the box)(?:\s+for each answer)?/gi,
   },
   {
     groups: [1],
-    pattern: /Write\s+(NO MORE THAN[^.?!]*?)(?=\s+for each answer|[.?!]|$)/gi,
+    pattern: /Write\s+(NO MORE THAN[^.?!]*?)(?=\s+from the passage|\s+for each answer|[.?!]|$)/gi,
+  },
+  {
+    groups: [1],
+    pattern: new RegExp(
+      `Write\\s+((?:NO MORE THAN\\s+)?(?:${COUNT_WORD_PATTERN})\\s+(?:WORDS?|LETTERS?|NUMBERS?)(?:\\s+AND\\/OR\\s+A\\s+NUMBER)?(?:\\s+ONLY)?)(?=\\s+for each answer|[.?!]|$)`,
+      'gi'
+    ),
+  },
+  {
+    groups: [1],
+    pattern: new RegExp(
+      `\\b((?:NO MORE THAN\\s+)?(?:${COUNT_WORD_PATTERN})\\s+(?:WORDS?|LETTERS?|NUMBERS?)(?:\\s+AND\\/OR\\s+A\\s+NUMBER)?(?:\\s+ONLY)?)\\b`,
+      'gi'
+    ),
+  },
+  {
+    groups: [1],
+    pattern: /\b(TRUE|FALSE|NOT GIVEN|YES|NO|NO MORE THAN|NOT MORE THAN)\b/g,
+  },
+  {
+    groups: [1],
+    pattern: /\b([A-Z](?:[–-][A-Z]|,\s*[A-Z])*)\b(?=\s*(?:below|from the box|on the map|in the diagram|$))/gi,
+  },
+  {
+    groups: [1],
+    pattern: /\b([A-Z][–-][A-Z])\b/g,
+  },
+  {
+    groups: [1],
+    pattern: new RegExp(
+      `\\b((?:${ROMAN_NUMERAL_PATTERN})[–-](?:${ROMAN_NUMERAL_PATTERN}))\\b`,
+      'gi'
+    ),
   },
   {
     groups: [1],
@@ -94,6 +147,17 @@ function getInstructionEmphasisRanges(instruction: string) {
     }, []);
 }
 
+function formatInstructionEmphasis(value: string) {
+  if (ROMAN_NUMERAL_RANGE_REGEX.test(value)) {
+    return value.toUpperCase();
+  }
+
+  return value.replace(
+    new RegExp(`\\b(${COUNT_WORD_PATTERN})\\s+(word|words|letter|letters|number|numbers)\\b`, 'gi'),
+    (_match, count: string, unit: string) => `${count.toUpperCase()} ${unit.toUpperCase()}`
+  );
+}
+
 function renderInstruction(instruction: string) {
   const emphasisRanges = getInstructionEmphasisRanges(instruction);
 
@@ -110,12 +174,12 @@ function renderInstruction(instruction: string) {
     }
 
     nodes.push(
-      <strong
+      <em
         key={`${range.start}-${range.end}-${index}`}
-        className="font-semibold text-stone-900 dark:text-white"
+        className="font-semibold italic text-sky-600 dark:text-sky-400"
       >
-        {instruction.slice(range.start, range.end)}
-      </strong>
+        {formatInstructionEmphasis(instruction.slice(range.start, range.end))}
+      </em>
     );
 
     currentIndex = range.end;
@@ -126,6 +190,43 @@ function renderInstruction(instruction: string) {
   }
 
   return nodes;
+}
+
+function escapeHtml(value: string) {
+  return value
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+function renderInstructionHtml(instruction: string) {
+  const emphasisRanges = getInstructionEmphasisRanges(instruction);
+
+  if (!emphasisRanges.length) {
+    return escapeHtml(instruction);
+  }
+
+  let html = '';
+  let currentIndex = 0;
+
+  emphasisRanges.forEach((range) => {
+    if (range.start > currentIndex) {
+      html += escapeHtml(instruction.slice(currentIndex, range.start));
+    }
+
+    html += `<strong><em>${escapeHtml(
+      formatInstructionEmphasis(instruction.slice(range.start, range.end))
+    )}</em></strong>`;
+    currentIndex = range.end;
+  });
+
+  if (currentIndex < instruction.length) {
+    html += escapeHtml(instruction.slice(currentIndex));
+  }
+
+  return html;
 }
 
 type QuestionGroupIntroProps = {
@@ -159,7 +260,7 @@ export function QuestionGroupIntro({
   const textSize = usePracticeTextSize();
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-2.5">
       {titleAnnotationBlockId && renderAnnotatedTextBlock ? (
         renderAnnotatedTextBlock({
           as: 'h3',
@@ -177,17 +278,16 @@ export function QuestionGroupIntro({
         </h3>
       )}
       {annotationBlockId && renderAnnotatedTextBlock ? (
-        renderAnnotatedTextBlock({
-          as: 'p',
-          blockId: annotationBlockId,
-          className: 'max-w-5xl text-stone-700 dark:text-white/72',
-          style: getPracticeTextStyle(textSize, 'body-compact'),
-          text: instruction,
-        })
+        <p
+          data-writing-block-id={annotationBlockId}
+          style={getPracticeTextStyle(textSize, 'body-compact')}
+          className="max-w-5xl font-semibold text-stone-700 dark:text-white/72 [&_em]:italic [&_strong]:font-semibold [&_strong]:text-sky-600 dark:[&_strong]:text-sky-400"
+          dangerouslySetInnerHTML={{ __html: renderInstructionHtml(instruction) }}
+        />
       ) : (
         <p
           style={getPracticeTextStyle(textSize, 'body-compact')}
-          className="max-w-5xl text-stone-700 dark:text-white/72"
+          className="max-w-5xl font-semibold text-stone-700 dark:text-white/72"
         >
           {renderInstruction(instruction)}
         </p>
@@ -204,7 +304,7 @@ export function QuestionNumberBadge({
   return (
     <span
       className={cn(
-        'inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-[0.92rem] font-semibold tabular-nums tracking-[-0.03em] align-middle transition-colors',
+        'inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-[0.74rem] font-semibold tabular-nums tracking-[-0.03em] align-middle transition-colors',
         isActive
           ? 'border border-[#ffb347] bg-[linear-gradient(135deg,#ffc85a_0%,#ff9f2f_55%,#ff784b_100%)] text-white'
           : 'bg-[#e8e8ec] text-stone-800 dark:bg-white/10 dark:text-white/74',
@@ -233,10 +333,13 @@ type PaperSurfaceProps = {
 };
 
 export function PaperSurface({ children, className, n = 4, radius = 38 }: PaperSurfaceProps) {
+  void n;
+  void radius;
+
   return (
-    <Squircle n={n} radius={radius} className={cn(PAPER_PANEL_CLASS_NAME, className)}>
+    <div className={cn(PAPER_PANEL_CLASS_NAME, className)}>
       {children}
-    </Squircle>
+    </div>
   );
 }
 
@@ -256,7 +359,7 @@ export function PaperPanel({
         <div
           style={getPracticeTextStyle(textSize, 'body')}
           className={cn(
-            'border-b border-[#dfdfdf] px-5 py-4 font-semibold tracking-[-0.02em] text-stone-900 dark:border-white/10 dark:text-white sm:px-8 sm:py-6',
+            'border-b border-[#dfdfdf] px-3 py-2.5 font-semibold tracking-[-0.02em] text-stone-900 dark:border-white/10 dark:text-white sm:px-4 sm:py-3',
             titleClassName
           )}
         >
