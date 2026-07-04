@@ -42,6 +42,12 @@ npm run admin:lint
 npm run admin:build
 ```
 
+## Documentation
+
+- [Architecture](./docs/architecture.md)
+- [API contract](./docs/api.md)
+- [CI/CD](./docs/ci-cd.md)
+
 ## Deployment
 
 The web app builds the `ghcr.io/ziiyodullayevv/mock4ielts` image.
