@@ -1,6 +1,6 @@
 services:
   admin:
-    image: ghcr.io/ziiyodullayevv/mock4ielts-admin-panel:latest
+    image: ghcr.io/ziiyodullayevv/mock4ielts-admin:latest
     container_name: mock4ielts-admin
     restart: unless-stopped
     ports:

@@ -160,8 +160,8 @@ The full API contract is documented in [api.md](./api.md).
 
 The monorepo builds two independent images:
 
-- web: `ghcr.io/ziiyodullayevv/mock4ielts`
-- admin: `ghcr.io/ziiyodullayevv/mock4ielts-admin-panel`
+- web: `ghcr.io/ziiyodullayevv/mock4ielts-web`
+- admin: `ghcr.io/ziiyodullayevv/mock4ielts-admin`
 
 GitHub Actions validates both apps on pull requests into `main`. On pushes to
 `main`, CI also builds and pushes both images. CD deploys the images to the VPS:
