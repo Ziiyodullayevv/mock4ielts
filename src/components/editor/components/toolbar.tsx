@@ -3,9 +3,12 @@ import type { EditorToolbarProps } from '../types';
 
 import { varAlpha } from 'minimal-shared/utils';
 
+import Chip from '@mui/material/Chip';
 import Stack from '@mui/material/Stack';
 import Divider from '@mui/material/Divider';
 import { styled } from '@mui/material/styles';
+
+import { Iconify } from 'src/components/iconify';
 
 import { LinkBlock } from './link-block';
 import { editorClasses } from '../classes';
@@ -22,6 +25,8 @@ export function Toolbar({
   editor,
   fullItem,
   fullscreen,
+  minimal,
+  onInsertBlank,
   onToggleFullscreen,
   ...other
 }: StackProps & EditorToolbarProps) {
@@ -36,7 +41,10 @@ export function Toolbar({
       sx={sx}
       {...other}
     >
-      <HeadingBlock editor={editor} isActive={toolbarState.isTextLevel} />
+      <HeadingBlock
+        editor={editor}
+        isActive={toolbarState.isTextLevel}
+      />
 
       {/* Text styles */}
       <ToolbarBlock>
@@ -88,40 +96,42 @@ export function Toolbar({
         />
       </ToolbarBlock>
 
-      {/* Text alignment */}
-      <ToolbarBlock>
-        <ToolbarItem
-          aria-label="Align left (⌘⇧L)"
-          active={toolbarState.isAlign('left')}
-          className={editorClasses.toolbar.alignLeft}
-          onClick={() => chainCommands().toggleTextAlign('left').run()}
-          icon={toolbarIcons.alignLeft}
-        />
-        <ToolbarItem
-          aria-label="Align center (⌘⇧E)"
-          active={toolbarState.isAlign('center')}
-          className={editorClasses.toolbar.alignCenter}
-          onClick={() => chainCommands().toggleTextAlign('center').run()}
-          icon={toolbarIcons.alignCenter}
-        />
-        <ToolbarItem
-          aria-label="Align right (⌘⇧R)"
-          active={toolbarState.isAlign('right')}
-          className={editorClasses.toolbar.alignRight}
-          onClick={() => chainCommands().toggleTextAlign('right').run()}
-          icon={toolbarIcons.alignRight}
-        />
-        <ToolbarItem
-          aria-label="Align justify (⌘⇧J)"
-          active={toolbarState.isAlign('justify')}
-          className={editorClasses.toolbar.alignJustify}
-          onClick={() => chainCommands().toggleTextAlign('justify').run()}
-          icon={toolbarIcons.alignJustify}
-        />
-      </ToolbarBlock>
+      {/* Text alignment — hidden in minimal mode */}
+      {!minimal && (
+        <ToolbarBlock>
+          <ToolbarItem
+            aria-label="Align left (⌘⇧L)"
+            active={toolbarState.isAlign('left')}
+            className={editorClasses.toolbar.alignLeft}
+            onClick={() => chainCommands().toggleTextAlign('left').run()}
+            icon={toolbarIcons.alignLeft}
+          />
+          <ToolbarItem
+            aria-label="Align center (⌘⇧E)"
+            active={toolbarState.isAlign('center')}
+            className={editorClasses.toolbar.alignCenter}
+            onClick={() => chainCommands().toggleTextAlign('center').run()}
+            icon={toolbarIcons.alignCenter}
+          />
+          <ToolbarItem
+            aria-label="Align right (⌘⇧R)"
+            active={toolbarState.isAlign('right')}
+            className={editorClasses.toolbar.alignRight}
+            onClick={() => chainCommands().toggleTextAlign('right').run()}
+            icon={toolbarIcons.alignRight}
+          />
+          <ToolbarItem
+            aria-label="Align justify (⌘⇧J)"
+            active={toolbarState.isAlign('justify')}
+            className={editorClasses.toolbar.alignJustify}
+            onClick={() => chainCommands().toggleTextAlign('justify').run()}
+            icon={toolbarIcons.alignJustify}
+          />
+        </ToolbarBlock>
+      )}
 
-      {/* Code - Code block */}
-      {fullItem && (
+      {/* Code - Code block — hidden in minimal mode */}
+      {fullItem && !minimal && (
         <ToolbarBlock>
           <ToolbarItem
             aria-label="Code (⌘E)"
@@ -140,8 +150,8 @@ export function Toolbar({
         </ToolbarBlock>
       )}
 
-      {/* Blockquote - Horizontal rule */}
-      {fullItem && (
+      {/* Blockquote - Horizontal rule — hidden in minimal mode */}
+      {fullItem && !minimal && (
         <ToolbarBlock>
           <ToolbarItem
             aria-label="Blockquote (⌘⇧B)"
@@ -159,35 +169,54 @@ export function Toolbar({
         </ToolbarBlock>
       )}
 
-      {/* Link - Image */}
-      <ToolbarBlock>
-        <LinkBlock
-          editor={editor}
-          active={toolbarState.isLink}
-          linkIcon={toolbarIcons.link}
-          unlinkIcon={toolbarIcons.unlink}
-        />
-        <ImageBlock editor={editor} icon={toolbarIcons.image} />
-      </ToolbarBlock>
+      {/* Link - Image — hidden in minimal mode */}
+      {!minimal && (
+        <ToolbarBlock>
+          <LinkBlock
+            editor={editor}
+            active={toolbarState.isLink}
+            linkIcon={toolbarIcons.link}
+            unlinkIcon={toolbarIcons.unlink}
+          />
+          <ImageBlock editor={editor} icon={toolbarIcons.image} />
+        </ToolbarBlock>
+      )}
 
-      {/* Hard break - Clear format */}
-      <ToolbarBlock>
-        <ToolbarItem
-          aria-label="Hard break (⇧Enter)"
-          className={editorClasses.toolbar.hardBreak}
-          onClick={() => chainCommands().setHardBreak().run()}
-          icon={toolbarIcons.hardBreak}
-        />
-        <ToolbarItem
-          aria-label="Clear format (⌘⇧X)"
-          className={editorClasses.toolbar.clear}
-          onClick={() => chainCommands().clearNodes().unsetAllMarks().run()}
-          icon={toolbarIcons.clear}
-        />
-      </ToolbarBlock>
+      {/* Hard break - Clear format — hidden in minimal mode */}
+      {!minimal && (
+        <ToolbarBlock>
+          <ToolbarItem
+            aria-label="Hard break (⇧Enter)"
+            className={editorClasses.toolbar.hardBreak}
+            onClick={() => chainCommands().setHardBreak().run()}
+            icon={toolbarIcons.hardBreak}
+          />
+          <ToolbarItem
+            aria-label="Clear format (⌘⇧X)"
+            className={editorClasses.toolbar.clear}
+            onClick={() => chainCommands().clearNodes().unsetAllMarks().run()}
+            icon={toolbarIcons.clear}
+          />
+        </ToolbarBlock>
+      )}
 
-      {/* Undo - Redo */}
-      {fullItem && (
+      {/* Insert Blank — shown when onInsertBlank is provided */}
+      {onInsertBlank && (
+        <ToolbarBlock>
+          <Chip
+            label="Add blank"
+            size="small"
+            color="primary"
+            variant="outlined"
+            icon={<Iconify icon="solar:pen-bold" width={15} />}
+            onClick={onInsertBlank}
+            sx={{ cursor: 'pointer', height: 28, fontSize: 12, fontWeight: 'medium' }}
+          />
+        </ToolbarBlock>
+      )}
+
+      {/* Undo - Redo — hidden in minimal mode */}
+      {fullItem && !minimal && (
         <ToolbarBlock>
           <ToolbarItem
             aria-label="Undo (⌘Z)"
@@ -206,16 +235,18 @@ export function Toolbar({
         </ToolbarBlock>
       )}
 
-      {/* Fullscreen */}
-      <ToolbarBlock>
-        <ToolbarItem
-          aria-label="Fullscreen"
-          active={fullscreen}
-          className={editorClasses.toolbar.fullscreen}
-          onClick={onToggleFullscreen}
-          icon={fullscreen ? toolbarIcons.fullscreen : toolbarIcons.exitFullscreen}
-        />
-      </ToolbarBlock>
+      {/* Fullscreen — hidden in minimal mode */}
+      {!minimal && (
+        <ToolbarBlock>
+          <ToolbarItem
+            aria-label="Fullscreen"
+            active={fullscreen}
+            className={editorClasses.toolbar.fullscreen}
+            onClick={onToggleFullscreen}
+            icon={fullscreen ? toolbarIcons.fullscreen : toolbarIcons.exitFullscreen}
+          />
+        </ToolbarBlock>
+      )}
     </ToolbarRoot>
   );
 }

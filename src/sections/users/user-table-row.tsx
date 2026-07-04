@@ -7,6 +7,7 @@ import Avatar from '@mui/material/Avatar';
 import TableRow from '@mui/material/TableRow';
 import TableCell from '@mui/material/TableCell';
 import IconButton from '@mui/material/IconButton';
+import Typography from '@mui/material/Typography';
 import ListItemText from '@mui/material/ListItemText';
 
 import { RouterLink } from 'src/routes/components';
@@ -27,17 +28,38 @@ const AUTH_PROVIDER_COLOR = {
   email: 'info',
 } as const;
 
+function EmptyValue({ label = 'Not set' }: { label?: string }) {
+  return (
+    <Typography variant="caption" color="text.disabled" sx={{ fontWeight: 500 }}>
+      {label}
+    </Typography>
+  );
+}
+
+function formatBand(value: IUser['target_band']) {
+  if (value === null || value === undefined || value === '') {
+    return null;
+  }
+
+  const numericValue = Number(value);
+
+  return Number.isNaN(numericValue) ? String(value) : numericValue.toFixed(1);
+}
+
 export function UserTableRow({ row, editHref }: Props) {
   const avatarLetter = row.full_name?.charAt(0).toUpperCase() || row.email.charAt(0).toUpperCase();
+  const targetBand = formatBand(row.target_band);
 
   return (
     <TableRow hover>
       <TableCell>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-          <Avatar sx={{ width: 40, height: 40 }}>{avatarLetter}</Avatar>
+          <Avatar src={row.avatar || undefined} sx={{ width: 40, height: 40 }}>
+            {avatarLetter}
+          </Avatar>
 
           <ListItemText
-            primary={row.full_name || '—'}
+            primary={row.full_name || 'Unnamed user'}
             secondary={row.email}
             slotProps={{
               primary: { typography: 'body2', fontWeight: 'fontWeightMedium' },
@@ -47,7 +69,7 @@ export function UserTableRow({ row, editHref }: Props) {
         </Box>
       </TableCell>
 
-      <TableCell>{row.country || '—'}</TableCell>
+      <TableCell>{row.country || <EmptyValue label="Not specified" />}</TableCell>
 
       <TableCell>
         <Label variant="soft" color={AUTH_PROVIDER_COLOR[row.auth_provider]}>
@@ -57,7 +79,7 @@ export function UserTableRow({ row, editHref }: Props) {
 
       <TableCell align="center">{row.token_balance}</TableCell>
 
-      <TableCell align="center">{row.target_band ?? '—'}</TableCell>
+      <TableCell align="center">{targetBand || <EmptyValue label="No target" />}</TableCell>
 
       <TableCell>
         <Label variant="soft" color={row.is_admin ? 'success' : 'default'}>

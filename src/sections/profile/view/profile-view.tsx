@@ -24,8 +24,11 @@ import axiosInstance, { endpoints } from 'src/lib/axios';
 import { DashboardContent } from 'src/layouts/dashboard';
 
 import { Label } from 'src/components/label';
+import { toast } from 'src/components/snackbar';
 import { Form, Field, schemaUtils } from 'src/components/hook-form';
 import { CustomBreadcrumbs } from 'src/components/custom-breadcrumbs';
+
+import { useAuthContext } from 'src/auth/hooks';
 
 // ----------------------------------------------------------------------
 
@@ -86,6 +89,7 @@ type ProfileFormProps = {
 
 function ProfileForm({ profile }: ProfileFormProps) {
   const queryClient = useQueryClient();
+  const { checkUserSession } = useAuthContext();
 
   const displayName = profile?.full_name || profile?.email || '';
   const avatarLetter = displayName.charAt(0).toUpperCase() || 'U';
@@ -96,12 +100,13 @@ function ProfileForm({ profile }: ProfileFormProps) {
       full_name: profile?.full_name ?? '',
       phone: profile?.phone ?? '',
       country: profile?.country ?? 'Uzbekistan',
-      target_band: profile?.target_band ?? 0,
+      target_band: profile?.target_band != null ? Number(profile.target_band) : '',
     },
   });
 
   const {
     handleSubmit,
+    reset,
     formState: { isDirty },
   } = methods;
 
@@ -113,8 +118,15 @@ function ProfileForm({ profile }: ProfileFormProps) {
         country: data.country || null,
         target_band: data.target_band === '' ? null : (data.target_band ?? null),
       }),
-    onSuccess: () => {
+    onSuccess: async (_res, variables) => {
+      toast.success('Profile updated successfully');
+      reset(variables);
       queryClient.invalidateQueries({ queryKey: ['profile'] });
+      queryClient.invalidateQueries({ queryKey: ['users'] });
+      await checkUserSession?.();
+    },
+    onError: (error) => {
+      toast.error(error.message || 'Failed to update profile');
     },
   });
 

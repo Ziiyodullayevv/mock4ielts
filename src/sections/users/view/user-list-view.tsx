@@ -58,6 +58,7 @@ export function UserListView() {
   const [search, setSearch] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const [authProvider, setAuthProvider] = useState('all');
+  const [roleFilter, setRoleFilter] = useState('all');
 
   useEffect(() => {
     const timer = setTimeout(() => setDebouncedSearch(search), 400);
@@ -74,11 +75,17 @@ export function UserListView() {
     setPage(0);
   }, []);
 
+  const handleRoleFilter = useCallback((value: string) => {
+    setRoleFilter(value);
+    setPage(0);
+  }, []);
+
   const queryParams = {
     page: page + 1,
     size: rowsPerPage,
     ...(debouncedSearch && { search: debouncedSearch }),
     ...(authProvider !== 'all' && { auth_provider: authProvider }),
+    ...(roleFilter !== 'all' && { is_admin: roleFilter === 'admin' }),
   };
 
   const { data, isLoading } = useQuery({
@@ -158,7 +165,12 @@ export function UserListView() {
           ))}
         </Tabs>
 
-        <UserTableToolbar search={search} onSearch={handleSearch} />
+        <UserTableToolbar
+          search={search}
+          roleFilter={roleFilter}
+          onSearch={handleSearch}
+          onRoleFilter={handleRoleFilter}
+        />
 
         <Box sx={{ position: 'relative' }}>
           <Scrollbar>

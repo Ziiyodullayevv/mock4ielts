@@ -29,14 +29,23 @@ export type TextHeadingLevel = (typeof HEADING_OPTIONS)[number]['level'];
 type HeadingBlock = {
   editor: Editor;
   isActive: (value: TextHeadingLevel) => boolean;
+  availableLevels?: Array<TextHeadingLevel>;
 };
 
-export function HeadingBlock({ editor, isActive }: HeadingBlock) {
+export function HeadingBlock({ editor, isActive, availableLevels }: HeadingBlock) {
   const { anchorEl, open, onOpen, onClose } = usePopover();
 
+  const filteredOptions = useMemo(
+    () =>
+      availableLevels
+        ? HEADING_OPTIONS.filter((opt) => availableLevels.includes(opt.level))
+        : HEADING_OPTIONS,
+    [availableLevels]
+  );
+
   const selectedOption = useMemo(
-    () => HEADING_OPTIONS.find((option) => isActive(option.level)),
-    [isActive]
+    () => filteredOptions.find((option) => isActive(option.level)),
+    [isActive, filteredOptions]
   );
 
   const handleSelect = useCallback(
@@ -108,7 +117,7 @@ export function HeadingBlock({ editor, isActive }: HeadingBlock) {
           },
         }}
       >
-        {HEADING_OPTIONS.map((option) => (
+        {filteredOptions.map((option) => (
           <ToolbarItem
             key={option.label}
             component="li"

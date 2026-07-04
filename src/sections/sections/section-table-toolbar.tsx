@@ -1,5 +1,6 @@
 'use client';
 
+import Box from '@mui/material/Box';
 import MenuItem from '@mui/material/MenuItem';
 import TextField from '@mui/material/TextField';
 import InputAdornment from '@mui/material/InputAdornment';
@@ -22,13 +23,21 @@ export function SectionTableToolbar({
   onFilterDifficulty,
 }: Props) {
   return (
-    <div style={{ display: 'flex', gap: 16, padding: '20px' }}>
+    <Box
+      sx={{
+        gap: 2,
+        p: 2.5,
+        display: 'grid',
+        gridTemplateColumns: { xs: '1fr', md: '220px minmax(0, 1fr)' },
+        alignItems: 'center',
+      }}
+    >
       <TextField
         select
         value={filterDifficulty}
         onChange={(e) => onFilterDifficulty(e.target.value)}
         label="Difficulty"
-        sx={{ width: { xs: 1, md: 200 }, flexShrink: 0 }}
+        fullWidth
       >
         <MenuItem value="">All difficulties</MenuItem>
         <MenuItem value="easy">Easy</MenuItem>
@@ -49,8 +58,8 @@ export function SectionTableToolbar({
             ),
           },
         }}
-        sx={{ flexGrow: 1 }}
+        fullWidth
       />
-    </div>
+    </Box>
   );
 }

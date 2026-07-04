@@ -13,23 +13,21 @@ import Box from '@mui/material/Box';
 import Card from '@mui/material/Card';
 import Grid from '@mui/material/Grid';
 import Stack from '@mui/material/Stack';
-import Avatar from '@mui/material/Avatar';
 import Button from '@mui/material/Button';
+import Avatar from '@mui/material/Avatar';
 import MenuItem from '@mui/material/MenuItem';
 import Typography from '@mui/material/Typography';
 import LoadingButton from '@mui/lab/LoadingButton';
 
 import { paths } from 'src/routes/paths';
 
-import { CONFIG } from 'src/global-config';
 import axiosInstance, { endpoints } from 'src/lib/axios';
 
 import { Label } from 'src/components/label';
+import { toast } from 'src/components/snackbar';
 import { Form, Field, schemaUtils } from 'src/components/hook-form';
 
 // ----------------------------------------------------------------------
-
-const DEFAULT_AVATAR = `${CONFIG.assetsDir}/assets/images/mock/avatar/avatar-25.webp`;
 
 const BAND_SCORES = [0, 0.5, 1, 1.5, 2, 2.5, 3, 3.5, 4, 4.5, 5, 5.5, 6, 6.5, 7, 7.5, 8, 8.5, 9];
 
@@ -55,9 +53,6 @@ export function UserCreateEditForm({ currentUser }: Props) {
   const router = useRouter();
   const queryClient = useQueryClient();
 
-  const displayName = currentUser?.full_name || currentUser?.email || '';
-  const avatarLetter = displayName.charAt(0).toUpperCase() || 'U';
-
   const methods = useForm({
     resolver: zodResolver(UserSchema),
     defaultValues: {
@@ -65,7 +60,7 @@ export function UserCreateEditForm({ currentUser }: Props) {
       email: currentUser?.email ?? '',
       phone: currentUser?.phone ?? '',
       country: currentUser?.country ?? 'Uzbekistan',
-      target_band: currentUser?.target_band ?? 0,
+      target_band: currentUser?.target_band ?? '',
       token_balance: currentUser?.token_balance ?? 0,
       is_admin: currentUser?.is_admin ?? false,
     },
@@ -76,8 +71,11 @@ export function UserCreateEditForm({ currentUser }: Props) {
     formState: { isDirty },
   } = methods;
 
+  const avatarLetter =
+    currentUser?.full_name?.charAt(0).toUpperCase() || currentUser?.email?.charAt(0).toUpperCase() || 'U';
+
   const { mutate, isPending } = useMutation({
-    mutationFn: (data: any) =>
+    mutationFn: async (data: any) =>
       axiosInstance.patch(endpoints.users.details(currentUser!.id), {
         full_name: data.full_name,
         phone: data.phone || null,
@@ -87,9 +85,13 @@ export function UserCreateEditForm({ currentUser }: Props) {
         is_admin: data.is_admin,
       }),
     onSuccess: () => {
+      toast.success('User updated successfully');
       queryClient.invalidateQueries({ queryKey: ['users'] });
       queryClient.invalidateQueries({ queryKey: ['user', currentUser!.id] });
       router.push(paths.dashboard.users.root);
+    },
+    onError: (error) => {
+      toast.error(error.message || 'Failed to update user');
     },
   });
 
@@ -109,21 +111,27 @@ export function UserCreateEditForm({ currentUser }: Props) {
             </Label>
 
             <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', mb: 5 }}>
-              <Box
+              <Avatar
+                src={currentUser?.avatar || undefined}
                 sx={{
-                  p: '8px',
                   mb: 2,
-                  borderRadius: '50%',
-                  border: (theme) => `dashed 1px ${theme.vars.palette.divider}`,
+                  width: 160,
+                  height: 160,
+                  typography: 'h3',
+                  color: 'text.secondary',
+                  bgcolor: 'background.neutral',
+                  border: (theme) => `1px dashed ${theme.vars.palette.divider}`,
                 }}
               >
-                <Avatar src={DEFAULT_AVATAR} alt={displayName} sx={{ width: 120, height: 120 }}>
-                  {avatarLetter}
-                </Avatar>
-              </Box>
+                {avatarLetter}
+              </Avatar>
+
+              <Typography variant="caption" color="text.disabled" sx={{ mb: 2, textAlign: 'center' }}>
+                Avatar editing is not supported by the current API.
+              </Typography>
 
               <Typography variant="subtitle1" noWrap sx={{ mt: 1 }}>
-                {currentUser?.full_name || '—'}
+                {currentUser?.full_name || 'Unnamed user'}
               </Typography>
               <Typography variant="body2" color="text.secondary" noWrap>
                 {currentUser?.email}
@@ -175,6 +183,11 @@ export function UserCreateEditForm({ currentUser }: Props) {
               />
 
               <Field.Select name="target_band" label="Target band">
+                <MenuItem value="">
+                  <Typography variant="body2" color="text.secondary">
+                    No target selected
+                  </Typography>
+                </MenuItem>
                 {BAND_SCORES.map((score) => (
                   <MenuItem key={score} value={score}>
                     {score.toFixed(1)}

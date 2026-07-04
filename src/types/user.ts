@@ -2,9 +2,17 @@ export type IUser = {
   id: string;
   email: string;
   full_name: string;
+  first_name?: string | null;
+  last_name?: string | null;
+  avatar?: string | null;
+  date_of_birth?: string | null;
+  gender?: string | null;
   phone: string | null;
+  phone_country_code?: string | null;
   country: string | null;
-  target_band: number | null;
+  country_region_of_residence?: string | null;
+  country_region_code?: string | null;
+  target_band: number | string | null;
   auth_provider: 'google' | 'apple' | 'email';
   token_balance: number;
   is_admin: boolean;

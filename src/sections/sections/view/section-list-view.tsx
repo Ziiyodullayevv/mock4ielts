@@ -3,8 +3,9 @@
 import type { ISection } from 'src/types/section';
 
 import { useRouter } from 'next/navigation';
+import { varAlpha } from 'minimal-shared/utils';
 import { useState, useEffect, useCallback } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueries, useMutation, useQueryClient } from '@tanstack/react-query';
 
 import Tab from '@mui/material/Tab';
 import Card from '@mui/material/Card';
@@ -25,6 +26,8 @@ import { paths } from 'src/routes/paths';
 import axiosInstance, { endpoints } from 'src/lib/axios';
 import { DashboardContent } from 'src/layouts/dashboard';
 
+import { Label } from 'src/components/label';
+import { toast } from 'src/components/snackbar';
 import { Iconify } from 'src/components/iconify';
 import { Scrollbar } from 'src/components/scrollbar';
 import { CustomBreadcrumbs } from 'src/components/custom-breadcrumbs';
@@ -35,11 +38,11 @@ import { SectionTableToolbar } from '../section-table-toolbar';
 // ----------------------------------------------------------------------
 
 const SECTION_TABS = [
-  { value: '', label: 'All' },
-  { value: 'listening', label: 'Listening' },
-  { value: 'reading', label: 'Reading' },
-  { value: 'writing', label: 'Writing' },
-  { value: 'speaking', label: 'Speaking' },
+  { value: '', label: 'All', color: 'default' },
+  { value: 'listening', label: 'Listening', color: 'info' },
+  { value: 'reading', label: 'Reading', color: 'success' },
+  { value: 'writing', label: 'Writing', color: 'warning' },
+  { value: 'speaking', label: 'Speaking', color: 'error' },
 ];
 
 const TABLE_HEAD = [
@@ -87,7 +90,7 @@ export function SectionListView() {
       const res = await axiosInstance.get(endpoints.sections.list, {
         params: {
           ...(sectionType && { section_type: sectionType }),
-          ...(debouncedSearch && { search: debouncedSearch }),
+          ...(debouncedSearch && { q: debouncedSearch }),
           ...(filterDifficulty && { difficulty: filterDifficulty }),
           page: page + 1,
           size: rowsPerPage,
@@ -100,9 +103,42 @@ export function SectionListView() {
   const sections: ISection[] = data?.data ?? [];
   const total: number = data?.pagination?.total ?? 0;
 
+  const tabCountResults = useQueries({
+    queries: SECTION_TABS.map((tab) => ({
+      queryKey: ['sections-count', tab.value, filterDifficulty, debouncedSearch],
+      queryFn: async () => {
+        const params: Record<string, unknown> = {
+          page: 1,
+          size: 1,
+          ...(debouncedSearch && { q: debouncedSearch }),
+          ...(filterDifficulty && { difficulty: filterDifficulty }),
+        };
+        if (tab.value) params.section_type = tab.value;
+
+        const res = await axiosInstance.get(endpoints.sections.list, { params });
+        return (res.data?.pagination?.total ?? 0) as number;
+      },
+      staleTime: 1000 * 60 * 2,
+    })),
+  });
+
+  const tabCountMap = SECTION_TABS.reduce<Record<string, number | undefined>>(
+    (acc, tab, idx) => {
+      acc[tab.value] = tabCountResults[idx].data;
+      return acc;
+    },
+    {}
+  );
+
   const deleteMutation = useMutation({
     mutationFn: (id: string) => axiosInstance.delete(endpoints.sections.details(id)),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['sections'] }),
+    onSuccess: () => {
+      toast.success('Section deleted successfully');
+      queryClient.invalidateQueries({ queryKey: ['sections'] });
+    },
+    onError: (error) => {
+      toast.error(error.message || 'Failed to delete section');
+    },
   });
 
   const handleTabChange = useCallback((_: React.SyntheticEvent, newValue: string) => {
@@ -141,13 +177,28 @@ export function SectionListView() {
         <Tabs
           value={sectionType}
           onChange={handleTabChange}
-          sx={{
-            px: 2.5,
-            boxShadow: (theme) => `inset 0 -2px 0 0 ${theme.vars.palette.divider}`,
-          }}
+          sx={[
+            (theme) => ({
+              px: { md: 2.5 },
+              boxShadow: `inset 0 -2px 0 0 ${varAlpha(theme.vars.palette.grey['500Channel'], 0.08)}`,
+            }),
+          ]}
         >
           {SECTION_TABS.map((tab) => (
-            <Tab key={tab.value} value={tab.value} label={tab.label} />
+            <Tab
+              key={tab.value}
+              value={tab.value}
+              label={tab.label}
+              iconPosition="end"
+              icon={
+                <Label
+                  variant={tab.value === sectionType ? 'filled' : 'soft'}
+                  color={tab.color as any}
+                >
+                  {tab.value === sectionType ? total : (tabCountMap[tab.value] ?? '')}
+                </Label>
+              }
+            />
           ))}
         </Tabs>
 

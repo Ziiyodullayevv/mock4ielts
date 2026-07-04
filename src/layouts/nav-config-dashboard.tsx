@@ -13,8 +13,10 @@ const icon = (name: string) => (
 );
 
 const ICONS = {
+  contest: icon('ic-calendar'),
+  section: icon('ic-course'),
+  mockExam: icon('ic-invoice'),
   user: icon('ic-user'),
-  order: icon('ic-order'),
   dashboard: icon('ic-dashboard'),
 };
 
@@ -35,24 +37,64 @@ export const navData: NavSectionProps['data'] = [
     subheader: 'Management',
     items: [
       {
-        title: 'Users',
+        title: 'User',
         path: paths.dashboard.users.root,
         icon: ICONS.user,
+        children: [
+          {
+            title: 'All users',
+            path: paths.dashboard.users.root,
+          },
+          {
+            title: 'New user',
+            path: paths.dashboard.users.new,
+          },
+        ],
       },
       {
-        title: 'Sections',
+        title: 'Section bank',
         path: paths.dashboard.sections.root,
-        icon: ICONS.order,
+        icon: ICONS.section,
+        children: [
+          {
+            title: 'All sections',
+            path: paths.dashboard.sections.root,
+          },
+          {
+            title: 'New section',
+            path: paths.dashboard.sections.new,
+          },
+        ],
       },
       {
-        title: 'Mock Exams',
+        title: 'Mock exams',
         path: paths.dashboard.mockExams.root,
-        icon: ICONS.order,
+        icon: ICONS.mockExam,
+        children: [
+          {
+            title: 'All mock exams',
+            path: paths.dashboard.mockExams.root,
+          },
+          {
+            title: 'New mock exam',
+            path: paths.dashboard.mockExams.new,
+          },
+        ],
       },
       {
         title: 'Contests',
         path: paths.dashboard.contests.root,
-        icon: ICONS.order,
+        icon: ICONS.contest,
+        children: [
+          {
+            title: 'All contests',
+            path: paths.dashboard.contests.root,
+          },
+          {
+            title: 'New contest',
+            path: paths.dashboard.contests.new,
+          },
+        ],
       },
     ],
   },

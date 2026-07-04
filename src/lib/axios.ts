@@ -37,6 +37,30 @@ const processQueue = (error: unknown, token: string | null = null) => {
   failedQueue = [];
 };
 
+function formatApiError(data: any, fallback: string) {
+  if (!data) return fallback;
+  if (typeof data === 'string') return data;
+  if (data.message) return data.message;
+  if (data.error) return data.error;
+
+  const detail = data.detail;
+  if (typeof detail === 'string') return detail;
+  if (Array.isArray(detail)) {
+    return detail
+      .map((item) => {
+        const location = Array.isArray(item?.loc) ? item.loc.join('.') : '';
+        return [location, item?.msg].filter(Boolean).join(': ');
+      })
+      .filter(Boolean)
+      .join('; ');
+  }
+  if (detail && typeof detail === 'object') {
+    return JSON.stringify(detail);
+  }
+
+  return fallback;
+}
+
 axiosInstance.interceptors.response.use(
   (response) => response,
   async (error) => {
@@ -65,7 +89,7 @@ axiosInstance.interceptors.response.use(
       }
 
       try {
-        const res = await axios.post(`${CONFIG.serverUrl}/auth/refresh`, {
+        const res = await axios.post(`${CONFIG.serverUrl}${endpoints.auth.refresh}`, {
           refresh_token: refreshToken,
         });
 
@@ -103,10 +127,7 @@ axiosInstance.interceptors.response.use(
     if (error?.response) {
       // Server responded with an error status
       const status = error.response.status;
-      message =
-        error.response.data?.message ||
-        error.response.data?.error ||
-        `Server error (${status})`;
+      message = formatApiError(error.response.data, `Server error (${status})`);
     } else if (error?.request) {
       // Request was made but no response received (CORS, network down, timeout)
       if (error.code === 'ECONNABORTED') {
@@ -148,7 +169,7 @@ export const fetcher = async <T = unknown>(
 export const endpoints = {
   auth: {
     signIn: '/admin/auth/login',
-    refresh: '/auth/refresh',
+    refresh: '/admin/auth/refresh',
     logout: '/auth/logout',
   },
   users: {
@@ -161,28 +182,38 @@ export const endpoints = {
     publish: (id: string) => `/admin/sections/${id}/publish`,
     duplicate: (id: string) => `/admin/sections/${id}/duplicate`,
     addPart: (sectionId: string) => `/admin/sections/${sectionId}/parts`,
-    updatePart: (sectionId: string, partId: string) => `/admin/sections/${sectionId}/parts/${partId}`,
-    deletePart: (sectionId: string, partId: string) => `/admin/sections/${sectionId}/parts/${partId}`,
-    addQuestion: (partId: string) => `/admin/parts/${partId}/questions`,
-    addQuestionsBulk: (partId: string) => `/admin/parts/${partId}/questions/bulk`,
-    updateQuestion: (partId: string, questionId: string) => `/admin/parts/${partId}/questions/${questionId}`,
-    deleteQuestion: (partId: string, questionId: string) => `/admin/parts/${partId}/questions/${questionId}`,
-    reorderQuestions: (partId: string) => `/admin/parts/${partId}/questions/reorder`,
+    updatePart: (sectionId: string, partId: string) =>
+      `/admin/sections/${sectionId}/parts/${partId}`,
+    deletePart: (sectionId: string, partId: string) =>
+      `/admin/sections/${sectionId}/parts/${partId}`,
+    addQuestion: (partId: string) => `/admin/sections/parts/${partId}/questions`,
+    addQuestionsBulk: (partId: string) => `/admin/sections/parts/${partId}/questions/bulk`,
+    updateQuestion: (partId: string, questionId: string) =>
+      `/admin/sections/parts/${partId}/questions/${questionId}`,
+    deleteQuestion: (partId: string, questionId: string) =>
+      `/admin/sections/parts/${partId}/questions/${questionId}`,
+    reorderQuestions: (partId: string) => `/admin/sections/parts/${partId}/questions/reorder`,
   },
   mockExams: {
     list: '/admin/mock-exams',
     details: (id: string) => `/admin/mock-exams/${id}`,
     publish: (id: string) => `/admin/mock-exams/${id}/publish`,
     duplicate: (id: string) => `/admin/mock-exams/${id}/duplicate`,
+    delete: (id: string) => `/admin/mock-exams/${id}`,
   },
   contests: {
     list: '/admin/contests',
     details: (id: string) => `/admin/contests/${id}`,
+    delete: (id: string) => `/admin/contests/${id}`,
     publish: (id: string) => `/admin/contests/${id}/publish`,
     start: (id: string) => `/admin/contests/${id}/start`,
     end: (id: string) => `/admin/contests/${id}/end`,
+    finalize: (id: string) => `/admin/contests/${id}/finalize`,
     leaderboard: (id: string) => `/admin/contests/${id}/leaderboard`,
     stats: (id: string) => `/admin/contests/${id}/stats`,
+  },
+  files: {
+    upload: '/admin/media/upload',
   },
   profile: {
     me: '/users/me',

@@ -8,8 +8,8 @@ import { mergeClasses } from 'minimal-shared/utils';
 import ImageExtension from '@tiptap/extension-image';
 import StarterKitExtension from '@tiptap/starter-kit';
 import TextAlignExtension from '@tiptap/extension-text-align';
-import { useMemo, useState, useEffect, useCallback } from 'react';
 import { Placeholder as PlaceholderExtension } from '@tiptap/extensions';
+import { useMemo, useState, useEffect, useContext, useCallback } from 'react';
 import CodeBlockLowlightExtension from '@tiptap/extension-code-block-lowlight';
 import { useEditor, EditorContent, ReactNodeViewRenderer } from '@tiptap/react';
 
@@ -23,8 +23,29 @@ import { editorClasses } from './classes';
 import { Toolbar } from './components/toolbar';
 import { BubbleToolbar } from './components/bubble-toolbar';
 import { CodeHighlightBlock } from './components/code-highlight-block';
+import { useQuestionNumbering } from '../questions/question-numbering';
+import { BlankNode, GlobalBlanksContext } from './extension/blank-node';
 import { ClearFormat as ClearFormatExtension } from './extension/clear-format';
 import { TextTransform as TextTransformExtension } from './extension/text-transform';
+
+// ----------------------------------------------------------------------
+
+// Convert stored blank formats to editor chips before setting content
+function toEditorHtml(html: string): string {
+  return html
+    .replace(
+      /<(?:b|strong)>\s*(\d+)\s*<\/(?:b|strong)>(?:\s|&nbsp;)*_{3,}/g,
+      '<span data-blank="$1"></span>'
+    )
+    .replace(/___(\d+)___/g, '<span data-blank="$1"></span>');
+}
+
+// Convert editor chips to the requested storage format
+function fromEditorHtml(html: string, format: EditorProps['blankOutputFormat']): string {
+  const replacement = format === 'html' ? '<b>$1</b> _____' : '___$1___';
+
+  return html.replace(/<span data-blank="(\d+)"[^>]*>[\s\S]*?<\/span>/g, replacement);
+}
 
 // ----------------------------------------------------------------------
 
@@ -38,6 +59,9 @@ export function Editor({
   className,
   editable = true,
   fullItem = false,
+  minimal = false,
+  showBlanksAsChips = false,
+  blankOutputFormat = 'token',
   immediatelyRender = false,
   ref: contentRef,
   value: initialContent = '',
@@ -49,18 +73,24 @@ export function Editor({
 
   const lowlight = useMemo(() => createLowlight(common), []);
 
+  const processedInitialContent = showBlanksAsChips
+    ? toEditorHtml(initialContent)
+    : initialContent;
+
   const debouncedOnChange = useMemo(
     () =>
       debounce((html: string) => {
-        onChange?.(html);
+        const output = showBlanksAsChips ? fromEditorHtml(html, blankOutputFormat) : html;
+        onChange?.(output);
       }, 200),
-    [onChange]
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [onChange, blankOutputFormat]
   );
 
   const editor = useEditor({
     editable,
     immediatelyRender,
-    content: initialContent,
+    content: processedInitialContent,
     shouldRerenderOnTransaction: !!rerenderKey,
     onUpdate: (ctx) => {
       const html = ctx.editor.getHTML();
@@ -81,8 +111,10 @@ export function Editor({
           HTMLAttributes: { class: editorClasses.content.link },
         },
       }),
-      TextAlignExtension.configure({ types: ['heading', 'paragraph'] }),
-      ImageExtension.configure({ HTMLAttributes: { class: editorClasses.content.image } }),
+      ...(minimal
+        ? []
+        : [TextAlignExtension.configure({ types: ['heading', 'paragraph'] })]),
+      ...(minimal ? [] : [ImageExtension.configure({ HTMLAttributes: { class: editorClasses.content.image } })]),
       PlaceholderExtension.configure({
         placeholder,
         emptyEditorClass: editorClasses.content.placeholder,
@@ -93,9 +125,32 @@ export function Editor({
       // Custom extensions
       TextTransformExtension,
       ClearFormatExtension,
+      ...(showBlanksAsChips ? [BlankNode] : []),
     ],
     ...other,
   });
+
+  const globalBlanks = useContext(GlobalBlanksContext);
+  const { nextNumber, currentQuestionOrder } = useQuestionNumbering();
+
+  const handleInsertBlank = useCallback(() => {
+    if (!editor) return;
+    const json = editor.getJSON();
+    const localUsed = new Set<number>();
+    const walk = (node: Record<string, any>) => {
+      if (node.type === 'blank') localUsed.add(node.attrs?.num ?? 0);
+      (node.content || []).forEach(walk);
+    };
+    walk(json as Record<string, any>);
+    // Gap-fill: combine local blanks + globally known blanks, find first unused
+    const used = new Set<number>([...localUsed, ...globalBlanks]);
+    let nextNum =
+      localUsed.size === 0 && currentQuestionOrder
+        ? currentQuestionOrder
+        : Math.max(nextNumber, ...used, 0);
+    while (used.has(nextNum)) nextNum += 1;
+    editor.chain().focus().insertContent({ type: 'blank', attrs: { num: nextNum } }).run();
+  }, [editor, globalBlanks, nextNumber, currentQuestionOrder]);
 
   const handleToggleFullscreen = useCallback(() => {
     editor?.unmount();
@@ -117,10 +172,12 @@ export function Editor({
   useEffect(() => {
     const timer = setTimeout(() => {
       if (!editor?.isDestroyed && editor?.isEmpty && initialContent !== '<p></p>') {
-        editor?.commands.setContent(initialContent);
+        const content = showBlanksAsChips ? toEditorHtml(initialContent) : initialContent;
+        editor?.commands.setContent(content);
       }
     }, 200);
     return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initialContent, editor]);
 
   useEffect(() => {
@@ -168,6 +225,8 @@ export function Editor({
                 editor={editor}
                 fullItem={fullItem}
                 fullscreen={fullscreen}
+                minimal={minimal}
+                onInsertBlank={showBlanksAsChips ? handleInsertBlank : undefined}
                 onToggleFullscreen={handleToggleFullscreen}
               />
               <BubbleToolbar editor={editor} />

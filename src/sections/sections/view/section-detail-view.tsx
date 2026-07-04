@@ -3,7 +3,7 @@
 import type { ISection } from 'src/types/section';
 
 import { useRouter } from 'next/navigation';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
 import Box from '@mui/material/Box';
 import Card from '@mui/material/Card';
@@ -24,10 +24,14 @@ import axiosInstance, { endpoints } from 'src/lib/axios';
 import { DashboardContent } from 'src/layouts/dashboard';
 
 import { Label } from 'src/components/label';
+import { toast } from 'src/components/snackbar';
 import { Iconify } from 'src/components/iconify';
 import { CustomBreadcrumbs } from 'src/components/custom-breadcrumbs';
 
-import { SECTION_TYPES, SECTION_COLORS, QUESTION_TYPES } from 'src/types/section';
+import { SECTION_TYPES, SECTION_COLORS } from 'src/types/section';
+
+import { QuestionDetailPreview } from './question-detail-preview';
+import { getPartContextLabel, getPartDisplayTitle } from '../utils/section-display';
 
 // ----------------------------------------------------------------------
 
@@ -35,12 +39,25 @@ type Props = { id: string };
 
 export function SectionDetailView({ id }: Props) {
   const router = useRouter();
+  const queryClient = useQueryClient();
 
   const { data, isLoading, error } = useQuery({
     queryKey: ['section', id],
     queryFn: async () => {
       const res = await axiosInstance.get(endpoints.sections.details(id));
       return res.data?.data as ISection;
+    },
+  });
+
+  const { mutate: publishSection, isPending: isPublishing } = useMutation({
+    mutationFn: () => axiosInstance.post(endpoints.sections.publish(id)),
+    onSuccess: () => {
+      toast.success('Section published successfully!');
+      queryClient.invalidateQueries({ queryKey: ['section', id] });
+      queryClient.invalidateQueries({ queryKey: ['sections'] });
+    },
+    onError: (err: Error) => {
+      toast.error(err.message || 'Failed to publish section');
     },
   });
 
@@ -54,13 +71,26 @@ export function SectionDetailView({ id }: Props) {
           { name: data?.title || 'Details' },
         ]}
         action={
-          <Button
-            variant="contained"
-            startIcon={<Iconify icon="solar:pen-bold" />}
-            onClick={() => router.push(paths.dashboard.sections.edit(id))}
-          >
-            Edit
-          </Button>
+          <Stack direction="row" spacing={1}>
+            {data && !data.is_published && (
+              <Button
+                variant="contained"
+                color="success"
+                loading={isPublishing}
+                startIcon={<Iconify icon="solar:flag-bold" />}
+                onClick={() => publishSection()}
+              >
+                Publish
+              </Button>
+            )}
+            <Button
+              variant="contained"
+              startIcon={<Iconify icon="solar:pen-bold" />}
+              onClick={() => router.push(paths.dashboard.sections.edit(id))}
+            >
+              Edit
+            </Button>
+          </Stack>
         }
         sx={{ mb: { xs: 3, md: 5 } }}
       />
@@ -93,7 +123,7 @@ export function SectionDetailView({ id }: Props) {
                 <InfoRow label="Difficulty" value={data.difficulty || '\u2014'} />
                 <InfoRow label="Status" value={data.is_published ? 'Published' : 'Draft'} />
                 <InfoRow label="Total Questions" value={String(data.total_questions ?? 0)} />
-                {data.audio_url && <InfoRow label="Audio" value={data.audio_url} />}
+                {data.audio_url && <AudioPreview audioUrl={data.audio_url} />}
                 {data.tags && data.tags.length > 0 && (
                   <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap' }}>
                     {data.tags.map((tag) => (
@@ -107,74 +137,77 @@ export function SectionDetailView({ id }: Props) {
 
           <Grid size={{ xs: 12, md: 8 }}>
             <Stack spacing={2}>
-              {data.parts?.map((part, pi) => (
-                <Accordion key={part.id || pi} defaultExpanded={pi === 0}>
-                  <AccordionSummary expandIcon={<Iconify icon="eva:arrow-ios-downward-fill" />}>
-                    <Stack direction="row" spacing={1.5} alignItems="center" sx={{ width: 1 }}>
-                      <Typography variant="subtitle1">{part.title || `Part ${pi + 1}`}</Typography>
-                      <Chip
-                        label={`${part.questions?.length ?? 0} questions`}
-                        size="small"
-                        variant="outlined"
-                      />
-                    </Stack>
-                  </AccordionSummary>
-                  <AccordionDetails>
-                    {part.instructions && (
-                      <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                        {part.instructions}
-                      </Typography>
-                    )}
-                    {part.passage_text && (
-                      <Typography
-                        variant="body2"
-                        sx={{
-                          mb: 2,
-                          p: 2,
-                          bgcolor: 'background.neutral',
-                          borderRadius: 1,
-                          maxHeight: 200,
-                          overflow: 'auto',
-                        }}
-                      >
-                        {part.passage_text}
-                      </Typography>
-                    )}
-                    {part.questions?.map((q, qi) => (
-                      <Box
-                        key={q.id || qi}
-                        sx={{
-                          p: 1.5,
-                          mb: 1,
-                          border: '1px solid',
-                          borderColor: 'divider',
-                          borderRadius: 1,
-                        }}
-                      >
-                        <Stack direction="row" spacing={1} alignItems="center">
-                          <Typography variant="caption" sx={{ fontWeight: 700 }}>
-                            Q{q.order || qi + 1}
+              {data.parts?.map((part, pi) => {
+                const contextLabel = getPartContextLabel({
+                  part,
+                  sectionTitle: data.title,
+                  sectionType: data.section_type,
+                });
+
+                return (
+                  <Accordion key={part.id || pi} defaultExpanded={pi === 0}>
+                    <AccordionSummary expandIcon={<Iconify icon="eva:arrow-ios-downward-fill" />}>
+                      <Stack direction="row" spacing={1.5} alignItems="center" sx={{ width: 1 }}>
+                        <Box sx={{ minWidth: 0, flex: 1 }}>
+                          <Typography variant="subtitle1" noWrap>
+                            {getPartDisplayTitle({
+                              part,
+                              partIndex: pi,
+                              sectionType: data.section_type,
+                            })}
                           </Typography>
-                          <Label variant="outlined" color="default" sx={{ fontSize: 11 }}>
-                            {QUESTION_TYPES[q.question_type] || q.question_type}
-                          </Label>
-                          <Typography variant="body2" sx={{ flex: 1 }} noWrap>
-                            {q.text}
-                          </Typography>
-                          <Typography variant="caption" color="text.secondary">
-                            {q.points} pt
-                          </Typography>
-                        </Stack>
-                      </Box>
-                    ))}
-                    {(!part.questions || part.questions.length === 0) && (
-                      <Typography variant="body2" color="text.disabled">
-                        No questions
-                      </Typography>
-                    )}
-                  </AccordionDetails>
-                </Accordion>
-              ))}
+                          {contextLabel && (
+                            <Typography variant="caption" color="text.secondary" noWrap>
+                              {contextLabel}
+                            </Typography>
+                          )}
+                        </Box>
+                        <Chip
+                          label={`${part.questions?.length ?? 0} questions`}
+                          size="small"
+                          variant="outlined"
+                        />
+                      </Stack>
+                    </AccordionSummary>
+                    <AccordionDetails>
+                      {part.instructions && (
+                        <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                          {part.instructions}
+                        </Typography>
+                      )}
+                      {part.passage_text && (
+                        <Box
+                          sx={{
+                            mb: 2,
+                            p: 2,
+                            bgcolor: 'background.neutral',
+                            borderRadius: 1,
+                            maxHeight: 200,
+                            overflow: 'auto',
+                            typography: 'body2',
+                            '& p': { my: 1 },
+                          }}
+                          dangerouslySetInnerHTML={{ __html: part.passage_text }}
+                        />
+                      )}
+                      <Stack spacing={1.5}>
+                        {part.questions?.map((question, qi) => (
+                          <QuestionDetailPreview
+                            key={question.id || qi}
+                            question={question}
+                            fallbackOrder={qi + 1}
+                          />
+                        ))}
+                      </Stack>
+                      {(!part.questions || part.questions.length === 0) && (
+                        <Typography variant="body2" color="text.disabled">
+                          No questions
+                        </Typography>
+                      )}
+                    </AccordionDetails>
+                  </Accordion>
+                );
+              })}
             </Stack>
           </Grid>
         </Grid>
@@ -187,13 +220,66 @@ export function SectionDetailView({ id }: Props) {
 
 function InfoRow({ label, value }: { label: string; value: string }) {
   return (
-    <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+    <Box sx={{ display: 'flex', justifyContent: 'space-between', gap: 2 }}>
       <Typography variant="body2" color="text.secondary">
         {label}
       </Typography>
-      <Typography variant="body2" sx={{ textTransform: 'capitalize' }}>
+      <Typography variant="body2" sx={{ textTransform: 'capitalize', textAlign: 'right' }}>
         {value}
       </Typography>
     </Box>
+  );
+}
+
+function AudioPreview({ audioUrl }: { audioUrl: string }) {
+  return (
+    <Stack spacing={1}>
+      <Typography variant="body2" color="text.secondary">
+        Audio
+      </Typography>
+
+      <Box
+        sx={{
+          p: 1.5,
+          border: '1px solid',
+          borderColor: 'divider',
+          borderRadius: 1.5,
+          bgcolor: 'background.neutral',
+        }}
+      >
+        <Stack spacing={1.25}>
+          <Stack direction="row" spacing={1} alignItems="center">
+            <Box
+              sx={{
+                width: 36,
+                height: 36,
+                borderRadius: 1,
+                display: 'grid',
+                placeItems: 'center',
+                color: 'info.main',
+                bgcolor: 'info.lighter',
+                flexShrink: 0,
+              }}
+            >
+              <Iconify icon="solar:headphones-round-bold" width={20} />
+            </Box>
+
+            <Box sx={{ minWidth: 0, flex: 1 }}>
+              <Typography variant="subtitle2" noWrap>
+                Listening audio
+              </Typography>
+            </Box>
+          </Stack>
+
+          <Box
+            component="audio"
+            controls
+            src={audioUrl}
+            preload="metadata"
+            sx={{ width: 1, display: 'block' }}
+          />
+        </Stack>
+      </Box>
+    </Stack>
   );
 }

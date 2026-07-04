@@ -152,7 +152,7 @@ export const SnackbarRoot = styled(Toaster)(({ theme }) => ({
   '@keyframes rotate': {
     to: { transform: 'rotate(1turn)' },
   },
-  width: 300,
+  width: 260,
   ...toastStyles(theme),
   ...iconStyles(theme),
   ...contentStyles(theme),

@@ -89,25 +89,31 @@ export interface ISection {
   updated_at?: string;
 }
 
+export interface IExamSection {
+  order: number;
+  section_type: SectionType | `SectionType.${Uppercase<SectionType>}` | string;
+  section_id: string;
+  title: string;
+  question_count: number;
+}
+
 export interface IExam {
   id: string;
   title: string;
   exam_type: ExamType;
-  mode: ExamMode;
+  mode?: ExamMode | null;
   description?: string | null;
   status: ExamStatus;
   duration_minutes: number;
   scheduled_at?: string | null;
   ends_at?: string | null;
+  registration_deadline?: string | null;
+  max_participants?: number | null;
   contest_status?: ContestStatus | null;
-  sections: {
-    order: number;
-    section_type: SectionType;
-    section_id: string;
-    title: string;
-    question_count: number;
-  }[];
-  total_questions: number;
+  // List endpoint returns sections_count; detail endpoint returns sections array
+  sections_count?: number | null;
+  sections?: IExamSection[] | null;
+  total_questions?: number | null;
   created_at: string;
 }
 
@@ -187,7 +193,7 @@ export const SECTION_PART_COUNTS: Record<SectionType, { min: number; max: number
 };
 
 export const SECTION_DURATIONS: Record<SectionType, number> = {
-  listening: 30,
+  listening: 32,
   reading: 60,
   writing: 60,
   speaking: 15,

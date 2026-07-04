@@ -2,12 +2,15 @@
 
 import type { QuestionType } from 'src/types/section';
 
-import { useFieldArray, useFormContext } from 'react-hook-form';
+import { useState, useEffect } from 'react';
+import { useWatch, useFieldArray, useFormContext } from 'react-hook-form';
 
 import Stack from '@mui/material/Stack';
+import Alert from '@mui/material/Alert';
 import Button from '@mui/material/Button';
 import Divider from '@mui/material/Divider';
 import MenuItem from '@mui/material/MenuItem';
+import TextField from '@mui/material/TextField';
 import IconButton from '@mui/material/IconButton';
 import Typography from '@mui/material/Typography';
 
@@ -16,6 +19,43 @@ import { RHFSelect } from 'src/components/hook-form/rhf-select';
 import { RHFTextField } from 'src/components/hook-form/rhf-text-field';
 
 type Props = { prefix: string; questionType: QuestionType };
+
+function JsonMetadataField({ prefix, name, label }: { prefix: string; name: string; label: string }) {
+  const { control, setValue } = useFormContext();
+  const fieldName = `${prefix}.metadata.${name}`;
+  const value = useWatch({ control, name: fieldName });
+  const [rawValue, setRawValue] = useState('');
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    setRawValue(value == null ? '' : JSON.stringify(value, null, 2));
+  }, [value]);
+
+  if (value == null) return null;
+
+  return (
+    <Stack spacing={1}>
+      <Typography variant="subtitle2">{label}</Typography>
+      <TextField
+        multiline
+        minRows={4}
+        value={rawValue}
+        error={Boolean(error)}
+        helperText={error || 'Saved as JSON'}
+        onChange={(event) => {
+          const next = event.target.value;
+          setRawValue(next);
+          try {
+            setValue(fieldName, next ? JSON.parse(next) : null, { shouldDirty: true });
+            setError('');
+          } catch {
+            setError("JSON format is invalid");
+          }
+        }}
+      />
+    </Stack>
+  );
+}
 
 function FollowUpsList({ prefix }: { prefix: string }) {
   const { control } = useFormContext();
@@ -101,6 +141,8 @@ export function SpeakingFields({ prefix, questionType }: Props) {
         </Stack>
         <Divider />
         <FollowUpsList prefix={prefix} />
+        <JsonMetadataField prefix={prefix} name="topics" label="Live Topics JSON" />
+        <JsonMetadataField prefix={prefix} name="grading_criteria" label="Grading Criteria JSON" />
       </Stack>
     );
   }
@@ -136,6 +178,16 @@ export function SpeakingFields({ prefix, questionType }: Props) {
           name={`${prefix}.metadata.rounding_off_question`}
           label="Rounding-off Question"
         />
+        <Alert severity="info" variant="outlined">
+          Cue card data is preserved in the live API metadata format.
+        </Alert>
+        <JsonMetadataField prefix={prefix} name="cue_card" label="Live Cue Card JSON" />
+        <JsonMetadataField
+          prefix={prefix}
+          name="rounding_off_questions"
+          label="Rounding-off Questions JSON"
+        />
+        <JsonMetadataField prefix={prefix} name="grading_criteria" label="Grading Criteria JSON" />
       </Stack>
     );
   }
@@ -161,6 +213,12 @@ export function SpeakingFields({ prefix, questionType }: Props) {
       </Stack>
       <Divider />
       <FollowUpsList prefix={prefix} />
+      <JsonMetadataField
+        prefix={prefix}
+        name="discussion_topics"
+        label="Live Discussion Topics JSON"
+      />
+      <JsonMetadataField prefix={prefix} name="grading_criteria" label="Grading Criteria JSON" />
     </Stack>
   );
 }

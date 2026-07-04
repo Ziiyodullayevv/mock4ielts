@@ -2,10 +2,10 @@
 
 import type { SectionType, QuestionType } from 'src/types/section';
 
-import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { useRef, useMemo, useState, useEffect } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { useForm, useFieldArray, useFormContext } from 'react-hook-form';
+import { useForm, useWatch, useFieldArray, useFormContext } from 'react-hook-form';
 
 import Box from '@mui/material/Box';
 import Card from '@mui/material/Card';
@@ -17,6 +17,7 @@ import Accordion from '@mui/material/Accordion';
 import Typography from '@mui/material/Typography';
 import IconButton from '@mui/material/IconButton';
 import LoadingButton from '@mui/lab/LoadingButton';
+import LinearProgress from '@mui/material/LinearProgress';
 import AccordionSummary from '@mui/material/AccordionSummary';
 import AccordionDetails from '@mui/material/AccordionDetails';
 
@@ -24,9 +25,22 @@ import { paths } from 'src/routes/paths';
 
 import axiosInstance, { endpoints } from 'src/lib/axios';
 
+import { toast } from 'src/components/snackbar';
 import { Iconify } from 'src/components/iconify';
 import { Form, Field } from 'src/components/hook-form';
+import { RHFEditor } from 'src/components/hook-form/rhf-editor';
 import { QuestionFormRenderer } from 'src/components/questions';
+import {
+  GlobalBlanksContext,
+  extractBlanksFromQuestions,
+} from 'src/components/editor/extension/blank-node';
+import {
+  useQuestionNumbering,
+  formatQuestionNumbers,
+  getQuestionDisplayNumbers,
+  QuestionNumberingProvider,
+  getNextSectionQuestionNumber,
+} from 'src/components/questions/question-numbering';
 
 import {
   SECTION_TYPES,
@@ -35,6 +49,14 @@ import {
   SECTION_PART_COUNTS,
   SECTION_ALLOWED_TYPES,
 } from 'src/types/section';
+
+import { getPartContextLabel, getPartDisplayTitle } from './utils/section-display';
+import {
+  buildPartPayload,
+  buildSectionPayload,
+  buildQuestionPayload,
+  getDefaultQuestionFormValues,
+} from './utils/section-form';
 
 // ----------------------------------------------------------------------
 
@@ -122,73 +144,28 @@ export function SectionCreateForm() {
   const { mutate, isPending } = useMutation({
     mutationFn: (data: FormValues) => {
       const payload = {
-        section_type: data.section_type,
-        exam_type: data.exam_type,
-        title: data.title,
-        instructions: data.instructions || null,
-        audio_url: data.audio_url || null,
-        duration_minutes: data.duration_minutes || null,
-        difficulty: data.difficulty || null,
-        tags: data.tags
-          ? data.tags
-              .split(',')
-              .map((t) => t.trim())
-              .filter(Boolean)
-          : null,
+        ...buildSectionPayload(data),
         parts: data.parts.map((part, pi) => ({
-          title: part.title,
-          instructions: part.instructions || null,
-          passage_text: part.passage_text || null,
-          audio_url: part.audio_url || null,
-          audio_start_time: part.audio_start_time ? Number(part.audio_start_time) : null,
-          audio_end_time: part.audio_end_time ? Number(part.audio_end_time) : null,
-          image_url: part.image_url || null,
-          order: pi,
-          questions: part.questions.map((q, qi) => {
-            const meta = q.metadata && Object.keys(q.metadata).length ? { ...q.metadata } : null;
-
-            // Auto-derive metadata.blanks for diagram_completion
-            if (q.question_type === 'diagram_completion' && q.correct_answer && meta) {
-              meta.blanks = Object.keys(q.correct_answer).sort(
-                (a, b) => Number(a) - Number(b)
-              );
-            }
-
-            // Ensure word_limit is a number
-            if (meta?.word_limit) {
-              meta.word_limit = Number(meta.word_limit);
-            }
-
-            // Ensure select_count is a number
-            if (meta?.select_count) {
-              meta.select_count = Number(meta.select_count);
-            }
-
-            return {
-              question_type: q.question_type,
-              text: q.text,
-              options: q.options?.length ? q.options : null,
-              correct_answer: q.correct_answer,
-              explanation: q.explanation || null,
-              points: Number(q.points) || 1,
-              order: q.order ? Number(q.order) : qi + 1,
-              metadata: meta,
-              image_url: q.image_url || null,
-            };
-          }),
+          ...buildPartPayload(part, pi),
+          questions: part.questions.map((q, qi) => buildQuestionPayload(q, qi)),
         })),
       };
       return axiosInstance.post(endpoints.sections.list, payload);
     },
     onSuccess: () => {
+      toast.success('Section created successfully');
       queryClient.invalidateQueries({ queryKey: ['sections'] });
       router.push(paths.dashboard.sections.root);
+    },
+    onError: (error) => {
+      toast.error(error.message || 'Failed to create section');
     },
   });
 
   const onSubmit = handleSubmit((data) => mutate(data));
 
   const availableTypes = watchedSectionType ? SECTION_ALLOWED_TYPES[watchedSectionType] : [];
+  const nextQuestionNumber = getNextSectionQuestionNumber(watch('parts') || []);
 
   return (
     <Form methods={methods} onSubmit={onSubmit}>
@@ -214,24 +191,13 @@ export function SectionCreateForm() {
               <Field.Text name="title" label="Title *" />
               <Field.Text name="instructions" label="Instructions" multiline rows={3} />
 
-              {watchedSectionType === 'listening' && (
-                <Field.Text name="audio_url" label="Audio URL" placeholder="https://..." />
-              )}
-
-              <Field.Text name="duration_minutes" label="Duration (minutes)" type="number" />
+              {watchedSectionType === 'listening' && <AudioUploadField prefix="" />}
 
               <Field.Select name="difficulty" label="Difficulty">
                 <MenuItem value="easy">Easy</MenuItem>
                 <MenuItem value="medium">Medium</MenuItem>
                 <MenuItem value="hard">Hard</MenuItem>
               </Field.Select>
-
-              <Field.Text
-                name="tags"
-                label="Tags"
-                placeholder="cambridge_18, test_1"
-                helperText="Comma-separated"
-              />
             </Stack>
           </Card>
         </Grid>
@@ -249,7 +215,10 @@ export function SectionCreateForm() {
                 key={partField.id}
                 partIndex={partIndex}
                 sectionType={watchedSectionType}
+                sectionTitle={watch('title')}
+                examType={watch('exam_type')}
                 availableTypes={availableTypes}
+                nextQuestionNumber={nextQuestionNumber}
               />
             ))}
           </Stack>
@@ -284,14 +253,36 @@ export function SectionCreateForm() {
 function PartAccordion({
   partIndex,
   sectionType,
+  sectionTitle,
+  examType,
   availableTypes,
+  nextQuestionNumber,
 }: {
   partIndex: number;
   sectionType: SectionType;
+  sectionTitle: string;
+  examType: string;
   availableTypes: QuestionType[];
+  nextQuestionNumber: number;
 }) {
   const { control, watch } = useFormContext();
   const partTitle = watch(`parts.${partIndex}.title`);
+  const questions: QuestionFormValues[] =
+    useWatch({ control, name: `parts.${partIndex}.questions` }) || [];
+  const questionCount = questions.reduce(
+    (total, question) => total + (Number(question.points) || 1),
+    0
+  );
+  const displayTitle = getPartDisplayTitle({
+    part: { title: partTitle },
+    partIndex,
+    sectionType,
+  });
+  const contextLabel = getPartContextLabel({
+    part: { title: partTitle },
+    sectionTitle,
+    sectionType,
+  });
 
   const {
     fields: questionFields,
@@ -300,104 +291,175 @@ function PartAccordion({
   } = useFieldArray({ control, name: `parts.${partIndex}.questions` });
 
   return (
-    <Accordion defaultExpanded={partIndex === 0}>
-      <AccordionSummary expandIcon={<Iconify icon="eva:arrow-ios-downward-fill" />}>
-        <Stack direction="row" spacing={1.5} alignItems="center">
-          <Typography variant="subtitle1">{partTitle || `Part ${partIndex + 1}`}</Typography>
-          <Typography variant="caption" color="text.secondary">
-            ({questionFields.length} questions)
-          </Typography>
-        </Stack>
-      </AccordionSummary>
+    <QuestionNumberingProvider value={{ nextNumber: nextQuestionNumber }}>
+      <Accordion defaultExpanded={partIndex === 0}>
+        <AccordionSummary expandIcon={<Iconify icon="eva:arrow-ios-downward-fill" />}>
+          <Stack direction="row" spacing={1.5} alignItems="center" sx={{ minWidth: 0 }}>
+            <Box sx={{ minWidth: 0 }}>
+              <Typography variant="subtitle1" noWrap>
+                {displayTitle}
+              </Typography>
+              {contextLabel && (
+                <Typography variant="caption" color="text.secondary" noWrap>
+                  {contextLabel}
+                </Typography>
+              )}
+            </Box>
+            <Typography variant="caption" color="text.secondary" sx={{ flexShrink: 0 }}>
+              ({questionCount} questions)
+            </Typography>
+          </Stack>
+        </AccordionSummary>
 
-      <AccordionDetails>
-        <Stack spacing={2.5}>
-          <Field.Text name={`parts.${partIndex}.title`} label="Part Title" size="small" />
-          <Field.Text
-            name={`parts.${partIndex}.instructions`}
-            label="Instructions"
-            multiline
-            rows={2}
-            size="small"
-          />
-
-          {sectionType === 'reading' && (
+        <AccordionDetails>
+          <Stack spacing={2.5}>
+            <Field.Text name={`parts.${partIndex}.title`} label="Part Title" size="small" />
             <Field.Text
-              name={`parts.${partIndex}.passage_text`}
-              label="Passage Text"
+              name={`parts.${partIndex}.instructions`}
+              label="Instructions"
               multiline
-              rows={5}
+              rows={2}
               size="small"
             />
-          )}
 
-          {sectionType === 'listening' && (
-            <Stack direction="row" spacing={2}>
-              <Field.Text
-                name={`parts.${partIndex}.audio_url`}
-                label="Part Audio URL"
-                size="small"
-              />
-              <Field.Text
-                name={`parts.${partIndex}.audio_start_time`}
-                label="Start (sec)"
-                type="number"
-                size="small"
-                sx={{ maxWidth: 130 }}
-              />
-              <Field.Text
-                name={`parts.${partIndex}.audio_end_time`}
-                label="End (sec)"
-                type="number"
-                size="small"
-                sx={{ maxWidth: 130 }}
-              />
-            </Stack>
-          )}
+            {sectionType === 'reading' && (
+              <Stack spacing={1}>
+                <Typography variant="subtitle2">Reading passage</Typography>
+                <Typography variant="caption" color="text.secondary">
+                  Write and format the passage as it should appear to students. HTML knowledge is
+                  not required.
+                </Typography>
+                <RHFEditor
+                  name={`parts.${partIndex}.passage_text`}
+                  placeholder="Write or paste the reading passage here..."
+                  sx={{ minHeight: 420 }}
+                />
+              </Stack>
+            )}
 
-          {sectionType === 'writing' && partIndex === 0 && (
-            <Field.Text
-              name={`parts.${partIndex}.image_url`}
-              label="Image URL (chart/graph)"
+            {/* Questions */}
+            {questionFields.map((qField, qIndex) => (
+              <QuestionItem
+                key={qField.id}
+                partIndex={partIndex}
+                questionIndex={qIndex}
+                availableTypes={availableTypes}
+                onRemove={() => removeQuestion(qIndex)}
+              />
+            ))}
+
+            <Button
               size="small"
-            />
-          )}
+              variant="outlined"
+              startIcon={<Iconify icon="mingcute:add-line" />}
+              onClick={() =>
+                appendQuestion(
+                  getDefaultQuestionFormValues({
+                    sectionType,
+                    examType,
+                    partIndex,
+                    order: nextQuestionNumber,
+                  })
+                )
+              }
+              sx={{ alignSelf: 'flex-start' }}
+            >
+              Add Question
+            </Button>
+          </Stack>
+        </AccordionDetails>
+      </Accordion>
+    </QuestionNumberingProvider>
+  );
+}
 
-          {/* Questions */}
-          {questionFields.map((qField, qIndex) => (
-            <QuestionItem
-              key={qField.id}
-              partIndex={partIndex}
-              questionIndex={qIndex}
-              availableTypes={availableTypes}
-              onRemove={() => removeQuestion(qIndex)}
-            />
-          ))}
+// ----------------------------------------------------------------------
+// Audio Upload Field
+// ----------------------------------------------------------------------
 
-          <Button
-            size="small"
-            variant="outlined"
-            startIcon={<Iconify icon="mingcute:add-line" />}
-            onClick={() =>
-              appendQuestion({
-                question_type: '',
-                text: '',
-                options: [],
-                correct_answer: null,
-                explanation: '',
-                points: 1,
-                order: questionFields.length + 1,
-                metadata: {},
-                image_url: '',
-              })
-            }
-            sx={{ alignSelf: 'flex-start' }}
-          >
-            Add Question
-          </Button>
-        </Stack>
-      </AccordionDetails>
-    </Accordion>
+function AudioUploadField({ prefix }: { prefix: string }) {
+  const { setValue, watch } = useFormContext();
+  const audioUrl = watch(`${prefix}.audio_url`) || '';
+  const [uploading, setUploading] = useState(false);
+  const [progress, setProgress] = useState(0);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  const handleUpload = async (file: File) => {
+    setUploading(true);
+    setProgress(0);
+
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const res = await axiosInstance.post(endpoints.files.upload, formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+        onUploadProgress: (e) => {
+          if (e.total) setProgress(Math.round((e.loaded * 100) / e.total));
+        },
+      });
+
+      const url = res.data?.data?.url || res.data?.url || '';
+      if (url) {
+        setValue(`${prefix}.audio_url`, url, { shouldDirty: true });
+        toast.success('Audio uploaded');
+      }
+    } catch (err: any) {
+      toast.error(err.message || 'Upload failed');
+    } finally {
+      setUploading(false);
+      setProgress(0);
+    }
+  };
+
+  return (
+    <Stack spacing={1}>
+      <Stack direction="row" spacing={1.5} alignItems="center">
+        <Button
+          size="small"
+          variant="outlined"
+          startIcon={<Iconify icon="eva:cloud-upload-fill" />}
+          onClick={() => inputRef.current?.click()}
+          disabled={uploading}
+        >
+          {uploading ? `Uploading… ${progress}%` : 'Upload Audio'}
+        </Button>
+
+        {audioUrl && (
+          <Stack direction="row" spacing={0.5} alignItems="center" sx={{ flex: 1, minWidth: 0 }}>
+            <Iconify icon="eva:checkmark-fill" sx={{ color: 'success.main' }} />
+            <Typography
+              variant="caption"
+              noWrap
+              sx={{ flex: 1, minWidth: 0, color: 'text.secondary' }}
+            >
+              {audioUrl}
+            </Typography>
+            <IconButton
+              size="small"
+              color="error"
+              onClick={() => setValue(`${prefix}.audio_url`, '', { shouldDirty: true })}
+            >
+              <Iconify icon="mingcute:close-line" width={16} />
+            </IconButton>
+          </Stack>
+        )}
+
+        <input
+          ref={inputRef}
+          type="file"
+          accept="audio/*"
+          hidden
+          onChange={(e) => {
+            const file = e.target.files?.[0];
+            if (file) handleUpload(file);
+            e.target.value = '';
+          }}
+        />
+      </Stack>
+
+      {uploading && <LinearProgress variant="determinate" value={progress} />}
+    </Stack>
   );
 }
 
@@ -416,52 +478,45 @@ function QuestionItem({
   availableTypes: QuestionType[];
   onRemove: () => void;
 }) {
-  const { watch } = useFormContext();
+  const { control, watch } = useFormContext();
+  const { nextNumber } = useQuestionNumbering();
   const prefix = `parts.${partIndex}.questions.${questionIndex}`;
   const questionType = watch(`${prefix}.question_type`) as QuestionType;
+  const question = watch(prefix);
+  const questionOrder = Number(question?.order) || questionIndex + 1;
+  const questionLabel = formatQuestionNumbers(getQuestionDisplayNumbers(question));
+
+  // Watch every question in the section so blank numbering stays globally unique
+  const allParts = useWatch({ control, name: 'parts' }) as any[] | undefined;
+  const globalBlanks = useMemo(
+    () => extractBlanksFromQuestions((allParts || []).flatMap((part) => part?.questions || [])),
+    [allParts]
+  );
 
   return (
-    <Card variant="outlined" sx={{ p: 2 }}>
-      <Stack spacing={2}>
-        <Stack direction="row" justifyContent="space-between" alignItems="center">
-          <Typography variant="subtitle2">Question {questionIndex + 1}</Typography>
-          <IconButton color="error" size="small" onClick={onRemove}>
-            <Iconify icon="solar:trash-bin-trash-bold" />
-          </IconButton>
-        </Stack>
+    <QuestionNumberingProvider value={{ nextNumber, currentQuestionOrder: questionOrder }}>
+      <GlobalBlanksContext.Provider value={globalBlanks}>
+        <Card variant="outlined" sx={{ p: 2 }}>
+          <Stack spacing={2}>
+            <Stack direction="row" justifyContent="space-between" alignItems="center">
+              <Typography variant="subtitle2">{questionLabel}</Typography>
+              <IconButton color="error" size="small" onClick={onRemove}>
+                <Iconify icon="solar:trash-bin-trash-bold" />
+              </IconButton>
+            </Stack>
 
-        <Stack direction="row" spacing={2}>
-          <Field.Select
-            name={`${prefix}.question_type`}
-            label="Question Type"
-            size="small"
-            sx={{ minWidth: 260 }}
-          >
-            {availableTypes.map((t) => (
-              <MenuItem key={t} value={t}>
-                {QUESTION_TYPES[t]}
-              </MenuItem>
-            ))}
-          </Field.Select>
+            <Field.Select name={`${prefix}.question_type`} label="Question Type" size="small">
+              {availableTypes.map((t) => (
+                <MenuItem key={t} value={t}>
+                  {QUESTION_TYPES[t]}
+                </MenuItem>
+              ))}
+            </Field.Select>
 
-          <Field.Text
-            name={`${prefix}.points`}
-            label="Points"
-            type="number"
-            size="small"
-            sx={{ maxWidth: 100 }}
-          />
-          <Field.Text
-            name={`${prefix}.order`}
-            label="Order"
-            type="number"
-            size="small"
-            sx={{ maxWidth: 100 }}
-          />
-        </Stack>
-
-        {questionType && <QuestionFormRenderer questionType={questionType} prefix={prefix} />}
-      </Stack>
-    </Card>
+            {questionType && <QuestionFormRenderer questionType={questionType} prefix={prefix} />}
+          </Stack>
+        </Card>
+      </GlobalBlanksContext.Provider>
+    </QuestionNumberingProvider>
   );
 }

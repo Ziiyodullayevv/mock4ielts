@@ -46,6 +46,7 @@ export const paths = {
     profile: `${ROOTS.DASHBOARD}/profile`,
     users: {
       root: `${ROOTS.DASHBOARD}/users`,
+      new: `${ROOTS.DASHBOARD}/users/new`,
       details: (id: string) => `${ROOTS.DASHBOARD}/users/${id}`,
       edit: (id: string) => `${ROOTS.DASHBOARD}/users/${id}/edit`,
     },
