@@ -1,44 +1,51 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Mock4IELTS
 
-## Getting Started
+Mock4IELTS is a Next.js monorepo for the public IELTS preparation platform and
+its admin panel.
 
-First, run the development server:
+## Apps
+
+- `.` - public learner-facing web app
+- `apps/admin` - dashboard for sections, users, contests, and mock exams
+
+## Requirements
+
+- Node.js 22+
+- npm for the public web app
+- Yarn 1.x for the admin app
+
+## Development
+
+Run the public web app:
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open `http://localhost:3000`.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Run the admin panel:
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+npm run admin:install
+npm run admin:dev
+```
 
-## Learn More
+Open `http://localhost:8083`.
 
-To learn more about Next.js, take a look at the following resources:
+## Checks
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```bash
+npm run lint
+npm run build
+npm run admin:lint
+npm run admin:build
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Deployment
 
-## Deploy on Vercel
+The root app builds the `ghcr.io/ziiyodullayevv/mock4ielts` image.
+The admin app builds the `ghcr.io/ziiyodullayevv/mock4ielts-admin-panel` image.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
-
-<!--
-1️⃣ Study
-2️⃣ Speaking test
-3️⃣ Listening practice
-4️⃣ Writing task
-5️⃣ High band result -->
-# mock4ielts
+The GitHub Actions workflow validates both apps and publishes both images on
+successful pushes to `main`.

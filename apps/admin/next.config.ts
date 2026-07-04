@@ -34,6 +34,7 @@ const nextConfig: NextConfig = {
   },
   // With --turbopack (next dev --turbopack)
   turbopack: {
+    root: process.cwd(),
     rules: {
       '*.svg': {
         loaders: ['@svgr/webpack'],

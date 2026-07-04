@@ -4,11 +4,19 @@
   "private": true,
   "scripts": {
     "dev": "next dev --turbopack",
+    "dev:web": "next dev --turbopack",
     "dev:webpack": "next dev --webpack",
     "dev:turbo": "next dev --turbopack",
     "build": "next build --webpack",
+    "build:web": "next build --webpack",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint src",
+    "lint:web": "eslint src",
+    "admin:install": "cd apps/admin && corepack yarn install --frozen-lockfile",
+    "admin:dev": "cd apps/admin && corepack yarn dev",
+    "admin:build": "cd apps/admin && corepack yarn build",
+    "admin:lint": "cd apps/admin && corepack yarn lint",
+    "admin:start": "cd apps/admin && corepack yarn start"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
