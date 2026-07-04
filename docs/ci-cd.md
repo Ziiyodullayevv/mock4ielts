@@ -18,6 +18,11 @@ On pushes to `main`, the workflow also builds and pushes:
 - `ghcr.io/ziiyodullayevv/mock4ielts`
 - `ghcr.io/ziiyodullayevv/mock4ielts-admin-panel`
 
+Build contexts:
+
+- web: `apps/web`
+- admin: `apps/admin`
+
 ## CD
 
 `CD` runs after a successful `CI` run on `main` and can also be started

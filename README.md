@@ -5,7 +5,7 @@ its admin panel.
 
 ## Apps
 
-- `.` - public learner-facing web app
+- `apps/web` - public learner-facing web app
 - `apps/admin` - dashboard for sections, users, contests, and mock exams
 
 ## Requirements
@@ -44,7 +44,7 @@ npm run admin:build
 
 ## Deployment
 
-The root app builds the `ghcr.io/ziiyodullayevv/mock4ielts` image.
+The web app builds the `ghcr.io/ziiyodullayevv/mock4ielts` image.
 The admin app builds the `ghcr.io/ziiyodullayevv/mock4ielts-admin-panel` image.
 
 The GitHub Actions workflow validates both apps and publishes both images on
