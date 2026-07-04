@@ -19,7 +19,6 @@ import {
   updateMyAvatar,
   deleteMyAccount,
   updateMyProfile,
-  type UserProfile,
 } from '@/src/auth/api/profile-api';
 import {
   toFormState,
@@ -34,6 +33,9 @@ export function useProfileViewModel() {
   const { isAuthenticated, isHydrated } = useAuthSession();
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [draftState, setDraftState] = useState<ProfileFormState | null>(null);
+  const [pendingAvatarFile, setPendingAvatarFile] = useState<File | null>(null);
+  const [pendingAvatarPreviewUrl, setPendingAvatarPreviewUrl] = useState<string | null>(null);
+  const [isAvatarRemovalPending, setIsAvatarRemovalPending] = useState(false);
   const {
     data: profile,
     error,
@@ -57,58 +59,46 @@ export function useProfileViewModel() {
     setDraftState((current) => updater(current ?? profileFormState));
   };
 
-  const updateProfileMutation = useMutation({
-    mutationFn: updateMyProfile,
+  useEffect(
+    () => () => {
+      if (pendingAvatarPreviewUrl) {
+        URL.revokeObjectURL(pendingAvatarPreviewUrl);
+      }
+    },
+    [pendingAvatarPreviewUrl]
+  );
+
+  const saveProfileMutation = useMutation({
+    mutationFn: async () => {
+      let avatar: string | null | undefined;
+
+      if (isAvatarRemovalPending) {
+        await removeMyAvatar();
+        avatar = null;
+      }
+
+      if (pendingAvatarFile) {
+        avatar = await updateMyAvatar(pendingAvatarFile);
+      }
+
+      const updatedProfile = await updateMyProfile(buildUpdatePayload(formState));
+
+      return {
+        ...updatedProfile,
+        avatar: avatar !== undefined ? avatar : updatedProfile.avatar,
+      };
+    },
     onSuccess: (updatedProfile) => {
       queryClient.setQueryData(['auth', 'me'], updatedProfile);
       setDraftState(toFormState(updatedProfile));
+      setPendingAvatarFile(null);
+      setPendingAvatarPreviewUrl(null);
+      setIsAvatarRemovalPending(false);
       toast.success('Your profile has been updated.');
     },
     onError: (mutationError) => {
       toast.error(
         mutationError instanceof Error ? mutationError.message : 'Failed to save changes.'
-      );
-    },
-  });
-
-  const patchProfileAvatar = (avatar: string | null) => {
-    queryClient.setQueryData<UserProfile | undefined>(['auth', 'me'], (currentProfile) =>
-      currentProfile
-        ? {
-            ...currentProfile,
-            avatar,
-          }
-        : currentProfile
-    );
-
-    setDraftState((current) => ({
-      ...(current ?? profileFormState),
-      avatar: avatar ?? '',
-    }));
-  };
-
-  const uploadAvatarMutation = useMutation({
-    mutationFn: updateMyAvatar,
-    onSuccess: (avatarUrl) => {
-      patchProfileAvatar(avatarUrl);
-      toast.success('Avatar updated.');
-    },
-    onError: (mutationError) => {
-      toast.error(
-        mutationError instanceof Error ? mutationError.message : 'Avatar upload failed.'
-      );
-    },
-  });
-
-  const removeAvatarMutation = useMutation({
-    mutationFn: removeMyAvatar,
-    onSuccess: () => {
-      patchProfileAvatar(null);
-      toast.success('Avatar removed.');
-    },
-    onError: (mutationError) => {
-      toast.error(
-        mutationError instanceof Error ? mutationError.message : 'Failed to remove avatar.'
       );
     },
   });
@@ -140,14 +130,35 @@ export function useProfileViewModel() {
 
   const handleAvatarChange = (file: File | null) => {
     if (!file) {
+      setPendingAvatarFile(null);
+      setPendingAvatarPreviewUrl(null);
+      setIsAvatarRemovalPending(false);
+      patchFormState((current) => ({
+        ...current,
+        avatar: profileFormState.avatar,
+      }));
       return;
     }
 
-    uploadAvatarMutation.mutate(file);
+    const previewUrl = URL.createObjectURL(file);
+
+    setPendingAvatarFile(file);
+    setPendingAvatarPreviewUrl(previewUrl);
+    setIsAvatarRemovalPending(false);
+    patchFormState((current) => ({
+      ...current,
+      avatar: previewUrl,
+    }));
   };
 
   const handleRemoveAvatar = () => {
-    removeAvatarMutation.mutate();
+    setPendingAvatarFile(null);
+    setPendingAvatarPreviewUrl(null);
+    setIsAvatarRemovalPending(Boolean(profileFormState.avatar));
+    patchFormState((current) => ({
+      ...current,
+      avatar: '',
+    }));
   };
 
   const handleDateOfBirthChange = (nextDate?: Date) => {
@@ -186,7 +197,7 @@ export function useProfileViewModel() {
   };
 
   const handleSaveProfile = () => {
-    updateProfileMutation.mutate(buildUpdatePayload(formState));
+    saveProfileMutation.mutate();
   };
 
   const handleDeleteAccount = () => {
@@ -202,15 +213,12 @@ export function useProfileViewModel() {
     isAuthenticated,
     isHydrated,
     isBusy:
-      updateProfileMutation.isPending ||
-      uploadAvatarMutation.isPending ||
-      removeAvatarMutation.isPending ||
-      deleteAccountMutation.isPending,
+      saveProfileMutation.isPending || deleteAccountMutation.isPending,
     isDeletingAccount: deleteAccountMutation.isPending,
     isLoading,
-    isRemovingAvatar: removeAvatarMutation.isPending,
-    isSavingProfile: updateProfileMutation.isPending,
-    isUploadingAvatar: uploadAvatarMutation.isPending,
+    isRemovingAvatar: saveProfileMutation.isPending && isAvatarRemovalPending,
+    isSavingProfile: saveProfileMutation.isPending,
+    isUploadingAvatar: saveProfileMutation.isPending && Boolean(pendingAvatarFile),
     refetch,
     setDeleteDialogOpen,
     handleAvatarChange,

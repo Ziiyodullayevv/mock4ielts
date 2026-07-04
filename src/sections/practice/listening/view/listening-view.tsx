@@ -33,18 +33,19 @@ export function ListeningView() {
     isStarred: favoriteIds.has(item.remoteId),
     questionCount: item.questionCount,
     remoteId: item.remoteId,
-    tokenCost: undefined,
+    resultLabel: item.resultLabel,
+    tokenCost: item.tokenCost,
     title: item.title,
   }));
 
   const overview: PracticeOverview = data
-      ? {
-          avgBandScore: undefined,
-          savedCount: data.pagination.total,
-          sectionType: 'listening',
-          sourceLabel: 'Published sections',
-          title: 'Listening',
-          totalAttempting: data.pagination.total,
+    ? {
+        avgBandScore: undefined,
+        savedCount: data.pagination.total,
+        sectionType: 'listening',
+        sourceLabel: 'Published sections',
+        title: 'Listening',
+        totalAttempting: data.pagination.total,
         totalQuestions: data.items.reduce((total, item) => total + item.questionCount, 0),
         totalSolved: 0,
         updatedAtLabel: 'Live',

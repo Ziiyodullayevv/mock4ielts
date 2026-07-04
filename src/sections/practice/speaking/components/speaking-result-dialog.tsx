@@ -2,6 +2,7 @@
 
 import { cn } from '@/src/lib/utils';
 import { Button } from '@/src/components/ui/button';
+import { formatIeltsBand } from '@/src/sections/practice/utils/ielts-band-score';
 import {
   Dialog,
   DialogTitle,
@@ -52,7 +53,7 @@ export function SpeakingResultDialog({ grading, onClose, open }: SpeakingResultD
               <div className="text-center">
                 <div className="text-sm text-stone-500 dark:text-white/60">Overall Band</div>
                 <div className="text-5xl font-bold text-orange-500">
-                  {overall !== undefined ? overall.toFixed(1) : '—'}
+                  {formatIeltsBand(overall)}
                 </div>
               </div>
             </div>
@@ -71,7 +72,7 @@ export function SpeakingResultDialog({ grading, onClose, open }: SpeakingResultD
                     <div className="flex items-center justify-between">
                       <span className="text-sm font-medium">{label}</span>
                       <span className="text-lg font-semibold text-orange-500">
-                        {entry?.score !== undefined ? entry.score.toFixed(1) : '—'}
+                        {formatIeltsBand(entry?.score)}
                       </span>
                     </div>
                     {entry?.reason ? (

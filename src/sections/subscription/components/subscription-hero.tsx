@@ -71,7 +71,7 @@ export function SubscriptionHero({
               <div
                 className={cn(
                   subscriptionCardClassName,
-                  'inline-flex w-fit items-center gap-3 rounded-full px-3 py-2 shadow-[0_8px_18px_rgba(15,23,42,0.08),0_2px_8px_rgba(15,23,42,0.04)] dark:shadow-none'
+                  'inline-flex w-fit items-center gap-2 rounded-full px-3 py-2 shadow-[0_8px_18px_rgba(15,23,42,0.08),0_2px_8px_rgba(15,23,42,0.04)] dark:shadow-none'
                 )}
               >
                 <TokenIcon className="size-5 text-[#ffb347] dark:text-[#ffb347]" />

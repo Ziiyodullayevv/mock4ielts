@@ -17,6 +17,7 @@ export type ListeningTestLayoutProps = {
   onPartChange: (part: ListeningPartNumber) => void;
   onPrevPart: () => void;
   onPrimaryAction: () => void;
+  onAudioTimeChange?: (currentTime: number) => void;
   onQuestionSelect: (part: ListeningPartNumber, questionId: string) => void;
   onTextSizeChange: (textSize: PracticeTextSize) => void;
   primaryActionLabelOverride?: string;

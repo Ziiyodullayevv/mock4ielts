@@ -54,7 +54,7 @@ export function HeaderAuthActions({
   if (!isHydrated) {
     return (
       <div className="flex items-center gap-2.5">
-        <div className={cn('hidden h-10 w-[220px] rounded-full sm:block', simpleSkeletonClass)} />
+        <div className={cn('hidden h-10 w-[82px] rounded-full sm:block', simpleSkeletonClass)} />
         <div className={cn('size-10 rounded-full', simpleSkeletonClass)} />
         <div className={cn('size-10 rounded-full', simpleSkeletonClass)} />
       </div>
@@ -86,11 +86,11 @@ export function HeaderAuthActions({
     <>
       <div className="hidden h-10 items-center gap-2.5 sm:flex">
         {isProfileLoading ? (
-          <div className={cn('h-10 w-[220px] rounded-full', simpleSkeletonClass)} />
+          <div className={cn('h-10 w-[82px] rounded-full', simpleSkeletonClass)} />
         ) : (
           <div
             className={cn(
-              'inline-flex h-10 items-center gap-3 rounded-full px-3.5 text-sm font-semibold shadow-[0_8px_18px_rgba(15,23,42,0.08),0_2px_8px_rgba(15,23,42,0.04)] dark:shadow-none',
+              'inline-flex h-10 items-center gap-2 rounded-full px-3 text-sm font-semibold shadow-[0_8px_18px_rgba(15,23,42,0.08),0_2px_8px_rgba(15,23,42,0.04)] dark:shadow-none',
               useHomeOverlayTone
                 ? 'border-0 bg-black/30 text-white/92 backdrop-blur-2xl'
                 : [PRACTICE_HEADER_RING_CLASS, isHomePage
@@ -101,19 +101,6 @@ export function HeaderAuthActions({
             <TokenIcon className="size-5 shrink-0 text-[#ffb347]" />
             <span className="bg-[linear-gradient(90deg,#f7c66c_0%,#ff9f2f_100%)] bg-clip-text text-[16px] tracking-[-0.03em] text-transparent">
               {profile?.tokenBalance ?? 0}
-            </span>
-            <span
-              className={cn(
-                'h-5 w-px shrink-0',
-                useHomeOverlayTone
-                  ? 'bg-white/20'
-                  : isHomeGlass
-                    ? 'bg-black/10 dark:bg-white/12'
-                    : 'bg-stone-300 dark:bg-white/12'
-              )}
-            />
-            <span className="bg-[linear-gradient(90deg,#f7c66c_0%,#ff9f2f_100%)] bg-clip-text text-[16px] tracking-[-0.03em] text-transparent">
-              Up to 15% off
             </span>
           </div>
         )}

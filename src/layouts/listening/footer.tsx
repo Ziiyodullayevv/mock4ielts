@@ -14,7 +14,57 @@ import {
   PRACTICE_FOOTER_DARK_BUTTON_RING_CLASS,
 } from '@/src/layouts/practice-footer-theme';
 
-import { getPartQuestions, countPartAnswered, getPartQuestionIds } from '../../sections/practice/listening/utils';
+import {
+  isAnswerCorrect,
+  getPartQuestions,
+  countPartAnswered,
+  getPartQuestionIds,
+  getQuestionAnswerMeta,
+} from '../../sections/practice/listening/utils';
+
+function getQuestionPillClassName({
+  isActivePart,
+  isAnswered,
+  isCorrect,
+  isCurrentQuestion,
+  isReview,
+}: {
+  isActivePart?: boolean;
+  isAnswered: boolean;
+  isCorrect?: boolean;
+  isCurrentQuestion: boolean;
+  isReview?: boolean;
+}) {
+  if (isReview) {
+    if (isCorrect) {
+      return isCurrentQuestion
+        ? 'border border-[#22C55E] bg-[#22C55E] text-white ring-2 ring-[#22C55E]/25'
+        : 'border border-[#22C55E]/25 bg-[#D3FCD2] text-[#118D57] hover:bg-[#D3FCD2]/80 dark:border-[#22C55E]/35 dark:bg-[#22C55E]/14 dark:text-[#77ED8B]';
+    }
+
+    return isCurrentQuestion
+      ? 'border border-[#FF5630] bg-[#FF5630] text-white ring-2 ring-[#FF5630]/25'
+      : 'border border-[#FF5630]/25 bg-[#FFE9D5] text-[#B71D18] hover:bg-[#FFE9D5]/80 dark:border-[#FF5630]/35 dark:bg-[#FF5630]/14 dark:text-[#FFAC82]';
+  }
+
+  if (isCurrentQuestion) {
+    return PRACTICE_FOOTER_ACTIVE_BUTTON_CLASS;
+  }
+
+  if (isAnswered) {
+    return 'border-none bg-black text-white hover:bg-black dark:bg-black dark:text-white dark:hover:bg-black';
+  }
+
+  return isActivePart
+    ? cn(
+        'border border-stone-300 bg-stone-200 text-stone-700 hover:bg-stone-300 dark:text-white/78 dark:hover:bg-transparent',
+        PRACTICE_FOOTER_DARK_BUTTON_RING_CLASS
+      )
+    : cn(
+        'border border-stone-200 bg-stone-100 text-stone-600 hover:bg-stone-200 dark:text-white/58 dark:hover:bg-transparent',
+        PRACTICE_FOOTER_DARK_BUTTON_RING_CLASS
+      );
+}
 
 type ListeningTestFooterProps = {
   activePart: ListeningPartNumber;
@@ -22,6 +72,7 @@ type ListeningTestFooterProps = {
   answers: Answers;
   isPrimaryActionDisabled?: boolean;
   isPrevDisabled?: boolean;
+  isReview?: boolean;
   onPrimaryAction: () => void;
   onPartChange: (part: ListeningPartNumber) => void;
   onPrevPart: () => void;
@@ -37,6 +88,7 @@ export function ListeningTestFooter({
   answers,
   isPrimaryActionDisabled = false,
   isPrevDisabled = false,
+  isReview = false,
   onPrimaryAction,
   onPartChange,
   onPrevPart,
@@ -65,6 +117,7 @@ export function ListeningTestFooter({
 
   const activePartEntry = test.parts.find((part) => part.number === activePart) ?? test.parts[0];
   const activePartQuestions = activePartEntry ? getPartQuestions(activePartEntry) : [];
+  const questionAnswerMeta = isReview ? getQuestionAnswerMeta(test) : {};
   return (
     <footer className={PRACTICE_FOOTER_SHELL_CLASS}>
       <div className={PRACTICE_FOOTER_TOP_BAR_CLASS} />
@@ -95,6 +148,15 @@ export function ListeningTestFooter({
                   {activePartQuestions.map((question) => {
                     const isCurrentQuestion = question.id === activeQuestionId;
                     const isAnswered = Boolean((answers[question.id] ?? '').trim());
+                    const answerMeta = questionAnswerMeta[question.id];
+                    const isCorrect =
+                      isReview && answerMeta
+                        ? isAnswerCorrect(
+                            answers[question.id],
+                            answerMeta.answer,
+                            answerMeta.multiSelect
+                          )
+                        : undefined;
                     const label = question.displayLabel ?? question.number;
                     const isFraction = Boolean(question.displayLabel);
                     const [fracTop, fracBottom] = isFraction
@@ -109,11 +171,13 @@ export function ListeningTestFooter({
                         className={cn(
                           'flex h-7 w-7 shrink-0 items-center justify-center rounded-md font-semibold transition-colors',
                           isFraction ? 'text-[9px]' : 'text-[11px]',
-                          isCurrentQuestion
-                            ? PRACTICE_FOOTER_ACTIVE_BUTTON_CLASS
-                            : isAnswered
-                              ? 'border-none bg-black text-white hover:bg-black dark:bg-black dark:text-white dark:hover:bg-black'
-                              : cn('border border-stone-300 bg-stone-200 text-stone-700 hover:bg-stone-300 dark:text-white/78 dark:hover:bg-transparent', PRACTICE_FOOTER_DARK_BUTTON_RING_CLASS)
+                          getQuestionPillClassName({
+                            isActivePart: true,
+                            isAnswered,
+                            isCorrect,
+                            isCurrentQuestion,
+                            isReview,
+                          })
                         )}
                         aria-current={isCurrentQuestion ? 'step' : undefined}
                       >
@@ -238,6 +302,15 @@ export function ListeningTestFooter({
                   {questions.map((question) => {
                     const isCurrentQuestion = question.id === activeQuestionId;
                     const isAnswered = Boolean((answers[question.id] ?? '').trim());
+                    const answerMeta = questionAnswerMeta[question.id];
+                    const isCorrect =
+                      isReview && answerMeta
+                        ? isAnswerCorrect(
+                            answers[question.id],
+                            answerMeta.answer,
+                            answerMeta.multiSelect
+                          )
+                        : undefined;
                     const label = question.displayLabel ?? question.number;
                     const isFraction = Boolean(question.displayLabel);
                     const [fracTop, fracBottom] = isFraction
@@ -255,13 +328,13 @@ export function ListeningTestFooter({
                         className={cn(
                           'flex h-7 w-7 shrink-0 items-center justify-center rounded-md font-semibold transition-colors',
                           isFraction ? 'text-[9px]' : 'text-[11px]',
-                          isCurrentQuestion
-                            ? PRACTICE_FOOTER_ACTIVE_BUTTON_CLASS
-                            : isAnswered
-                              ? 'border-none bg-black text-white hover:bg-black dark:bg-black dark:text-white dark:hover:bg-black'
-                              : isActive
-                                ? cn('border border-stone-300 bg-stone-200 text-stone-700 hover:bg-stone-300 dark:text-white/78 dark:hover:bg-transparent', PRACTICE_FOOTER_DARK_BUTTON_RING_CLASS)
-                                : cn('border border-stone-200 bg-stone-100 text-stone-600 hover:bg-stone-200 dark:text-white/58 dark:hover:bg-transparent', PRACTICE_FOOTER_DARK_BUTTON_RING_CLASS)
+                          getQuestionPillClassName({
+                            isActivePart: isActive,
+                            isAnswered,
+                            isCorrect,
+                            isCurrentQuestion,
+                            isReview,
+                          })
                         )}
                         aria-current={isCurrentQuestion ? 'step' : undefined}
                       >

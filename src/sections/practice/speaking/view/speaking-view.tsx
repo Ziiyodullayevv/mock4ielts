@@ -34,8 +34,9 @@ export function SpeakingView() {
     isStartAvailable: true,
     questionCount: item.questionCount,
     remoteId: item.remoteId,
+    resultLabel: item.resultLabel,
     sectionType: 'speaking',
-    tokenCost: undefined,
+    tokenCost: item.tokenCost,
     title: item.title,
   }));
 

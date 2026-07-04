@@ -10,11 +10,17 @@ import { PracticeQuestionsToolbar } from './practice-questions-toolbar';
 import { PracticeQuestionsListLoading } from './practice-questions-list-loading';
 
 export type PracticeStatusFilter = 'all' | 'completed' | 'uncompleted';
+export type PracticeSortOrder = 'title-asc' | 'title-desc' | 'original';
 type PracticeOpenBehavior = 'info' | 'start';
 
 type PracticeWindow = Window & {
   __practiceRowsInitialAnimationPlayed?: boolean;
 };
+
+const practiceTitleCollator = new Intl.Collator('en', {
+  numeric: true,
+  sensitivity: 'base',
+});
 
 type PracticeWorkspaceProps = {
   emptyMessage?: string;
@@ -39,6 +45,7 @@ export function PracticeWorkspace({
   const [openRequestId, setOpenRequestId] = useState(0);
   const [openBehavior, setOpenBehavior] = useState<PracticeOpenBehavior>('info');
   const [searchTerm, setSearchTerm] = useState('');
+  const [sortOrder, setSortOrder] = useState<PracticeSortOrder>('title-asc');
   const [statusFilter, setStatusFilter] = useState<PracticeStatusFilter>('all');
   const rowsAnimationTimerRef = useRef<number | null>(null);
 
@@ -84,6 +91,11 @@ export function PracticeWorkspace({
     triggerRowsAnimation();
   };
 
+  const handleSortOrderChange = (nextSortOrder: PracticeSortOrder) => {
+    setSortOrder(nextSortOrder);
+    triggerRowsAnimation();
+  };
+
   const handleSearchTermChange = (nextSearchTerm: string) => {
     clearRowsAnimationTimer();
     setIsRowsAnimationActive(false);
@@ -93,27 +105,39 @@ export function PracticeWorkspace({
   const filteredQuestions = useMemo(() => {
     const normalizedSearchTerm = searchTerm.trim().toLowerCase();
 
-    return questions.filter((item) => {
-      const matchesSearch =
-        !normalizedSearchTerm ||
-        item.title.toLowerCase().includes(normalizedSearchTerm) ||
-        String(item.id).includes(normalizedSearchTerm);
+    const withOriginalIndex = questions.map((item, originalIndex) => ({ item, originalIndex }));
 
-      if (!matchesSearch) return false;
-      if (statusFilter === 'all') return true;
-      if (statusFilter === 'completed') return Boolean(item.isCompleted);
-      return !item.isCompleted;
-    });
-  }, [questions, searchTerm, statusFilter]);
+    return withOriginalIndex
+      .filter(({ item }) => {
+        const matchesSearch =
+          !normalizedSearchTerm ||
+          item.title.toLowerCase().includes(normalizedSearchTerm) ||
+          String(item.id).includes(normalizedSearchTerm);
+
+        if (!matchesSearch) return false;
+        if (statusFilter === 'all') return true;
+        if (statusFilter === 'completed') return Boolean(item.isCompleted);
+        return !item.isCompleted;
+      })
+      .sort((left, right) => {
+        if (sortOrder === 'original') {
+          return left.originalIndex - right.originalIndex;
+        }
+
+        const titleComparison = practiceTitleCollator.compare(left.item.title, right.item.title);
+        const stableComparison = titleComparison || left.originalIndex - right.originalIndex;
+
+        return sortOrder === 'title-asc' ? stableComparison : -stableComparison;
+      })
+      .map(({ item }) => item);
+  }, [questions, searchTerm, sortOrder, statusFilter]);
 
   const currentQuestion = useMemo(() => {
     const nextUncompletedQuestion = questions.find((item) => !item.isCompleted);
     return nextUncompletedQuestion ?? questions[0] ?? null;
   }, [questions]);
 
-  const currentQuestionLabel = currentQuestion
-    ? `${currentQuestion.id}.${currentQuestion.title}`
-    : null;
+  const currentQuestionLabel = currentQuestion ? currentQuestion.title : null;
 
   const handleOpenCurrentQuestion = () => {
     if (!currentQuestion) {
@@ -121,6 +145,7 @@ export function PracticeWorkspace({
     }
 
     setSearchTerm('');
+    setSortOrder('title-asc');
     setStatusFilter('all');
     setOpenBehavior('info');
     setOpenItemHref(currentQuestion.href);
@@ -163,9 +188,11 @@ export function PracticeWorkspace({
               canStartRandom={filteredQuestions.length > 0}
               onRandomStart={handleStartRandomQuestion}
               searchTerm={searchTerm}
+              sortOrder={sortOrder}
               statusFilter={statusFilter}
               searchPlaceholder={searchPlaceholder}
               onSearchTermChange={handleSearchTermChange}
+              onSortOrderChange={handleSortOrderChange}
               onStatusFilterChange={handleStatusFilterChange}
             />
 

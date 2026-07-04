@@ -2,8 +2,7 @@
 
 import type { ListeningTestLayoutProps } from './types';
 
-import {
-  PracticeShell } from '@/src/layouts/practice';
+import { PracticeShell } from '@/src/layouts/practice';
 
 import { ListeningTestFooter } from './footer';
 import { ListeningTestHeader } from './header';
@@ -22,6 +21,7 @@ export function ListeningTestLayout({
   onPartChange,
   onPrevPart,
   onPrimaryAction,
+  onAudioTimeChange,
   onQuestionSelect,
   onTextSizeChange,
   primaryActionLabelOverride,
@@ -48,6 +48,7 @@ export function ListeningTestLayout({
           onLogoClick={onLogoClick}
           onPrevPart={onPrevPart}
           onPrimaryAction={onPrimaryAction}
+          onAudioTimeChange={onAudioTimeChange}
           onTextSizeChange={onTextSizeChange}
           prevActionLabel={prevActionLabel}
           primaryActionLabel={primaryActionLabel}
@@ -60,6 +61,7 @@ export function ListeningTestLayout({
           activePart={activePart}
           activeQuestionId={activeQuestionId}
           answers={answers}
+          isReview={isReview}
           isPrimaryActionDisabled={isPrimaryActionDisabled}
           isPrevDisabled={resolvedIsPrevDisabled}
           onPrimaryAction={onPrimaryAction}

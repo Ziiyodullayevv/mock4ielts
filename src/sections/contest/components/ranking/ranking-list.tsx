@@ -37,7 +37,7 @@ function RankingListItem({ user, delayMs }: { user: RankingUser; delayMs: number
         src={user.avatarUrl}
         alt={`${user.displayName} avatar`}
         loading="lazy"
-        className="h-7 w-7 shrink-0 rounded-full outline-1 -outline-offset-[0.5px] outline-[rgba(226,232,240,0.8)] dark:outline-white/5"
+        className="h-7 w-7 shrink-0 rounded-full object-cover object-center outline-1 -outline-offset-[0.5px] outline-[rgba(226,232,240,0.8)] dark:outline-white/5"
       />
 
       <div className="flex min-w-0 flex-1 items-center justify-between overflow-hidden">

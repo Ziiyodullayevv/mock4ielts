@@ -18,6 +18,9 @@ import type {
 
 import { CONFIG } from '@/src/global-config';
 import { endpoints, axiosInstance } from '@/src/lib/axios';
+import { stripHtmlPreservingInlineFormatting } from '@/src/sections/practice/shared/inline-html-formatting';
+
+import { LISTENING_DURATION_MINUTES } from '../constants';
 
 type ApiRecord = Record<string, unknown>;
 
@@ -127,7 +130,7 @@ const normalizeMediaUrl = (value: unknown) => {
 };
 
 const normalizeText = (value?: string) =>
-  value
+  stripHtmlPreservingInlineFormatting(value ?? '')
     ?.replace(/&nbsp;/gi, ' ')
     ?.replace(/&amp;/gi, '&')
     ?.replace(/&quot;/gi, '"')
@@ -146,6 +149,10 @@ const toDifficulty = (value?: string): ListeningDifficulty => {
 };
 
 const toCorrectAnswer = (value: unknown): CorrectAnswer | undefined => {
+  if (typeof value === 'number' && Number.isFinite(value)) {
+    return String(value);
+  }
+
   const singleValue = pickString(value);
 
   if (singleValue) {
@@ -153,7 +160,9 @@ const toCorrectAnswer = (value: unknown): CorrectAnswer | undefined => {
   }
 
   const values = asArray(value)
-    .map((item) => pickString(item))
+    .map((item) =>
+      typeof item === 'number' && Number.isFinite(item) ? String(item) : pickString(item)
+    )
     .filter((item): item is string => Boolean(item));
 
   if (values.length) {
@@ -216,11 +225,19 @@ const buildBlankField = (
   answerLength: estimateAnswerLength(answer, options?.wordLimit),
 });
 
-const parseNumberedAnswers = (value: unknown) => {
+const parseNumberedAnswers = (value: unknown, startNumber = 1) => {
   const record = asRecord(value);
   const answers = new Map<number, CorrectAnswer>();
 
   if (!record) {
+    asArray(value).forEach((answerValue, index) => {
+      const answer = toCorrectAnswer(answerValue);
+
+      if (answer) {
+        answers.set(startNumber + index, answer);
+      }
+    });
+
     return answers;
   }
 
@@ -241,11 +258,7 @@ const stripHtmlToLines = (html?: string) => {
     return [] as string[];
   }
 
-  const text = html
-    .replace(/<br\s*\/?>/gi, '\n')
-    .replace(/<\/(h\d|p|li|tr|div|ul|ol|table|tbody|thead)>/gi, '\n')
-    .replace(/<\/(td|th)>/gi, ' ')
-    .replace(/<[^>]+>/g, '')
+  const text = stripHtmlPreservingInlineFormatting(html)
     .replace(/\n{2,}/g, '\n');
 
   return text
@@ -257,7 +270,39 @@ const stripHtmlToLines = (html?: string) => {
 const extractFirstHeadingText = (html?: string) => {
   const headingMatch = html?.match(/<h[1-6][^>]*>([\s\S]*?)<\/h[1-6]>/i);
 
-  return headingMatch ? normalizeText(headingMatch[1].replace(/<[^>]+>/g, '')) : undefined;
+  return headingMatch ? normalizeText(headingMatch[1]) : undefined;
+};
+
+type HtmlTextBlock = {
+  tag: string;
+  text: string;
+};
+
+const isHeadingBlock = (block: HtmlTextBlock) => /^h[1-6]$/i.test(block.tag);
+
+const extractHtmlTextBlocks = (html?: string): HtmlTextBlock[] => {
+  if (!html) {
+    return [];
+  }
+
+  const blockPattern = /<(h[1-6]|p|li|tr|td|th)\b[^>]*>([\s\S]*?)<\/\1>/gi;
+  const blocks: HtmlTextBlock[] = [];
+  let match: RegExpExecArray | null;
+
+  while ((match = blockPattern.exec(html)) !== null) {
+    const tag = match[1].toLowerCase();
+    const text = normalizeText(match[2]);
+
+    if (text) {
+      blocks.push({ tag, text });
+    }
+  }
+
+  if (blocks.length) {
+    return blocks;
+  }
+
+  return stripHtmlToLines(html).map((text) => ({ tag: 'p', text }));
 };
 
 const splitTextWithBlanks = (
@@ -357,45 +402,62 @@ const parseNoteSections = (
   wordLimit?: number
 ): { noteTitle?: string; sections: NoteSection[] } => {
   const preprocessed = sourceHtml ? preprocessBlankMarkers(sourceHtml) : sourceHtml;
-  const lines = stripHtmlToLines(preprocessed);
-  const explicitTitle = extractFirstHeadingText(preprocessed);
-  const firstLine = normalizeText(lines[0]);
+  const blocks = extractHtmlTextBlocks(preprocessed);
+  const explicitTitle = blocks[0] && isHeadingBlock(blocks[0]) ? blocks[0].text : extractFirstHeadingText(preprocessed);
+  const firstLine = normalizeText(blocks[0]?.text);
   const implicitTitle = firstLine && !firstLine.match(BLANK_MARKER_REGEX) ? firstLine : undefined;
   const noteTitle = explicitTitle ?? implicitTitle ?? fallbackTitle;
-  const contentLines = lines.filter((line, index) => {
-    if (explicitTitle && normalizeText(line) === explicitTitle) {
+  const contentBlocks = blocks.filter((block, index) => {
+    if (explicitTitle && index === 0 && normalizeText(block.text) === explicitTitle) {
       return false;
     }
 
-    if (!explicitTitle && implicitTitle && index === 0 && normalizeText(line) === implicitTitle) {
+    if (!explicitTitle && implicitTitle && index === 0 && normalizeText(block.text) === implicitTitle) {
       return false;
     }
 
     return true;
   });
 
-  const bullets = (contentLines.length ? contentLines : [fallbackTitle]).flatMap((line) => {
-    const fields = parseBlankFieldsFromText(line, backendQuestionId, answersByNumber, wordLimit);
+  const sections: NoteSection[] = [];
+  let currentSection: NoteSection = { bullets: [] };
 
-    if (!fields.length) {
-      return {
-        text: line,
-      };
+  const pushCurrentSection = () => {
+    if (currentSection.heading || currentSection.bullets.length) {
+      sections.push(currentSection);
+    }
+    currentSection = { bullets: [] };
+  };
+
+  (contentBlocks.length ? contentBlocks : [{ tag: 'p', text: fallbackTitle }]).forEach((block) => {
+    if (isHeadingBlock(block) && !block.text.match(BLANK_MARKER_REGEX)) {
+      pushCurrentSection();
+      currentSection.heading = block.text;
+      return;
     }
 
-    return fields.map((field) => ({
-      text: field.label,
-      field,
-    }));
+    const fields = parseBlankFieldsFromText(block.text, backendQuestionId, answersByNumber, wordLimit);
+
+    if (!fields.length) {
+      currentSection.bullets.push({
+        text: block.text,
+      });
+      return;
+    }
+
+    fields.forEach((field) => {
+      currentSection.bullets.push({
+        text: field.label,
+        field,
+      });
+    });
   });
+
+  pushCurrentSection();
 
   return {
     noteTitle,
-    sections: [
-      {
-        bullets,
-      },
-    ],
+    sections: sections.length ? sections : [{ bullets: [{ text: fallbackTitle }] }],
   };
 };
 
@@ -518,17 +580,35 @@ const parseFormSections = (
     pickString(metadata.formLayoutHtml) ??
     pickString(metadata.html) ??
     question.text;
-  const lines = stripHtmlToLines(preprocessBlankMarkers(sourceHtml ?? ''));
-  const parsedFields = lines
-    .flatMap((line) => parseBlankFieldsFromText(line, backendQuestionId, answersByNumber, wordLimit))
-    .filter((field) => Number.isFinite(field.number));
+  const sourceBlocks = extractHtmlTextBlocks(preprocessBlankMarkers(sourceHtml ?? ''));
+  const parsedSections: FormSection[] = [];
+  let currentSection: FormSection = { fields: [] };
+
+  const pushCurrentSection = () => {
+    if (currentSection.heading || currentSection.fields.length) {
+      parsedSections.push(currentSection);
+    }
+    currentSection = { fields: [] };
+  };
+
+  sourceBlocks.forEach((block) => {
+    if (isHeadingBlock(block) && !block.text.match(BLANK_MARKER_REGEX)) {
+      pushCurrentSection();
+      currentSection.heading = block.text;
+      return;
+    }
+
+    currentSection.fields.push(
+      ...parseBlankFieldsFromText(block.text, backendQuestionId, answersByNumber, wordLimit)
+    );
+  });
+
+  pushCurrentSection();
+
+  const parsedFields = parsedSections.flatMap((section) => section.fields);
 
   return parsedFields.length
-    ? [
-        {
-          fields: parsedFields,
-        },
-      ]
+    ? parsedSections.filter((section) => section.fields.length > 0)
     : [];
 };
 
@@ -538,13 +618,47 @@ const parseSummaryParagraphs = (
   answersByNumber: Map<number, CorrectAnswer>,
   wordLimit?: number
 ): SummaryParagraph[] => {
-  const segments = splitTextWithBlanks(sourceText, backendQuestionId, answersByNumber, wordLimit);
+  const sourceBlocks = extractHtmlTextBlocks(preprocessBlankMarkers(sourceText));
 
-  return [
-    {
-      segments,
-    },
-  ];
+  if (sourceBlocks.length <= 1 && !/<[a-z][\s\S]*>/i.test(sourceText)) {
+    return [
+      {
+        segments: splitTextWithBlanks(sourceText, backendQuestionId, answersByNumber, wordLimit),
+      },
+    ];
+  }
+
+  const paragraphs: SummaryParagraph[] = [];
+  let currentParagraph: SummaryParagraph = { segments: [] };
+
+  const pushCurrentParagraph = () => {
+    if (currentParagraph.heading || currentParagraph.segments.length) {
+      paragraphs.push(currentParagraph);
+    }
+    currentParagraph = { segments: [] };
+  };
+
+  sourceBlocks.forEach((block) => {
+    if (isHeadingBlock(block) && !block.text.match(BLANK_MARKER_REGEX)) {
+      pushCurrentParagraph();
+      currentParagraph.heading = block.text;
+      return;
+    }
+
+    currentParagraph.segments.push(
+      ...splitTextWithBlanks(block.text, backendQuestionId, answersByNumber, wordLimit)
+    );
+  });
+
+  pushCurrentParagraph();
+
+  return paragraphs.length
+    ? paragraphs
+    : [
+        {
+          segments: splitTextWithBlanks(sourceText, backendQuestionId, answersByNumber, wordLimit),
+        },
+      ];
 };
 
 const normalizeChoiceOptions = (value: unknown): MCOption[] =>
@@ -609,7 +723,7 @@ const normalizeSectionDetail = (payload: unknown): ApiSectionDetail => {
   return {
     audioUrl: pickString(data.audio_url),
     difficulty: pickString(data.difficulty),
-    durationMinutes: pickNumber(data.duration_minutes),
+    durationMinutes: LISTENING_DURATION_MINUTES,
     id: pickString(data.id) ?? '',
     instructions: pickString(data.instructions),
     parts: asArray(data.parts)
@@ -847,7 +961,7 @@ const toQuestionGroup = (
   }
 
   if (question.questionType === 'matching') {
-    const answersByNumber = parseNumberedAnswers(question.correctAnswer);
+    const answersByNumber = parseNumberedAnswers(question.correctAnswer, questionNumber);
     const items = asArray(question.metadata?.items)
       .map((item) => asRecord(item))
       .filter((item): item is ApiRecord => Boolean(item));
@@ -885,7 +999,7 @@ const toQuestionGroup = (
   }
 
   if (question.questionType === 'form_completion') {
-    const answersByNumber = parseNumberedAnswers(question.correctAnswer);
+    const answersByNumber = parseNumberedAnswers(question.correctAnswer, questionNumber);
     const sections = parseFormSections(backendQuestionId, question, answersByNumber, wordLimit);
 
     if (!sections.length) {
@@ -905,7 +1019,7 @@ const toQuestionGroup = (
   }
 
   if (question.questionType === 'note_completion') {
-    const answersByNumber = parseNumberedAnswers(question.correctAnswer);
+    const answersByNumber = parseNumberedAnswers(question.correctAnswer, questionNumber);
     const notesHtml = pickString(question.metadata?.notes_html);
     const parsedNote = parseNoteSections(
       backendQuestionId,
@@ -924,7 +1038,7 @@ const toQuestionGroup = (
   }
 
   if (question.questionType === 'table_completion') {
-    const answersByNumber = parseNumberedAnswers(question.correctAnswer);
+    const answersByNumber = parseNumberedAnswers(question.correctAnswer, questionNumber);
     const table = asRecord(question.metadata?.table);
 
     if (!table) {
@@ -944,7 +1058,7 @@ const toQuestionGroup = (
   }
 
   if (question.questionType === 'map_labeling') {
-    const answersByNumber = parseNumberedAnswers(question.correctAnswer);
+    const answersByNumber = parseNumberedAnswers(question.correctAnswer, questionNumber);
     const imageWidth =
       pickNumber(question.metadata?.image_width) ??
       pickNumber(question.metadata?.natural_width) ??
@@ -975,7 +1089,7 @@ const toQuestionGroup = (
   }
 
   if (question.questionType === 'flow_chart_completion') {
-    const answersByNumber = parseNumberedAnswers(question.correctAnswer);
+    const answersByNumber = parseNumberedAnswers(question.correctAnswer, questionNumber);
     const flowChartHtml = pickString(question.metadata?.flow_chart_html);
     const stepsArray = asArray(question.metadata?.steps);
 
@@ -1034,7 +1148,7 @@ const toQuestionGroup = (
   }
 
   if (question.questionType === 'summary_completion_free') {
-    const answersByNumber = parseNumberedAnswers(question.correctAnswer);
+    const answersByNumber = parseNumberedAnswers(question.correctAnswer, questionNumber);
     const summaryText =
       pickString(question.metadata?.summary_text) ??
       pickString(question.metadata?.summary_html) ??
@@ -1051,7 +1165,7 @@ const toQuestionGroup = (
   }
 
   if (question.questionType === 'diagram_completion') {
-    const answersByNumber = parseNumberedAnswers(question.correctAnswer);
+    const answersByNumber = parseNumberedAnswers(question.correctAnswer, questionNumber);
     const blanks = asArray(question.metadata?.blanks)
       .map((value) => Number.parseInt(String(value), 10))
       .filter((value) => Number.isFinite(value));
@@ -1073,7 +1187,7 @@ const toQuestionGroup = (
   }
 
   if (question.questionType === 'sentence_completion' || question.questionType === 'short_answer') {
-    const answersByNumber = parseNumberedAnswers(question.correctAnswer);
+    const answersByNumber = parseNumberedAnswers(question.correctAnswer, questionNumber);
     const text = question.text ?? `Question ${questionNumber}`;
     const segments = splitTextWithBlanks(text, backendQuestionId, answersByNumber, wordLimit);
     const questions = segments
@@ -1087,7 +1201,7 @@ const toQuestionGroup = (
     };
   }
 
-  const fallbackAnswersByNumber = parseNumberedAnswers(question.correctAnswer);
+  const fallbackAnswersByNumber = parseNumberedAnswers(question.correctAnswer, questionNumber);
   const fallbackText =
     pickString(question.metadata?.form_html) ??
     pickString(question.metadata?.formHtml) ??

@@ -10,6 +10,7 @@ import { ContestCardFooter } from './contest-card-footer';
 import { ContestCountdownChip } from './contest-countdown-chip';
 import {
   formatStartLabel,
+  getContestDisplayTone,
   openContestGoogleCalendar,
   formatContestDisplayTitle,
 } from '../utils';
@@ -56,9 +57,10 @@ export function ContestCard({ contest, tone = 'default' }: ContestCardProps) {
 
   const width = contest.width ?? 400;
   const height = contest.height ?? 250;
-  const imageSrc = getContestCardImage(contest, tone);
-  const contestHref = tone === 'violet' ? `${contest.slug}?tone=violet` : contest.slug;
-  const displayTitle = formatContestDisplayTitle(contest.title, tone);
+  const displayTone = getContestDisplayTone(contest.title, tone);
+  const imageSrc = getContestCardImage(contest, displayTone);
+  const contestHref = contest.slug;
+  const displayTitle = formatContestDisplayTitle(contest.title, displayTone);
   const handleReminderClick = (event: MouseEvent<HTMLButtonElement>) => {
     event.preventDefault();
     event.stopPropagation();
@@ -109,7 +111,7 @@ export function ContestCard({ contest, tone = 'default' }: ContestCardProps) {
             alt={displayTitle}
             className="h-full w-full object-cover object-center"
           />
-          {tone === 'violet' ? <VioletCardOverlay /> : null}
+          {displayTone === 'violet' ? <VioletCardOverlay /> : null}
           <ContestCountdownChip
             endsAt={endsAt}
             startsAt={startsAt}
@@ -117,7 +119,6 @@ export function ContestCard({ contest, tone = 'default' }: ContestCardProps) {
             variant="mobile"
           />
           <ContestCardFooter
-            startsAt={startsAt}
             title={displayTitle}
             startLabel={startLabel}
             showReminder={isUpcoming}
@@ -147,7 +148,7 @@ export function ContestCard({ contest, tone = 'default' }: ContestCardProps) {
           displayOverlayContent
           overlayContent={
             <div className="relative size-full overflow-hidden rounded-[2rem]">
-              {tone === 'violet' ? <VioletCardOverlay /> : null}
+              {displayTone === 'violet' ? <VioletCardOverlay /> : null}
               <Link
                 href={contestHref}
                 aria-label={displayTitle}
@@ -159,7 +160,6 @@ export function ContestCard({ contest, tone = 'default' }: ContestCardProps) {
                 status={contest.contestStatus}
               />
               <ContestCardFooter
-                startsAt={startsAt}
                 title={displayTitle}
                 startLabel={startLabel}
                 showReminder={isUpcoming}

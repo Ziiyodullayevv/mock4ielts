@@ -5,12 +5,7 @@ import type { MouseEvent } from 'react';
 import { cn } from '@/src/lib/utils';
 import { AlarmClock } from 'lucide-react';
 
-import { useCountdown } from '../hooks';
-import { formatClockCountdown } from '../utils';
-import { contestIconButtonClassName } from './contest-theme';
-
 type ContestCardFooterProps = {
-  startsAt: Date;
   title: string;
   startLabel: string;
   showReminder?: boolean;
@@ -18,14 +13,11 @@ type ContestCardFooterProps = {
 };
 
 export function ContestCardFooter({
-  startsAt,
   title,
   startLabel,
   showReminder = false,
   onReminderClick,
 }: ContestCardFooterProps) {
-  const countdown = useCountdown(startsAt);
-
   return (
     <>
       <div className="pointer-events-none absolute inset-x-0 bottom-0 h-18" />
@@ -42,12 +34,10 @@ export function ContestCardFooter({
             onClick={onReminderClick}
             aria-label="Set reminder"
             className={cn(
-              contestIconButtonClassName,
-              'pointer-events-auto h-10 shrink-0 gap-2 px-3 text-xs font-semibold tabular-nums text-white/92 hover:text-white after:!bg-white/10 dark:after:!bg-white/8'
+              'pointer-events-auto grid size-10 shrink-0 place-items-center rounded-full bg-white/10 text-white shadow-none backdrop-blur-xl transition-colors hover:bg-white/16 hover:text-white'
             )}
           >
             <AlarmClock className="size-4" strokeWidth={2} aria-hidden />
-            <span>{formatClockCountdown(countdown)}</span>
           </button>
         ) : null}
       </div>

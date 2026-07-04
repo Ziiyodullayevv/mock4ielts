@@ -3,9 +3,14 @@
 import type { BlankField } from '../../types';
 import type { QuestionTypeAnnotationProps } from './annotation-blocks';
 
-import { usePracticeTextSize, getPracticeTextStyle } from '@/src/sections/practice/shared/practice-text-size';
+import { XCircle, CheckCircle2 } from 'lucide-react';
+import {
+  usePracticeTextSize,
+  getPracticeTextStyle,
+} from '@/src/sections/practice/shared/practice-text-size';
 
-import { isAnswerCorrect, getPrimaryAnswer } from '../../utils';
+import { isAnswerCorrect, formatCorrectAnswer } from '../../utils';
+import { REVIEW_STYLE, getReviewValueLabel } from './review-styles';
 import { renderQuestionText, getQuestionAnnotationBlockId } from './annotation-blocks';
 
 interface CompletionInputProps extends QuestionTypeAnnotationProps {
@@ -26,11 +31,21 @@ export function CompletionInput({
   const textSize = usePracticeTextSize();
   const isCorrect = showAnswer ? isAnswerCorrect(value, field.answer) : undefined;
 
-  const inputWidth = Math.max(92, field.answerLength * 12 + 18);
-  const primaryAnswer = getPrimaryAnswer(field.answer);
+  const correctAnswer = formatCorrectAnswer(field.answer);
+  const expectedAnswerLength = correctAnswer
+    .split(/\s*(?:\/|\||;|\bor\b)\s*/i)
+    .reduce((longestLength, answer) => Math.max(longestLength, answer.trim().length), 0);
+  const visibleCharacterCount = Math.max(
+    10,
+    field.answerLength,
+    expectedAnswerLength,
+    value.length
+  );
+  const inputWidth = Math.max(128, visibleCharacterCount * 10 + 36);
+
   return (
-    <span className="inline-flex items-center gap-1.5 align-middle">
-      {field.label && (
+    <span className="inline-flex flex-wrap items-center gap-x-1.5 gap-y-1 align-middle">
+      {field.label &&
         renderQuestionText({
           as: 'span',
           blockId: getQuestionAnnotationBlockId(
@@ -43,41 +58,55 @@ export function CompletionInput({
           renderAnnotatedTextBlock,
           style: getPracticeTextStyle(textSize, 'body'),
           text: field.label,
-        })
-      )}
+        })}
       <span className="inline-flex flex-col items-start">
-        <input
-          data-question-focus="true"
-          type="text"
-          name={`listening-answer-${field.id}`}
-          value={value}
-          onChange={(e) => onChange(field.id, e.target.value)}
-          disabled={showAnswer}
-          maxLength={field.answerLength + 6}
-          autoComplete="off"
-          autoCorrect="off"
-          autoCapitalize="off"
-          spellCheck={false}
-          style={{
-            ...getPracticeTextStyle(textSize, 'body-soft'),
-            width: inputWidth,
-          }}
-          className={[
-            'border-b-2 border-dotted bg-transparent px-1 pb-0.5 text-stone-900 outline-none transition-[border-color,border-style] placeholder:text-stone-500/70 focus:border-solid focus-visible:border-solid dark:text-white dark:placeholder:text-white/32',
-            showAnswer
-              ? isCorrect
-                ? 'border-green-600 text-green-700'
-                : 'border-red-500 text-red-600'
-              : 'border-stone-500 focus:border-stone-900 dark:border-white/34 dark:focus:border-white',
-          ].join(' ')}
-        />
-        {showAnswer && !isCorrect && (
-          <span className="mt-1 whitespace-nowrap text-xs font-medium text-green-700">
-            ✓ {primaryAnswer}
+        {showAnswer ? (
+          <span className="inline-flex flex-col items-start gap-1.5">
+            <span
+              style={getPracticeTextStyle(textSize, 'body-compact')}
+              className={[
+                'inline-flex min-h-9 max-w-[18rem] items-center gap-2 rounded-full border px-3 py-1.5 font-semibold shadow-sm',
+                isCorrect ? REVIEW_STYLE.correctBadge : REVIEW_STYLE.wrongBadge,
+              ].join(' ')}
+            >
+              {isCorrect ? (
+                <CheckCircle2 className="size-4 shrink-0" strokeWidth={2.5} />
+              ) : (
+                <XCircle className="size-4 shrink-0" strokeWidth={2.5} />
+              )}
+              <span className="truncate">{isCorrect ? value : getReviewValueLabel(value)}</span>
+            </span>
+
+            {!isCorrect && (
+              <span
+                className={`inline-flex max-w-[22rem] items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-semibold ${REVIEW_STYLE.correctBadge}`}
+              >
+                <CheckCircle2 className="size-3.5 shrink-0" strokeWidth={2.5} />
+                <span className="truncate">Correct: {correctAnswer}</span>
+              </span>
+            )}
           </span>
+        ) : (
+          <input
+            data-question-focus="true"
+            type="text"
+            name={`listening-answer-${field.id}`}
+            value={value}
+            onChange={(e) => onChange(field.id, e.target.value)}
+            autoComplete="off"
+            autoCorrect="off"
+            autoCapitalize="off"
+            spellCheck={false}
+            style={{
+              ...getPracticeTextStyle(textSize, 'body-soft'),
+              width: inputWidth,
+              fieldSizing: 'content',
+            }}
+            className="min-w-[8rem] max-w-none shrink-0 border-b-2 border-dotted border-stone-500 bg-transparent px-1 pb-0.5 text-stone-900 outline-none transition-[border-color,border-style,width] placeholder:text-stone-500/70 focus:border-[#ff9f2f] focus:border-solid dark:border-white/34 dark:text-white dark:placeholder:text-white/32 dark:focus:border-[#ffb347]"
+          />
         )}
       </span>
-      {field.suffix && (
+      {field.suffix &&
         renderQuestionText({
           as: 'span',
           blockId: getQuestionAnnotationBlockId(
@@ -90,8 +119,7 @@ export function CompletionInput({
           renderAnnotatedTextBlock,
           style: getPracticeTextStyle(textSize, 'body'),
           text: field.suffix,
-        })
-      )}
+        })}
     </span>
   );
 }

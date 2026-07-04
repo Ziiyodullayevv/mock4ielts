@@ -4,6 +4,11 @@ import type { ReactNode, ElementType, CSSProperties } from 'react';
 import type { BlankField, QuestionGroup } from '../../types';
 
 import { cn } from '@/src/lib/utils';
+import {
+  type InlineTextSegment,
+  splitInlineFormattedText,
+  stripHtmlPreservingInlineFormatting,
+} from '@/src/sections/practice/shared/inline-html-formatting';
 
 import { getGroupQuestions } from '../../utils';
 
@@ -55,13 +60,31 @@ export function renderQuestionText({
   style?: CSSProperties;
   text: string;
 }) {
+  const renderSegments = (segments: InlineTextSegment[]) =>
+    segments.map((segment, index) => (
+      <span
+        key={`${index}-${segment.text}`}
+        className={cn(
+          segment.bold && 'font-semibold',
+          segment.italic && 'italic',
+          segment.underline && 'underline underline-offset-2',
+          segment.code &&
+            'rounded bg-black/5 px-1 py-0.5 font-mono text-[0.92em] dark:bg-white/10',
+          segment.sup && 'align-super text-[0.72em]',
+          segment.sub && 'align-sub text-[0.72em]'
+        )}
+      >
+        {segment.text}
+      </span>
+    ));
+
   if (blockId && renderAnnotatedTextBlock) {
     return renderAnnotatedTextBlock({ as: Component, blockId, className, style, text });
   }
 
   return (
     <Component className={cn('break-words whitespace-pre-wrap select-text', className)} style={style}>
-      {text}
+      {renderSegments(splitInlineFormattedText(stripHtmlPreservingInlineFormatting(text)))}
     </Component>
   );
 }

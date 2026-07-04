@@ -19,6 +19,7 @@ type FileUploadSpecial1Props = {
   maxSize?: number;
   onFileChange?: (file: File | null) => void;
   overlayClassName?: string;
+  resetKey?: number | string;
   triggerClassName?: string;
 };
 
@@ -33,6 +34,7 @@ export function FileUploadSpecial1({
   maxSize = 2 * 1024 * 1024,
   onFileChange,
   overlayClassName,
+  resetKey,
   triggerClassName,
 }: FileUploadSpecial1Props) {
   const [files, setFiles] = React.useState<File[]>([]);
@@ -45,14 +47,17 @@ export function FileUploadSpecial1({
     }, 0);
 
     return () => window.clearTimeout(timer);
-  }, [defaultImage]);
+  }, [defaultImage, resetKey]);
 
   const handleValueChange = React.useCallback((nextFiles: File[]) => {
     const latestFile = nextFiles.slice(-1);
 
     setFiles(latestFile);
+    if (!latestFile.length) {
+      setAvatarPreview(defaultImage);
+    }
     onFileChange?.(latestFile[0] ?? null);
-  }, [onFileChange]);
+  }, [defaultImage, onFileChange]);
 
   React.useEffect(() => {
     if (!files.length) {

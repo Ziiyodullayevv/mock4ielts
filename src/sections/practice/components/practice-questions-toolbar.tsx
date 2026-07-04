@@ -1,6 +1,6 @@
 'use client';
 
-import type { PracticeStatusFilter } from './practice-workspace';
+import type { PracticeSortOrder, PracticeStatusFilter } from './practice-workspace';
 
 import { cn } from '@/src/lib/utils';
 import { Check, Funnel, Search, Shuffle } from 'lucide-react';
@@ -17,23 +17,27 @@ import {
 type PracticeQuestionsToolbarProps = {
   canStartRandom?: boolean;
   onRandomStart?: () => void;
+  onSortOrderChange: (sortOrder: PracticeSortOrder) => void;
   onStatusFilterChange: (statusFilter: PracticeStatusFilter) => void;
   onSearchTermChange: (searchTerm: string) => void;
   searchTerm: string;
   searchPlaceholder?: string;
+  sortOrder: PracticeSortOrder;
   statusFilter: PracticeStatusFilter;
 };
 
 export function PracticeQuestionsToolbar({
   canStartRandom = false,
   onRandomStart,
+  onSortOrderChange,
   onStatusFilterChange,
   onSearchTermChange,
   searchTerm,
   searchPlaceholder = 'Search questions',
+  sortOrder,
   statusFilter,
 }: PracticeQuestionsToolbarProps) {
-  const activeFilterCount = statusFilter === 'all' ? 0 : 1;
+  const activeFilterCount = (statusFilter === 'all' ? 0 : 1) + (sortOrder === 'title-asc' ? 0 : 1);
   const cardTooltipClassName =
     'rounded-md border border-black/8 bg-white px-2.5 py-1 text-xs font-medium text-black shadow-[0_10px_24px_rgba(15,23,42,0.12)] dark:border-white/10 dark:bg-[#1f1f1f] dark:text-white dark:shadow-[0_10px_24px_rgba(0,0,0,0.32)]';
 
@@ -97,29 +101,79 @@ export function PracticeQuestionsToolbar({
             )}
           >
             All
-            {statusFilter === 'all' ? <Check className="ml-auto size-4 text-black dark:text-white" /> : null}
+            {statusFilter === 'all' ? (
+              <Check className="ml-auto size-4 text-black dark:text-white" />
+            ) : null}
           </DropdownMenuItem>
 
           <DropdownMenuItem
             onSelect={() => onStatusFilterChange('completed')}
             className={cn(
               'h-10 rounded-lg px-3 text-sm text-black/88 focus:bg-[#ededed] focus:text-black dark:text-white/88 dark:focus:bg-white/8 dark:focus:text-white',
-              statusFilter === 'completed' && 'bg-[#ededed] text-black dark:bg-white/8 dark:text-white'
+              statusFilter === 'completed' &&
+                'bg-[#ededed] text-black dark:bg-white/8 dark:text-white'
             )}
           >
             Completed
-            {statusFilter === 'completed' ? <Check className="ml-auto size-4 text-black dark:text-white" /> : null}
+            {statusFilter === 'completed' ? (
+              <Check className="ml-auto size-4 text-black dark:text-white" />
+            ) : null}
           </DropdownMenuItem>
 
           <DropdownMenuItem
             onSelect={() => onStatusFilterChange('uncompleted')}
             className={cn(
               'h-10 rounded-lg px-3 text-sm text-black/88 focus:bg-[#ededed] focus:text-black dark:text-white/88 dark:focus:bg-white/8 dark:focus:text-white',
-              statusFilter === 'uncompleted' && 'bg-[#ededed] text-black dark:bg-white/8 dark:text-white'
+              statusFilter === 'uncompleted' &&
+                'bg-[#ededed] text-black dark:bg-white/8 dark:text-white'
             )}
           >
             Uncompleted
             {statusFilter === 'uncompleted' ? (
+              <Check className="ml-auto size-4 text-black dark:text-white" />
+            ) : null}
+          </DropdownMenuItem>
+
+          <DropdownMenuLabel className="mt-2 border-t border-black/8 px-2 py-1.5 text-sm font-semibold text-black/85 dark:border-white/8 dark:text-white/85">
+            Sort
+          </DropdownMenuLabel>
+
+          <DropdownMenuItem
+            onSelect={() => onSortOrderChange('title-asc')}
+            className={cn(
+              'h-10 rounded-lg px-3 text-sm text-black/88 focus:bg-[#ededed] focus:text-black dark:text-white/88 dark:focus:bg-white/8 dark:focus:text-white',
+              sortOrder === 'title-asc' && 'bg-[#ededed] text-black dark:bg-white/8 dark:text-white'
+            )}
+          >
+            Title A-Z
+            {sortOrder === 'title-asc' ? (
+              <Check className="ml-auto size-4 text-black dark:text-white" />
+            ) : null}
+          </DropdownMenuItem>
+
+          <DropdownMenuItem
+            onSelect={() => onSortOrderChange('title-desc')}
+            className={cn(
+              'h-10 rounded-lg px-3 text-sm text-black/88 focus:bg-[#ededed] focus:text-black dark:text-white/88 dark:focus:bg-white/8 dark:focus:text-white',
+              sortOrder === 'title-desc' &&
+                'bg-[#ededed] text-black dark:bg-white/8 dark:text-white'
+            )}
+          >
+            Title Z-A
+            {sortOrder === 'title-desc' ? (
+              <Check className="ml-auto size-4 text-black dark:text-white" />
+            ) : null}
+          </DropdownMenuItem>
+
+          <DropdownMenuItem
+            onSelect={() => onSortOrderChange('original')}
+            className={cn(
+              'h-10 rounded-lg px-3 text-sm text-black/88 focus:bg-[#ededed] focus:text-black dark:text-white/88 dark:focus:bg-white/8 dark:focus:text-white',
+              sortOrder === 'original' && 'bg-[#ededed] text-black dark:bg-white/8 dark:text-white'
+            )}
+          >
+            Original order
+            {sortOrder === 'original' ? (
               <Check className="ml-auto size-4 text-black dark:text-white" />
             ) : null}
           </DropdownMenuItem>

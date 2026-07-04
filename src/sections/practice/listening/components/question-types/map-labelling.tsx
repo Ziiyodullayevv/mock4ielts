@@ -4,9 +4,11 @@ import type { MapData } from '../../types';
 import type { QuestionTypeAnnotationProps } from './annotation-blocks';
 
 import { useState } from 'react';
+import { XCircle, CheckCircle2 } from 'lucide-react';
 
 import { PaperPanel, PaperSurface } from './paper-shell';
 import { useDragAutoScroll } from './use-drag-auto-scroll';
+import { REVIEW_STYLE, getReviewValueLabel } from './review-styles';
 import { renderQuestionText, getQuestionAnnotationBlockId } from './annotation-blocks';
 import { isAnswerCorrect, getPrimaryAnswer, getListeningQuestionAnchorId } from '../../utils';
 
@@ -83,7 +85,9 @@ export function MapLabelling({
                   : 'bg-white text-stone-700'
             }`}
           >
-            <span className={`font-semibold ${usedWords.includes(option.value) ? 'text-inherit' : ''}`}>
+            <span
+              className={`font-semibold ${usedWords.includes(option.value) ? 'text-inherit' : ''}`}
+            >
               {option.value}
             </span>
             <span className="whitespace-nowrap">
@@ -106,7 +110,7 @@ export function MapLabelling({
 
   const mapPanel = (
     <PaperPanel
-      title={data.panelTitle === undefined ? 'Map' : data.panelTitle ?? undefined}
+      title={data.panelTitle === undefined ? 'Map' : (data.panelTitle ?? undefined)}
       titleContent={
         data.panelTitle === null
           ? undefined
@@ -131,47 +135,103 @@ export function MapLabelling({
             viewBox="0 0 400 225"
             xmlns="http://www.w3.org/2000/svg"
           >
-              <rect x="10" y="10" width="380" height="205" fill="none" stroke="#8f8f93" strokeWidth="2" />
-              <rect x="10" y="10" width="110" height="105" fill="#f4f4f5" stroke="#8f8f93" strokeWidth="1" />
-              <text x="65" y="67" textAnchor="middle" fontSize="9" fill="#44403c">
-                Zone A
-              </text>
+            <rect
+              x="10"
+              y="10"
+              width="380"
+              height="205"
+              fill="none"
+              stroke="#8f8f93"
+              strokeWidth="2"
+            />
+            <rect
+              x="10"
+              y="10"
+              width="110"
+              height="105"
+              fill="#f4f4f5"
+              stroke="#8f8f93"
+              strokeWidth="1"
+            />
+            <text x="65" y="67" textAnchor="middle" fontSize="9" fill="#44403c">
+              Zone A
+            </text>
 
-              <rect x="120" y="10" width="160" height="105" fill="#f4f4f5" stroke="#8f8f93" strokeWidth="1" />
-              <text x="200" y="67" textAnchor="middle" fontSize="9" fill="#44403c">
-                Central Hall
-              </text>
+            <rect
+              x="120"
+              y="10"
+              width="160"
+              height="105"
+              fill="#f4f4f5"
+              stroke="#8f8f93"
+              strokeWidth="1"
+            />
+            <text x="200" y="67" textAnchor="middle" fontSize="9" fill="#44403c">
+              Central Hall
+            </text>
 
-              <rect x="280" y="10" width="110" height="105" fill="#f4f4f5" stroke="#8f8f93" strokeWidth="1" />
-              <text x="335" y="67" textAnchor="middle" fontSize="9" fill="#44403c">
-                Zone B
-              </text>
+            <rect
+              x="280"
+              y="10"
+              width="110"
+              height="105"
+              fill="#f4f4f5"
+              stroke="#8f8f93"
+              strokeWidth="1"
+            />
+            <text x="335" y="67" textAnchor="middle" fontSize="9" fill="#44403c">
+              Zone B
+            </text>
 
-              <rect x="10" y="115" width="130" height="100" fill="#f4f4f5" stroke="#8f8f93" strokeWidth="1" />
-              <text x="75" y="168" textAnchor="middle" fontSize="9" fill="#44403c">
-                South Wing
-              </text>
+            <rect
+              x="10"
+              y="115"
+              width="130"
+              height="100"
+              fill="#f4f4f5"
+              stroke="#8f8f93"
+              strokeWidth="1"
+            />
+            <text x="75" y="168" textAnchor="middle" fontSize="9" fill="#44403c">
+              South Wing
+            </text>
 
-              <rect x="140" y="115" width="120" height="100" fill="#f4f4f5" stroke="#8f8f93" strokeWidth="1" />
-              <text x="200" y="168" textAnchor="middle" fontSize="9" fill="#44403c">
-                Gallery
-              </text>
+            <rect
+              x="140"
+              y="115"
+              width="120"
+              height="100"
+              fill="#f4f4f5"
+              stroke="#8f8f93"
+              strokeWidth="1"
+            />
+            <text x="200" y="168" textAnchor="middle" fontSize="9" fill="#44403c">
+              Gallery
+            </text>
 
-              <rect x="260" y="115" width="130" height="100" fill="#f4f4f5" stroke="#8f8f93" strokeWidth="1" />
-              <text x="325" y="168" textAnchor="middle" fontSize="9" fill="#44403c">
-                East Wing
-              </text>
+            <rect
+              x="260"
+              y="115"
+              width="130"
+              height="100"
+              fill="#f4f4f5"
+              stroke="#8f8f93"
+              strokeWidth="1"
+            />
+            <text x="325" y="168" textAnchor="middle" fontSize="9" fill="#44403c">
+              East Wing
+            </text>
 
-              <line x1="185" y1="215" x2="215" y2="215" stroke="#8f8f93" strokeWidth="3" />
-              <text x="200" y="224" textAnchor="middle" fontSize="8" fill="#44403c">
-                Entrance
-              </text>
+            <line x1="185" y1="215" x2="215" y2="215" stroke="#8f8f93" strokeWidth="3" />
+            <text x="200" y="224" textAnchor="middle" fontSize="8" fill="#44403c">
+              Entrance
+            </text>
           </svg>
         )}
         {data.pins.map((pin) => {
           const word = answers[pin.id] ?? '';
           const isActiveQuestion = pin.id === activeQuestionId;
-          const inputWidth = Math.max(76, pin.answerLength * 9 + 18);
+          const inputWidth = Math.max(96, Math.max(pin.answerLength, word.length, 8) * 9 + 24);
           const isCorrect = showAnswer ? isAnswerCorrect(word, pin.answer) : undefined;
           const primaryAnswer = getPrimaryAnswer(pin.answer);
           const shouldShowBadge = showBadges && !pin.hideBadge;
@@ -184,25 +244,20 @@ export function MapLabelling({
           }inline-flex min-h-9 items-center justify-center gap-1.5 rounded-md border border-dashed border-sky-400 bg-transparent px-3 py-1.5 text-[11px] font-semibold tracking-[0.14em] text-sky-800 whitespace-nowrap shadow-[inset_0_0_0_1px_rgba(125,211,252,0.45)]`;
 
           if (showAnswer) {
-            pinBadgeClassName = isCorrect
-              ? 'border-green-600 bg-green-600'
-              : 'border-red-500 bg-red-500';
+            pinBadgeClassName = isCorrect ? REVIEW_STYLE.correctFill : REVIEW_STYLE.wrongFill;
             answerClassName = isCorrect
-              ? `${shouldShowBadge ? 'mt-1 ' : ''}rounded-sm border border-green-300 bg-green-50 px-2.5 py-1 text-xs font-medium whitespace-nowrap text-green-700`
-              : `${shouldShowBadge ? 'mt-1 ' : ''}rounded-sm border border-red-300 bg-red-50 px-2.5 py-1 text-xs font-medium whitespace-nowrap text-red-600`;
+              ? `${shouldShowBadge ? 'mt-1 ' : ''}inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-semibold whitespace-nowrap ${REVIEW_STYLE.correctBadge}`
+              : `${shouldShowBadge ? 'mt-1 ' : ''}inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-semibold whitespace-nowrap ${REVIEW_STYLE.wrongBadge}`;
           } else if (isActiveQuestion) {
             pinBadgeClassName = 'border-sky-500 bg-sky-500 ring-2 ring-sky-200';
-            answerClassName =
-              `${shouldShowBadge ? 'mt-1 ' : ''}rounded-sm border border-sky-400 bg-sky-50 px-2.5 py-1 text-xs font-medium whitespace-nowrap text-sky-700 shadow-[0_0_0_1px_rgba(56,189,248,0.12)]`;
-            emptyDropZoneClassName =
-              `${shouldShowBadge ? 'mt-1 ' : ''}inline-flex min-h-9 items-center justify-center gap-1.5 rounded-md border border-dashed border-sky-500 bg-transparent px-3 py-1.5 text-[11px] font-semibold tracking-[0.14em] text-sky-900 whitespace-nowrap shadow-[0_0_0_1px_rgba(56,189,248,0.16)]`;
+            answerClassName = `${shouldShowBadge ? 'mt-1 ' : ''}rounded-sm border border-sky-400 bg-sky-50 px-2.5 py-1 text-xs font-medium whitespace-nowrap text-sky-700 shadow-[0_0_0_1px_rgba(56,189,248,0.12)]`;
+            emptyDropZoneClassName = `${shouldShowBadge ? 'mt-1 ' : ''}inline-flex min-h-9 items-center justify-center gap-1.5 rounded-md border border-dashed border-sky-500 bg-transparent px-3 py-1.5 text-[11px] font-semibold tracking-[0.14em] text-sky-900 whitespace-nowrap shadow-[0_0_0_1px_rgba(56,189,248,0.16)]`;
           } else if (word) {
             pinBadgeClassName = 'border-stone-900 bg-stone-900';
           }
 
           if (!showAnswer && dragging && !word) {
-            emptyDropZoneClassName =
-              `${shouldShowBadge ? 'mt-1 ' : ''}inline-flex min-h-9 items-center justify-center gap-1.5 rounded-md border-2 border-dashed border-sky-600 bg-transparent px-3 py-1.5 text-[11px] font-semibold tracking-[0.16em] text-sky-950 whitespace-nowrap shadow-[0_0_0_4px_rgba(56,189,248,0.14)]`;
+            emptyDropZoneClassName = `${shouldShowBadge ? 'mt-1 ' : ''}inline-flex min-h-9 items-center justify-center gap-1.5 rounded-md border-2 border-dashed border-sky-600 bg-transparent px-3 py-1.5 text-[11px] font-semibold tracking-[0.16em] text-sky-950 whitespace-nowrap shadow-[0_0_0_4px_rgba(56,189,248,0.14)]`;
           }
 
           return (
@@ -229,7 +284,14 @@ export function MapLabelling({
                     tabIndex={showAnswer ? -1 : 0}
                     className={answerClassName}
                   >
-                    {word}
+                    {showAnswer ? (
+                      isCorrect ? (
+                        <CheckCircle2 className="size-3.5 shrink-0" strokeWidth={2.5} />
+                      ) : (
+                        <XCircle className="size-3.5 shrink-0" strokeWidth={2.5} />
+                      )
+                    ) : null}
+                    {showAnswer && !isCorrect ? getReviewValueLabel(word) : word}
                     {!showAnswer && (
                       <button
                         type="button"
@@ -239,6 +301,13 @@ export function MapLabelling({
                         ✕
                       </button>
                     )}
+                  </div>
+                ) : showAnswer ? (
+                  <div
+                    className={`${shouldShowBadge ? 'mt-1 ' : ''}inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-semibold whitespace-nowrap ${REVIEW_STYLE.wrongBadge}`}
+                  >
+                    <XCircle className="size-3.5 shrink-0" strokeWidth={2.5} />
+                    No answer
                   </div>
                 ) : (
                   <div
@@ -261,8 +330,8 @@ export function MapLabelling({
                   className={`mt-1 rounded-sm border px-2 py-1 ${
                     showAnswer
                       ? isCorrect
-                        ? 'border-green-300 bg-green-50'
-                        : 'border-red-300 bg-red-50'
+                        ? `border ${REVIEW_STYLE.correctBadge}`
+                        : `border ${REVIEW_STYLE.wrongBadge}`
                       : isActiveQuestion
                         ? 'border-sky-400 bg-sky-50 shadow-[0_0_0_1px_rgba(56,189,248,0.12)]'
                         : 'border-sky-300 bg-sky-50/40'
@@ -272,20 +341,19 @@ export function MapLabelling({
                     data-question-focus="true"
                     type="text"
                     name={`listening-answer-${pin.id}`}
-                    value={word}
+                    value={showAnswer && !isCorrect ? getReviewValueLabel(word) : word}
                     onChange={(event) => onChange(pin.id, event.target.value)}
                     disabled={showAnswer}
-                    maxLength={pin.answerLength + 6}
                     autoComplete="off"
                     autoCorrect="off"
                     autoCapitalize="off"
                     spellCheck={false}
-                    style={{ width: inputWidth }}
+                    style={{ width: inputWidth, fieldSizing: 'content' }}
                     className={`bg-transparent text-xs font-medium outline-none ${
                       showAnswer
                         ? isCorrect
-                          ? 'text-green-700'
-                          : 'text-red-600'
+                          ? REVIEW_STYLE.correctText
+                          : REVIEW_STYLE.wrongText
                         : 'text-stone-800'
                     }`}
                   />
@@ -293,8 +361,11 @@ export function MapLabelling({
               )}
 
               {showAnswer && !isCorrect && (
-                <div className="mt-1 whitespace-nowrap text-xs font-medium text-green-700">
-                  ✓ {primaryAnswer}
+                <div
+                  className={`mt-1 inline-flex items-center gap-1.5 whitespace-nowrap rounded-full border px-2.5 py-1 text-xs font-semibold ${REVIEW_STYLE.correctBadge}`}
+                >
+                  <CheckCircle2 className="size-3.5 shrink-0" strokeWidth={2.5} />
+                  Correct: {primaryAnswer}
                 </div>
               )}
             </div>
@@ -305,49 +376,58 @@ export function MapLabelling({
   );
 
   return (
-    <div className={hasLegendOptions ? 'grid gap-5 xl:grid-cols-[minmax(0,40fr)_minmax(0,60fr)] xl:items-start' : 'space-y-5'}>
+    <div
+      className={
+        hasLegendOptions
+          ? 'grid gap-5 xl:grid-cols-[minmax(0,40fr)_minmax(0,60fr)] xl:items-start'
+          : 'space-y-5'
+      }
+    >
       {legendPanel}
 
       <div className="min-w-0 space-y-5">
         {hasWordBank && !showAnswer && !hasLegendOptions && (
           <PaperSurface className="p-3 sm:p-4">
-          {renderQuestionText({
-            as: 'p',
-            blockId: getQuestionAnnotationBlockId(annotationBlockIdPrefix, 'word-bank-inline-title'),
-            className: 'mb-3 text-xs font-semibold uppercase tracking-[0.2em] text-stone-500',
-            renderAnnotatedTextBlock,
-            text: 'Word bank — drag labels onto the map',
-          })}
-          <div className="flex flex-wrap gap-2">
-            {data.wordBank.map((word, wordIndex) => (
-              <button
-                key={word}
-                type="button"
-                draggable
-                onDragStart={() => setDragging(word)}
-                onDragEnd={() => setDragging(null)}
-                className={`px-4 py-2 text-sm font-medium select-none transition-all ${
-                  usedWords.includes(word)
-                    ? 'cursor-not-allowed bg-white/25 text-stone-400 opacity-30'
-                    : dragging === word
-                      ? 'cursor-grabbing bg-stone-900 text-white opacity-50'
-                      : 'cursor-grab bg-white/55 text-stone-700 hover:bg-white'
-                }`}
-              >
-                {renderQuestionText({
-                  as: 'span',
-                  blockId: getQuestionAnnotationBlockId(
-                    annotationBlockIdPrefix,
-                    'word-bank-word',
-                    wordIndex
-                  ),
-                  renderAnnotatedTextBlock,
-                  text: word,
-                })}
-              </button>
-            ))}
-          </div>
-        </PaperSurface>
+            {renderQuestionText({
+              as: 'p',
+              blockId: getQuestionAnnotationBlockId(
+                annotationBlockIdPrefix,
+                'word-bank-inline-title'
+              ),
+              className: 'mb-3 text-xs font-semibold uppercase tracking-[0.2em] text-stone-500',
+              renderAnnotatedTextBlock,
+              text: 'Word bank — drag labels onto the map',
+            })}
+            <div className="flex flex-wrap gap-2">
+              {data.wordBank.map((word, wordIndex) => (
+                <button
+                  key={word}
+                  type="button"
+                  draggable
+                  onDragStart={() => setDragging(word)}
+                  onDragEnd={() => setDragging(null)}
+                  className={`px-4 py-2 text-sm font-medium select-none transition-all ${
+                    usedWords.includes(word)
+                      ? 'cursor-not-allowed bg-white/25 text-stone-400 opacity-30'
+                      : dragging === word
+                        ? 'cursor-grabbing bg-stone-900 text-white opacity-50'
+                        : 'cursor-grab bg-white/55 text-stone-700 hover:bg-white'
+                  }`}
+                >
+                  {renderQuestionText({
+                    as: 'span',
+                    blockId: getQuestionAnnotationBlockId(
+                      annotationBlockIdPrefix,
+                      'word-bank-word',
+                      wordIndex
+                    ),
+                    renderAnnotatedTextBlock,
+                    text: word,
+                  })}
+                </button>
+              ))}
+            </div>
+          </PaperSurface>
         )}
 
         {mapPanel}

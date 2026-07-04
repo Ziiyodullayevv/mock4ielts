@@ -12,6 +12,7 @@ import { buildLoginHref } from '@/src/auth/utils/return-to';
 import { useRouter, usePathname } from '@/src/routes/hooks';
 import { useAuthSession } from '@/src/auth/hooks/use-auth-session';
 import { CircularProgress } from '@/src/components/customized/progress/progress';
+import { formatIeltsBand } from '@/src/sections/practice/utils/ielts-band-score';
 import { PRACTICE_HEADER_RING_CLASS } from '@/src/layouts/practice-surface-theme';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/src/components/ui/tooltip';
 import { Popover, PopoverContent, PopoverTrigger } from '@/src/components/ui/popover';
@@ -294,8 +295,7 @@ export function PracticeOverviewCard({
   const totalSections = sectionStats?.totalSections ?? overview.totalAttempting;
   const totalQuestions = sectionStats?.totalQuestions ?? overview.totalQuestions;
   const completedSections = sectionStats?.completedCount ?? overview.totalSolved;
-  const solvedRatio =
-    totalSections > 0 ? (completedSections / totalSections) * 100 : 0;
+  const solvedRatio = totalSections > 0 ? (completedSections / totalSections) * 100 : 0;
   const solvedPercent = Math.max(0, Math.min(100, Math.round(solvedRatio)));
   const avgBandScore = sectionStats?.averageBand ?? overview.avgBandScore ?? 0;
   const theme = OVERVIEW_THEME[sectionType];
@@ -304,7 +304,7 @@ export function PracticeOverviewCard({
   const hasSummaryStats = totalSections > 0 || totalQuestions > 0;
   const summaryText =
     overview.summaryLabel ??
-    `${overview.sourceLabel} · ${numberFormatter.format(totalSections)} tests · ${numberFormatter.format(totalQuestions)} questions`;
+    `${overview.sourceLabel} · ${numberFormatter.format(totalSections)} tests`;
   const updatedAtLabel = sectionStats?.lastUpdatedAt
     ? formatUpdatedAt(sectionStats.lastUpdatedAt)
     : overview.updatedAtLabel;
@@ -419,7 +419,7 @@ export function PracticeOverviewCard({
                       {isSectionStatsLoading ? (
                         <StatSkeleton className="h-8 w-16 align-middle" />
                       ) : (
-                        avgBandScore.toFixed(1)
+                        formatIeltsBand(avgBandScore)
                       )}
                     </span>
                     <span className="ml-1 text-[1.15rem] leading-none text-black/80 dark:text-white/80">
@@ -544,7 +544,11 @@ export function PracticeOverviewCard({
                     />
                   </span>
                   <span className="truncate text-[1.05rem] font-semibold leading-none tracking-[-0.03em] text-black dark:text-white">
-                    {isSectionStatsLoading ? <StatSkeleton className="h-5 w-8" /> : completedSections}
+                    {isSectionStatsLoading ? (
+                      <StatSkeleton className="h-5 w-8" />
+                    ) : (
+                      completedSections
+                    )}
                   </span>
                   <span className="truncate text-[0.95rem] text-black/82 dark:text-white/82">
                     Solved
@@ -693,7 +697,7 @@ export function PracticeOverviewCard({
                         {isSectionStatsLoading ? (
                           <StatSkeleton className="h-7 w-14 align-middle" />
                         ) : (
-                          avgBandScore.toFixed(1)
+                          formatIeltsBand(avgBandScore)
                         )}
                       </span>
                       <span className="ml-1 text-base leading-none text-black/80 dark:text-white/80">

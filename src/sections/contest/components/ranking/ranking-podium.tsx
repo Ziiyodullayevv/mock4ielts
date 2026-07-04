@@ -92,7 +92,7 @@ function PodiumColumn({ user }: { user: RankingUser }) {
       <img
         src={user.avatarUrl}
         alt={`${user.displayName} avatar`}
-        className="absolute left-1/2 top-[20.5px] h-[72px] w-[72px] -translate-x-1/2 rounded-full"
+        className="absolute left-1/2 top-[20.5px] h-[72px] w-[72px] -translate-x-1/2 rounded-full object-cover object-center"
       />
       <MedalIcon medal={medal} />
 

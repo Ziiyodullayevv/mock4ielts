@@ -3,8 +3,6 @@
 import type { FormSection } from '../../types';
 import type { QuestionTypeAnnotationProps } from './annotation-blocks';
 
-import { usePracticeTextSize, getPracticeTextStyle } from '@/src/sections/practice/shared/practice-text-size';
-
 import { CompletionInput } from './completion-input';
 import { getListeningQuestionAnchorId } from '../../utils';
 import { renderQuestionText, getQuestionAnnotationBlockId } from './annotation-blocks';
@@ -34,7 +32,7 @@ export function FormCompletion({
   renderAnnotatedTextBlock,
   showAnswer,
 }: Props) {
-  const textSize = usePracticeTextSize();
+  const htmlHeadingStyle = { fontSize: '16px', lineHeight: '24px' };
 
   return (
     <PaperPanel
@@ -59,9 +57,9 @@ export function FormCompletion({
                     sectionIndex,
                     'heading'
                   ),
-                  className: 'font-semibold uppercase tracking-[0.2em] text-stone-500 dark:text-white/42',
+                  className: 'font-semibold tracking-[-0.02em] text-stone-900 dark:text-white',
                   renderAnnotatedTextBlock,
-                  style: getPracticeTextStyle(textSize, 'eyebrow'),
+                  style: htmlHeadingStyle,
                   text: section.heading,
                 })}
               </div>

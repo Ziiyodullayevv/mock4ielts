@@ -9,6 +9,11 @@ import type {
 
 import { useMemo } from 'react';
 import { cn } from '@/src/lib/utils';
+import {
+  type InlineTextSegment,
+  splitInlineFormattedText,
+  stripHtmlPreservingInlineFormatting,
+} from '@/src/sections/practice/shared/inline-html-formatting';
 
 type TextSegment = {
   annotation?: TextAnnotation;
@@ -33,6 +38,30 @@ export const ANNOTATION_STYLES: Record<AnnotationColor, string> = {
   red: 'bg-[#ff5d5d]/32 decoration-[#ff5d5d]',
   yellow: 'bg-[#ffc62b]/36 decoration-[#ffc62b]',
 };
+
+function renderInlineFormattedSegments(segments: InlineTextSegment[]) {
+  return segments.map((segment, index) => (
+    <span
+      key={`${index}-${segment.text}`}
+      className={cn(
+        segment.bold && 'font-semibold',
+        segment.italic && 'italic',
+        segment.underline && 'underline underline-offset-2',
+        segment.code && 'rounded bg-black/5 px-1 py-0.5 font-mono text-[0.92em] dark:bg-white/10',
+        segment.sup && 'align-super text-[0.72em]',
+        segment.sub && 'align-sub text-[0.72em]'
+      )}
+    >
+      {segment.text}
+    </span>
+  ));
+}
+
+function renderInlineFormattedText(text: string) {
+  return renderInlineFormattedSegments(
+    splitInlineFormattedText(stripHtmlPreservingInlineFormatting(text))
+  );
+}
 
 function buildTextSegments(text: string, annotations: TextAnnotation[]) {
   const segments: TextSegment[] = [];
@@ -100,10 +129,10 @@ export function AnnotatedTextBlock({
             )}
             title={segment.annotation.note ? 'This highlight has a note' : undefined}
           >
-            {segment.text}
+            {renderInlineFormattedText(segment.text)}
           </span>
         ) : (
-          <span key={segment.id}>{segment.text}</span>
+          <span key={segment.id}>{renderInlineFormattedText(segment.text)}</span>
         )
       )}
     </Component>

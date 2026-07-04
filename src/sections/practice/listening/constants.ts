@@ -1,0 +1,2 @@
+export const LISTENING_DURATION_MINUTES = 32;
+

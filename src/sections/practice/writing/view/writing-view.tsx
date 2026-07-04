@@ -34,8 +34,9 @@ export function WritingView() {
     isStartAvailable: true,
     questionCount: item.questionCount,
     remoteId: item.remoteId,
+    resultLabel: item.resultLabel,
     sectionType: 'writing',
-    tokenCost: undefined,
+    tokenCost: item.tokenCost,
     title: item.title,
   }));
 

@@ -3,16 +3,15 @@
 import type { MatchingData } from '../../types';
 import type { QuestionTypeAnnotationProps } from './annotation-blocks';
 
-import { X, Check } from 'lucide-react';
+import { X, Check, XCircle, CheckCircle2 } from 'lucide-react';
+import { Select, SelectItem, SelectContent, SelectTrigger } from '@/src/components/ui/select';
 import {
-  Select,
-  SelectItem,
-  SelectContent,
-  SelectTrigger,
-} from '@/src/components/ui/select';
-import { usePracticeTextSize, getPracticeTextStyle } from '@/src/sections/practice/shared/practice-text-size';
+  usePracticeTextSize,
+  getPracticeTextStyle,
+} from '@/src/sections/practice/shared/practice-text-size';
 
-import { getListeningQuestionAnchorId } from '../../utils';
+import { REVIEW_STYLE, getReviewValueLabel } from './review-styles';
+import { isAnswerCorrect, getListeningQuestionAnchorId } from '../../utils';
 import { renderQuestionText, getQuestionAnnotationBlockId } from './annotation-blocks';
 import {
   PaperPanel,
@@ -57,19 +56,17 @@ export function Matching({
         <PaperSurface>
           <div className="flex flex-wrap gap-2.5 p-3 sm:p-3.5 md:p-4">
             {data.options.map((opt) => {
-                  const [value, ...labelParts] = opt.label.split(/\s+/);
-                  const displayValue = formatOptionValue(value);
+              const [value, ...labelParts] = opt.label.split(/\s+/);
+              const displayValue = formatOptionValue(value);
 
-                  return (
+              return (
                 <button
                   key={opt.value}
                   type="button"
                   style={getPracticeTextStyle(textSize, 'option')}
                   className="inline-flex items-center gap-2 rounded-full bg-white px-3.5 py-2 text-[0.95rem] leading-5 text-stone-700 transition-all dark:bg-white/8 dark:text-white/78"
                 >
-                  <span className="font-semibold">
-                    {displayValue}
-                  </span>
+                  <span className="font-semibold">{displayValue}</span>
                   <span className="whitespace-nowrap">
                     {renderQuestionText({
                       as: 'span',
@@ -104,8 +101,10 @@ export function Matching({
           {data.pairs.map((pair) => {
             const val = answers[pair.id] ?? '';
             const isActiveQuestion = pair.id === activeQuestionId;
-            const isCorrect = showAnswer ? val === pair.answer : undefined;
-            const correctLabel = data.options.find((o) => o.value === pair.answer)?.label ?? '';
+            const isCorrect = showAnswer ? isAnswerCorrect(val, pair.answer) : undefined;
+            const primaryPairAnswer = Array.isArray(pair.answer) ? pair.answer[0] : pair.answer;
+            const correctLabel =
+              data.options.find((o) => o.value === primaryPairAnswer)?.label ?? primaryPairAnswer;
             const selectedOption = data.options.find((o) => o.value === val);
             const selectedLabel = selectedOption
               ? selectedOption.label.split(/\s+/).slice(1).join(' ')
@@ -116,8 +115,8 @@ export function Matching({
 
             if (showAnswer) {
               dropChipClassName = isCorrect
-                ? 'inline-flex min-h-8 items-center gap-2 rounded-sm border border-green-300 bg-green-50 px-2.5 py-1 text-xs font-medium whitespace-nowrap text-green-700 transition-colors'
-                : 'inline-flex min-h-8 items-center gap-2 rounded-sm border border-red-300 bg-red-50 px-2.5 py-1 text-xs font-medium whitespace-nowrap text-red-600 transition-colors';
+                ? `inline-flex min-h-8 items-center gap-2 rounded-full border px-2.5 py-1 text-xs font-semibold whitespace-nowrap transition-colors ${REVIEW_STYLE.correctBadge}`
+                : `inline-flex min-h-8 items-center gap-2 rounded-full border px-2.5 py-1 text-xs font-semibold whitespace-nowrap transition-colors ${REVIEW_STYLE.wrongBadge}`;
             } else if (val) {
               dropChipClassName = isActiveQuestion
                 ? 'inline-flex min-h-8 items-center gap-2 rounded-sm border border-sky-400 bg-sky-50 px-2.5 py-1 text-xs font-medium whitespace-nowrap text-sky-700 shadow-[0_0_0_1px_rgba(56,189,248,0.12)] transition-colors'
@@ -157,14 +156,21 @@ export function Matching({
                     <div className={dropChipClassName}>
                       {val ? (
                         <div className="flex items-center gap-2">
-                          <span className="font-semibold tracking-[0.08em] text-inherit">
-                            {selectedDisplayValue}
+                          {isCorrect ? (
+                            <CheckCircle2 className="size-3.5 shrink-0" strokeWidth={2.5} />
+                          ) : (
+                            <XCircle className="size-3.5 shrink-0" strokeWidth={2.5} />
+                          )}
+                          <span>
+                            {isCorrect
+                              ? selectedDisplayValue
+                              : getReviewValueLabel(selectedDisplayValue)}
                           </span>
                         </div>
                       ) : (
                         <span className="inline-flex items-center gap-1.5">
-                          <span className="size-1.5 rounded-full bg-current opacity-70" />
-                          <span>NO ANSWER</span>
+                          <XCircle className="size-3.5 shrink-0" strokeWidth={2.5} />
+                          <span>No answer</span>
                         </span>
                       )}
                     </div>
@@ -195,13 +201,14 @@ export function Matching({
                                 <Check className="size-3" strokeWidth={2.6} />
                               </span>
                             )}
-                            <span className="truncate">
-                              {selectedLabel || 'Select answer'}
-                            </span>
+                            <span className="truncate">{selectedLabel || 'Select answer'}</span>
                           </div>
                         </SelectTrigger>
                         <SelectContent className="w-[min(34rem,calc(100vw-2rem))] rounded-xl border-stone-300 dark:border-white/10">
-                          <SelectItem value="__clear__" className="rounded-lg text-stone-500 dark:text-white/52">
+                          <SelectItem
+                            value="__clear__"
+                            className="rounded-lg text-stone-500 dark:text-white/52"
+                          >
                             Clear selection
                           </SelectItem>
                           {data.options.map((option) => {
@@ -209,7 +216,11 @@ export function Matching({
                             const displayValue = formatOptionValue(option.value);
 
                             return (
-                              <SelectItem key={option.value} value={option.value} className="rounded-lg pr-9">
+                              <SelectItem
+                                key={option.value}
+                                value={option.value}
+                                className="rounded-lg pr-9"
+                              >
                                 <span className="flex min-w-0 items-start gap-2">
                                   <span className="inline-flex size-5 shrink-0 items-center justify-center rounded-full bg-stone-900 text-[11px] font-semibold tracking-[0.08em] text-white dark:bg-white/90 dark:text-stone-950">
                                     {displayValue}
@@ -238,7 +249,12 @@ export function Matching({
                   )}
 
                   {showAnswer && !isCorrect ? (
-                    <p className="text-sm font-medium text-green-700">✓ {correctLabel}</p>
+                    <p
+                      className={`inline-flex max-w-full items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-semibold ${REVIEW_STYLE.correctBadge}`}
+                    >
+                      <CheckCircle2 className="size-3.5 shrink-0" strokeWidth={2.5} />
+                      <span className="truncate">Correct: {correctLabel}</span>
+                    </p>
                   ) : null}
 
                   {!showAnswer && val ? (

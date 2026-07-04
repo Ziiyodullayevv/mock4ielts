@@ -3,8 +3,10 @@
 import type { MCQuestion } from '../../types';
 import type { QuestionTypeAnnotationProps } from './annotation-blocks';
 
+import { XCircle, CheckCircle2 } from 'lucide-react';
 import { usePracticeTextSize, getPracticeTextStyle } from '@/src/sections/practice/shared/practice-text-size';
 
+import { REVIEW_STYLE, getReviewValueLabel } from './review-styles';
 import { isAnswerCorrect, getListeningQuestionAnchorId } from '../../utils';
 import { renderQuestionText, getQuestionAnnotationBlockId } from './annotation-blocks';
 import {
@@ -50,11 +52,12 @@ export function MultipleChoice({
             .split(',')
             .map((value) => value.trim())
             .filter(Boolean);
-          const correctAnswer = Array.isArray(q.answer) ? q.answer[0] ?? '' : q.answer;
-          const correctValues = correctAnswer
-            .split(',')
+          const correctValues = (Array.isArray(q.answer) ? q.answer : q.answer.split(','))
             .map((value) => value.trim())
             .filter(Boolean);
+          const hasAnswer = selectedValues.length > 0;
+          const selectedAnswerLabel = selectedValues.join(', ');
+          const correctAnswerLabel = correctValues.join(', ');
           const optionTextStyle = {
             ...getPracticeTextStyle(textSize, 'option'),
             fontSize: `${Math.max(12, textSize - 2)}px`,
@@ -156,12 +159,12 @@ export function MultipleChoice({
 
                   if (showAnswer) {
                     if (isCorrect) {
-                      optionClassName = 'rounded-2xl bg-green-50/80 py-1 text-green-800';
-                      markerClassName = 'border-green-600 bg-green-600';
+                      optionClassName = `rounded-2xl py-1 ${REVIEW_STYLE.correctRow}`;
+                      markerClassName = REVIEW_STYLE.correctFill;
                       markerValueClassName = 'text-white';
                     } else if (isSelected && !isQuestionCorrect) {
-                      optionClassName = 'rounded-2xl bg-red-50/80 py-1 text-red-700';
-                      markerClassName = 'border-red-500 bg-red-500';
+                      optionClassName = `rounded-2xl py-1 ${REVIEW_STYLE.wrongRow}`;
+                      markerClassName = REVIEW_STYLE.wrongFill;
                       markerValueClassName = 'text-white';
                     }
                   } else if (isSelected) {
@@ -209,6 +212,36 @@ export function MultipleChoice({
                     </button>
                   );
                 })}
+
+                {showAnswer ? (
+                  <div className="flex flex-wrap items-center gap-2 pt-1">
+                    {isAnswerCorrect(answers[q.id], q.answer, q.multiSelect) ? (
+                      <span
+                        className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-semibold ${REVIEW_STYLE.correctBadge}`}
+                      >
+                        <CheckCircle2 className="size-3.5 shrink-0" strokeWidth={2.5} />
+                        Correct
+                      </span>
+                    ) : (
+                      <>
+                        <span
+                          className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-semibold ${REVIEW_STYLE.wrongBadge}`}
+                        >
+                          <XCircle className="size-3.5 shrink-0" strokeWidth={2.5} />
+                          {hasAnswer
+                            ? getReviewValueLabel(selectedAnswerLabel)
+                            : 'No answer'}
+                        </span>
+                        <span
+                          className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-semibold ${REVIEW_STYLE.correctBadge}`}
+                        >
+                          <CheckCircle2 className="size-3.5 shrink-0" strokeWidth={2.5} />
+                          Correct: {correctAnswerLabel}
+                        </span>
+                      </>
+                    )}
+                  </div>
+                ) : null}
               </div>
             </section>
           );

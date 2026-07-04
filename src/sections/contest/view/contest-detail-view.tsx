@@ -32,6 +32,7 @@ import {
 import {
   formatCountdown,
   formatStartLabel,
+  getContestDisplayTone,
   openContestGoogleCalendar,
   formatContestDisplayTitle,
 } from '../utils';
@@ -75,18 +76,17 @@ const getContestDetailActionButtonClassName = (tone: ContestTone) =>
     : 'inline-flex items-center justify-center rounded-full border border-black/5 bg-white/70 text-[#d97706] shadow-[0_10px_28px_rgba(15,23,42,0.10)] transition-[background-color,color,transform] duration-200 hover:bg-white/85 hover:text-[#b85c00] active:scale-[0.98] dark:border-white/8 dark:bg-white/8 dark:text-[#ff9f2f] dark:shadow-none dark:hover:bg-white/12 dark:hover:text-[#ffb347]';
 
 function getContestTone(contest: ContestItem | undefined, requestedTone: ContestTone): ContestTone {
-  if (requestedTone === 'violet') {
-    return 'violet';
-  }
-
   const gradient = contest?.gradient.toLowerCase() ?? '';
-
-  return gradient.includes('937fe1') ||
+  const fallbackTone =
+    requestedTone === 'violet' ||
+    gradient.includes('937fe1') ||
     gradient.includes('251b80') ||
     gradient.includes('8b5cf6') ||
     gradient.includes('312e81')
-    ? 'violet'
-    : 'default';
+      ? 'violet'
+      : 'default';
+
+  return contest?.title ? getContestDisplayTone(contest.title, fallbackTone) : fallbackTone;
 }
 
 const getContestStatus = (startsAt: Date, endsAt: Date, apiStatus?: ContestItem['contestStatus']) => {
@@ -220,7 +220,7 @@ export function ContestDetailView({ contestId }: ContestDetailViewProps) {
     openContestGoogleCalendar({
       description: contest.description,
       endsAt: contest.endsAt,
-      slug: tone === 'violet' ? `${contest.slug}?tone=violet` : contest.slug,
+      slug: contest.slug,
       startsAt: contest.startsAt,
       title: displayTitle,
     });
@@ -289,12 +289,12 @@ export function ContestDetailView({ contestId }: ContestDetailViewProps) {
               type="button"
               onClick={handleReminder}
               className={cn(
-                contestIconButtonClassName,
-                'size-10 bg-white/70 text-stone-700 dark:bg-white/8 dark:text-white/86'
+                'inline-flex h-10 items-center justify-center gap-2 rounded-full bg-white/10 px-4 text-sm font-semibold text-white shadow-none backdrop-blur-xl transition-colors hover:bg-white/16 hover:text-white'
               )}
               aria-label="Set reminder"
             >
               <AlarmClock className="size-4" />
+              <span>Set reminder</span>
             </button>
 
             <Link

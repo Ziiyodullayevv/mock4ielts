@@ -10,6 +10,7 @@ export type PracticeQuestionItem = {
   isCompleted?: boolean;
   isStartAvailable?: boolean;
   questionCount?: number;
+  resultLabel?: string;
   isStarred?: boolean;
   remoteId?: string;
   sectionType?: PracticeSectionType;

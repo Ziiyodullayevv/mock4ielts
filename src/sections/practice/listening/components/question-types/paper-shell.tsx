@@ -3,15 +3,30 @@
 import type { ReactNode, ElementType, CSSProperties } from 'react';
 
 import { cn } from '@/src/lib/utils';
-import { usePracticeTextSize, getPracticeTextStyle } from '@/src/sections/practice/shared/practice-text-size';
+import { useContext, createContext } from 'react';
+import {
+  usePracticeTextSize,
+  getPracticeTextStyle,
+} from '@/src/sections/practice/shared/practice-text-size';
+import {
+  type InlineTextSegment,
+  splitInlineFormattedText,
+  stripHtmlPreservingInlineFormatting,
+} from '@/src/sections/practice/shared/inline-html-formatting';
 
 export const PAPER_PANEL_CLASS_NAME =
-  'relative overflow-hidden rounded-lg bg-[#f7f7f7] dark:bg-[#131313]';
+  'relative overflow-hidden rounded-lg border border-[#dfdfdf] bg-[#f7f7f7] dark:border-white/10 dark:bg-[#131313]';
 
 export const PAPER_DIVIDER_CLASS_NAME =
   "[&>*+*]:relative [&>*+*]:before:absolute [&>*+*]:before:top-0 [&>*+*]:before:left-3 [&>*+*]:before:right-3 sm:[&>*+*]:before:left-4 sm:[&>*+*]:before:right-4 [&>*+*]:before:h-px [&>*+*]:before:bg-[#dfdfdf] dark:[&>*+*]:before:bg-white/10 [&>*+*]:before:content-['']";
 
 export const PAPER_ROW_CLASS_NAME = 'px-3 py-2 text-stone-800 dark:text-white/84 sm:px-4 sm:py-3';
+
+const PAPER_PANEL_TITLE_CLASS_NAME =
+  'border-b border-[#d6d6d6] bg-white px-3 py-2.5 text-[18px] leading-7 font-extrabold uppercase tracking-normal text-stone-950 dark:border-white/10 dark:bg-white/[0.06] dark:text-white sm:px-4 sm:py-3';
+
+const PAPER_PANEL_GENERIC_TITLE_CLASS_NAME =
+  'border-b border-[#d6d6d6] px-3 py-2.5 text-[16px] leading-6 font-semibold tracking-normal text-stone-900 dark:border-white/10 dark:text-white sm:px-4';
 
 const COUNT_WORD_PATTERN = 'ONE|TWO|THREE|FOUR|FIVE|SIX|SEVEN|EIGHT|NINE|TEN|\\d+';
 const ROMAN_NUMERAL_PATTERN = 'i|ii|iii|iv|v|vi|vii|viii|ix|x';
@@ -76,7 +91,8 @@ const INSTRUCTION_EMPHASIS_PATTERNS = [
   },
   {
     groups: [1],
-    pattern: /\b([A-Z](?:[–-][A-Z]|,\s*[A-Z])*)\b(?=\s*(?:below|from the box|on the map|in the diagram|$))/gi,
+    pattern:
+      /\b([A-Z](?:[–-][A-Z]|,\s*[A-Z])*)\b(?=\s*(?:below|from the box|on the map|in the diagram|$))/gi,
   },
   {
     groups: [1],
@@ -158,11 +174,34 @@ function formatInstructionEmphasis(value: string) {
   );
 }
 
+function renderInlineFormattedText(text: string) {
+  const segments: InlineTextSegment[] = splitInlineFormattedText(
+    stripHtmlPreservingInlineFormatting(text)
+  );
+
+  return segments.map((segment, index) => (
+    <span
+      key={`${index}-${segment.text}`}
+      className={cn(
+        segment.bold && 'font-semibold',
+        segment.italic && 'italic',
+        segment.underline && 'underline underline-offset-2',
+        segment.code && 'rounded bg-black/5 px-1 py-0.5 font-mono text-[0.92em] dark:bg-white/10',
+        segment.sup && 'align-super text-[0.72em]',
+        segment.sub && 'align-sub text-[0.72em]'
+      )}
+    >
+      {segment.text}
+    </span>
+  ));
+}
+
 function renderInstruction(instruction: string) {
-  const emphasisRanges = getInstructionEmphasisRanges(instruction);
+  const formattedInstruction = stripHtmlPreservingInlineFormatting(instruction);
+  const emphasisRanges = getInstructionEmphasisRanges(formattedInstruction);
 
   if (!emphasisRanges.length) {
-    return instruction;
+    return renderInlineFormattedText(formattedInstruction);
   }
 
   const nodes: Array<string | React.JSX.Element> = [];
@@ -170,7 +209,9 @@ function renderInstruction(instruction: string) {
 
   emphasisRanges.forEach((range, index) => {
     if (range.start > currentIndex) {
-      nodes.push(instruction.slice(currentIndex, range.start));
+      nodes.push(
+        ...renderInlineFormattedText(formattedInstruction.slice(currentIndex, range.start))
+      );
     }
 
     nodes.push(
@@ -178,55 +219,20 @@ function renderInstruction(instruction: string) {
         key={`${range.start}-${range.end}-${index}`}
         className="font-semibold italic text-sky-600 dark:text-sky-400"
       >
-        {formatInstructionEmphasis(instruction.slice(range.start, range.end))}
+        {renderInlineFormattedText(
+          formatInstructionEmphasis(formattedInstruction.slice(range.start, range.end))
+        )}
       </em>
     );
 
     currentIndex = range.end;
   });
 
-  if (currentIndex < instruction.length) {
-    nodes.push(instruction.slice(currentIndex));
+  if (currentIndex < formattedInstruction.length) {
+    nodes.push(...renderInlineFormattedText(formattedInstruction.slice(currentIndex)));
   }
 
   return nodes;
-}
-
-function escapeHtml(value: string) {
-  return value
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#39;');
-}
-
-function renderInstructionHtml(instruction: string) {
-  const emphasisRanges = getInstructionEmphasisRanges(instruction);
-
-  if (!emphasisRanges.length) {
-    return escapeHtml(instruction);
-  }
-
-  let html = '';
-  let currentIndex = 0;
-
-  emphasisRanges.forEach((range) => {
-    if (range.start > currentIndex) {
-      html += escapeHtml(instruction.slice(currentIndex, range.start));
-    }
-
-    html += `<strong><em>${escapeHtml(
-      formatInstructionEmphasis(instruction.slice(range.start, range.end))
-    )}</em></strong>`;
-    currentIndex = range.end;
-  });
-
-  if (currentIndex < instruction.length) {
-    html += escapeHtml(instruction.slice(currentIndex));
-  }
-
-  return html;
 }
 
 type QuestionGroupIntroProps = {
@@ -249,6 +255,22 @@ type QuestionNumberBadgeProps = {
   number: number | string;
   size?: 'md' | 'sm' | 'xs';
 };
+
+const AudioQuestionNumberContext = createContext<number | null>(null);
+
+export function AudioQuestionNumberProvider({
+  children,
+  value,
+}: {
+  children: ReactNode;
+  value: number | null;
+}) {
+  return (
+    <AudioQuestionNumberContext.Provider value={value}>
+      {children}
+    </AudioQuestionNumberContext.Provider>
+  );
+}
 
 export function QuestionGroupIntro({
   annotationBlockId,
@@ -282,8 +304,9 @@ export function QuestionGroupIntro({
           data-writing-block-id={annotationBlockId}
           style={getPracticeTextStyle(textSize, 'body-compact')}
           className="max-w-5xl font-semibold text-stone-700 dark:text-white/72 [&_em]:italic [&_strong]:font-semibold [&_strong]:text-sky-600 dark:[&_strong]:text-sky-400"
-          dangerouslySetInnerHTML={{ __html: renderInstructionHtml(instruction) }}
-        />
+        >
+          {renderInstruction(instruction)}
+        </p>
       ) : (
         <p
           style={getPracticeTextStyle(textSize, 'body-compact')}
@@ -296,20 +319,25 @@ export function QuestionGroupIntro({
   );
 }
 
-export function QuestionNumberBadge({
-  className,
-  isActive,
-  number,
-}: QuestionNumberBadgeProps) {
+export function QuestionNumberBadge({ className, isActive, number }: QuestionNumberBadgeProps) {
+  const audioQuestionNumber = useContext(AudioQuestionNumberContext);
+  const numericNumber = typeof number === 'number' ? number : Number(number);
+  const isAudioCurrent = Number.isFinite(numericNumber) && audioQuestionNumber === numericNumber;
+
   return (
     <span
       className={cn(
-        'inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-[0.74rem] font-semibold tabular-nums tracking-[-0.03em] align-middle transition-colors',
+        'relative inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-[0.74rem] font-semibold tabular-nums tracking-[-0.03em] align-middle transition-colors',
         isActive
           ? 'border border-[#ffb347] bg-[linear-gradient(135deg,#ffc85a_0%,#ff9f2f_55%,#ff784b_100%)] text-white'
-          : 'bg-[#e8e8ec] text-stone-800 dark:bg-white/10 dark:text-white/74',
+          : isAudioCurrent
+            ? 'border border-[#ffb347] bg-[#fff4df] text-[#b76b00] ring-2 ring-[#ffb347]/30 dark:bg-[#ffb347]/14 dark:text-[#ffcf7a]'
+            : 'bg-[#e8e8ec] text-stone-800 dark:bg-white/10 dark:text-white/74',
+        isAudioCurrent &&
+          "after:absolute after:-right-0.5 after:-top-0.5 after:size-2 after:rounded-full after:bg-[#ff9f2f] after:shadow-[0_0_0_3px_rgba(255,179,71,0.25)] after:content-['']",
         className
       )}
+      title={isAudioCurrent ? `Audio is around question ${number}` : undefined}
     >
       {number}
     </span>
@@ -336,11 +364,7 @@ export function PaperSurface({ children, className, n = 4, radius = 38 }: PaperS
   void n;
   void radius;
 
-  return (
-    <div className={cn(PAPER_PANEL_CLASS_NAME, className)}>
-      {children}
-    </div>
-  );
+  return <div className={cn(PAPER_PANEL_CLASS_NAME, className)}>{children}</div>;
 }
 
 export function PaperPanel({
@@ -351,15 +375,16 @@ export function PaperPanel({
   titleClassName,
   titleContent,
 }: PaperPanelProps) {
-  const textSize = usePracticeTextSize();
+  const isGenericQuestionTitle = title?.trim().toLowerCase() === 'questions';
 
   return (
     <PaperSurface className={className}>
       {title || titleContent ? (
         <div
-          style={getPracticeTextStyle(textSize, 'body')}
           className={cn(
-            'border-b border-[#dfdfdf] px-3 py-2.5 font-semibold tracking-[-0.02em] text-stone-900 dark:border-white/10 dark:text-white sm:px-4 sm:py-3',
+            isGenericQuestionTitle
+              ? PAPER_PANEL_GENERIC_TITLE_CLASS_NAME
+              : PAPER_PANEL_TITLE_CLASS_NAME,
             titleClassName
           )}
         >

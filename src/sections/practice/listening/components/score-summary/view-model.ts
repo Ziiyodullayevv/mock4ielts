@@ -1,25 +1,11 @@
 import type { TestResult } from '../../types';
 import type { PartMetric, PerformanceTheme, ScoreSummaryViewModel } from './types';
 
-function bandScore(score: number, total: number): string {
-  if (!total) {
-    return '0.0';
-  }
-
-  const pct = score / total;
-  if (pct >= 0.97) return '9.0';
-  if (pct >= 0.93) return '8.5';
-  if (pct >= 0.87) return '8.0';
-  if (pct >= 0.8) return '7.5';
-  if (pct >= 0.73) return '7.0';
-  if (pct >= 0.67) return '6.5';
-  if (pct >= 0.6) return '6.0';
-  if (pct >= 0.53) return '5.5';
-  if (pct >= 0.47) return '5.0';
-  if (pct >= 0.4) return '4.5';
-
-  return '4.0';
-}
+import {
+  formatIeltsBand,
+  normalizeIeltsBand,
+  getIeltsListeningBandFromRawScore,
+} from '@/src/sections/practice/utils/ielts-band-score';
 
 function getPartMetrics(result: TestResult): PartMetric[] {
   return Object.entries(result.partScores)
@@ -30,12 +16,6 @@ function getPartMetrics(result: TestResult): PartMetric[] {
       total: values.total,
     }))
     .sort((a, b) => a.partNumber - b.partNumber);
-}
-
-function formatBand(bandValue: number) {
-  const formatted = bandValue.toFixed(1);
-
-  return formatted.endsWith('.0') ? formatted.slice(0, -2) : formatted;
 }
 
 function getCefrLevel(bandValue: number) {
@@ -100,11 +80,8 @@ function getPerformanceTheme(bandValue: number): PerformanceTheme {
 export function buildScoreSummaryViewModel(result: TestResult): ScoreSummaryViewModel {
   const score = Math.round(result.score);
   const total = Math.round(result.total);
-  const bandValue =
-    typeof result.overallBand === 'number' && Number.isFinite(result.overallBand)
-      ? result.overallBand
-      : Number.parseFloat(bandScore(score, total));
-  const displayBand = formatBand(bandValue);
+  const bandValue = normalizeIeltsBand(getIeltsListeningBandFromRawScore(score, total));
+  const displayBand = formatIeltsBand(bandValue);
   const answeredCount = Object.keys(result.answers).filter((value) =>
     result.answers[value]?.trim()
   ).length;

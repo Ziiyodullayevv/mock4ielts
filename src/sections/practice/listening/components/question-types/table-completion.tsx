@@ -214,7 +214,7 @@ function TableContentCell({
                 />
                 <CompletionInput
                   annotationBlockIdPrefix={annotationBlockIdPrefix}
-                  field={segment.field}
+                  field={{ ...segment.field, label: '' }}
                   value={answers[segment.field.id] ?? ''}
                   onChange={onChange}
                   renderAnnotatedTextBlock={renderAnnotatedTextBlock}

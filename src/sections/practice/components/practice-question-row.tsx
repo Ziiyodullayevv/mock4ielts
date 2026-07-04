@@ -17,7 +17,6 @@ import { PRACTICE_HEADER_RING_CLASS } from '@/src/layouts/practice-surface-theme
 import { useFavoriteToggleMutation } from '@/src/sections/practice/hooks/use-favorite-toggle-mutation';
 import { startListeningSectionAttempt } from '@/src/sections/practice/listening/api/listening-attempt-api';
 import { getListeningSectionDetail } from '@/src/sections/practice/listening/api/get-listening-section-detail';
-import { X, Mic, Zap, Star, Check, Timer, Files, Circle, PenTool, BookOpen, Headphones, type LucideIcon } from 'lucide-react';
 import {
   Sheet,
   SheetClose,
@@ -26,6 +25,20 @@ import {
   SheetContent,
   SheetDescription,
 } from '@/src/components/ui/sheet';
+import {
+  X,
+  Mic,
+  Zap,
+  Star,
+  Check,
+  Timer,
+  Files,
+  Circle,
+  PenTool,
+  BookOpen,
+  Headphones,
+  type LucideIcon,
+} from 'lucide-react';
 
 import { PracticeCountdownOverlay } from './practice-test-state';
 
@@ -47,8 +60,7 @@ const ATTEMPT_COUNT_FORMATTER = new Intl.NumberFormat('en', {
 const PRACTICE_SECTION_CONTENT = {
   listening: {
     aboutTitle: 'About IELTS Listening',
-    description:
-      'IELTS listening section details and structure.',
+    description: 'IELTS listening section details and structure.',
     emptyStartNotice: null,
     examCoverageItems: [
       'Part 1: A conversation between two people set in an everyday social context.',
@@ -79,8 +91,7 @@ const PRACTICE_SECTION_CONTENT = {
   },
   reading: {
     aboutTitle: 'About IELTS Reading',
-    description:
-      'IELTS reading section details and structure.',
+    description: 'IELTS reading section details and structure.',
     emptyStartNotice: null,
     examCoverageItems: [
       'Three passages with increasing difficulty and academic-style topics.',
@@ -110,8 +121,7 @@ const PRACTICE_SECTION_CONTENT = {
   },
   writing: {
     aboutTitle: 'About IELTS Writing',
-    description:
-      'IELTS writing section details and structure.',
+    description: 'IELTS writing section details and structure.',
     emptyStartNotice:
       'Writing practice list is live, but starting a writing set is not enabled yet.',
     examCoverageItems: [
@@ -142,8 +152,7 @@ const PRACTICE_SECTION_CONTENT = {
   },
   speaking: {
     aboutTitle: 'About IELTS Speaking',
-    description:
-      'IELTS speaking section details and structure.',
+    description: 'IELTS speaking section details and structure.',
     emptyStartNotice: null,
     examCoverageItems: [
       'Part 1 focuses on short personal questions with natural everyday answers.',
@@ -173,8 +182,7 @@ const PRACTICE_SECTION_CONTENT = {
   },
   'mock-exam': {
     aboutTitle: 'About Full IELTS Mock Exams',
-    description:
-      'Full IELTS mock exam details and structure.',
+    description: 'Full IELTS mock exam details and structure.',
     emptyStartNotice: null,
     examCoverageItems: [
       'Listening, Reading, Writing, and Speaking are combined into one full IELTS-style exam flow.',
@@ -252,6 +260,7 @@ export function PracticeQuestionRow({
       ? `${item.questionCount} q`
       : ATTEMPT_COUNT_FORMATTER.format(item.attemptCount).toLowerCase());
   const requiredTokenCount = item.tokenCost ?? 0;
+  const resultLabel = item.resultLabel ?? 'No result';
   const StatsIcon = content.statsIcon;
   const canFavorite = Boolean(item.remoteId);
 
@@ -416,9 +425,7 @@ export function PracticeQuestionRow({
 
       toast.success(result.added ? 'Added to favorites.' : 'Removed from favorites.');
     } catch (error) {
-      toast.error(
-        error instanceof Error ? error.message : 'Unable to update favorites right now.'
-      );
+      toast.error(error instanceof Error ? error.message : 'Unable to update favorites right now.');
     }
   };
 
@@ -436,7 +443,7 @@ export function PracticeQuestionRow({
         >
           <div
             className={cn(
-              'group grid min-h-10 grid-cols-[minmax(0,1fr)_3.8rem_3.2rem_2rem] items-center gap-x-2 rounded-xl px-3 py-1.5 text-sm transition-colors sm:grid-cols-[minmax(0,1fr)_4.8rem_4.4rem_2.3rem] sm:gap-x-3 sm:px-3',
+              'group grid min-h-10 grid-cols-[minmax(0,1fr)_auto_2rem] items-center gap-x-2 rounded-xl px-3 py-1.5 text-sm transition-colors sm:grid-cols-[minmax(0,1fr)_auto_2.3rem] sm:gap-x-3 sm:px-3',
               hasGradientRow
                 ? `${PRACTICE_HEADER_RING_CLASS} shadow-sm dark:shadow-none dark:after:!bg-[#1e1e1e]`
                 : 'bg-transparent'
@@ -464,23 +471,24 @@ export function PracticeQuestionRow({
                 }}
                 className="truncate text-left text-sm font-semibold tracking-[-0.02em] text-black/92 transition-[color,filter] group-hover:bg-[linear-gradient(90deg,#f7c66c_0%,#ff9f2f_100%)] group-hover:bg-clip-text group-hover:text-transparent group-hover:brightness-105 hover:bg-[linear-gradient(90deg,#f7c66c_0%,#ff9f2f_100%)] hover:bg-clip-text hover:text-transparent hover:brightness-105 focus-visible:bg-[linear-gradient(90deg,#f7c66c_0%,#ff9f2f_100%)] focus-visible:bg-clip-text focus-visible:text-transparent disabled:cursor-wait disabled:opacity-70 dark:text-white/92"
               >
-                {item.id}. {item.title}
+                {item.title}
               </button>
             </div>
 
-            <p className="justify-self-start text-sm font-medium tabular-nums text-black/66 dark:text-white/66">
-              {attemptLabel}
-            </p>
+            <div className="flex min-w-max items-center justify-end gap-2 justify-self-end">
+              <span className="hidden items-center gap-1 rounded-full border border-black/8 bg-black/[0.03] px-2 py-1 text-[0.72rem] font-semibold leading-none text-black/62 dark:border-white/10 dark:bg-white/[0.06] dark:text-white/68 md:inline-flex">
+                <span className="font-medium text-black/42 dark:text-white/42">Result</span>
+                {resultLabel}
+              </span>
 
-            <div className="justify-self-start">
-              {item.tokenCost ? (
-                <span className="inline-flex items-center gap-1 text-link-active">
-                  <TokenIcon className="text-[14px]" />
-                  <span className="text-sm font-semibold leading-none">{item.tokenCost}</span>
-                </span>
-              ) : (
-                <span className="block h-4 w-8" aria-hidden="true" />
-              )}
+              <span className="text-sm font-medium tabular-nums text-black/66 dark:text-white/66">
+                {attemptLabel}
+              </span>
+
+              <span className="inline-flex min-w-10 items-center justify-end gap-1 rounded-full bg-[#fff4dc] px-2 py-1 text-link-active dark:bg-[#3a2a12]">
+                <TokenIcon className="text-[14px]" />
+                <span className="text-sm font-semibold leading-none">{requiredTokenCount}</span>
+              </span>
             </div>
 
             <div className="justify-self-end">
@@ -553,8 +561,8 @@ export function PracticeQuestionRow({
                         ? 'Starting...'
                         : 'Start Practice'
                       : startAttemptMutation.isPending
-                      ? 'Starting...'
-                      : 'Start Practice'
+                        ? 'Starting...'
+                        : 'Start Practice'
                     : 'Coming soon'}
                 </button>
               </div>
@@ -594,7 +602,10 @@ export function PracticeQuestionRow({
                     const ImprovementIcon = point.icon;
 
                     return (
-                      <div key={point.text} className="inline-flex items-center gap-2 text-black/86 dark:text-white/86">
+                      <div
+                        key={point.text}
+                        className="inline-flex items-center gap-2 text-black/86 dark:text-white/86"
+                      >
                         <ImprovementIcon className="size-4 text-black dark:text-[#ff9f2f]" />
                         {point.text}
                       </div>

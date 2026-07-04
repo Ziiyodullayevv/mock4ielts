@@ -20,7 +20,7 @@ function ContestToastCard({
   onClose: () => void;
 }) {
   return (
-    <div className="group relative w-[calc(100vw-2rem)] max-w-none pl-1.5 pt-1.5 sm:max-w-82">
+    <div className="group relative w-[min(calc(100vw-2rem),356px)] pl-1.5 pt-1.5">
       <button
         type="button"
         onClick={onClose}
@@ -43,8 +43,8 @@ function ContestToastCard({
       <div
         className={[
           'overflow-hidden backdrop-blur-3xl rounded-[22px] bg-linear-to-tl from-[#d8dce2] via-[#f6f7f9] to-[#d8dce2] p-px',
-          'shadow-[0_8px_18px_rgba(15,23,42,0.08),0_2px_8px_rgba(15,23,42,0.04),0_25px_55px_rgba(0,0,0,0.25)]',
-          'dark:from-white/14 dark:via-[#151515]/78 dark:to-white/14 dark:shadow-[0_25px_55px_rgba(0,0,0,0.5)]',
+          'shadow-[0_4px_10px_rgba(15,23,42,0.06),0_1px_4px_rgba(15,23,42,0.04),0_8px_18px_rgba(0,0,0,0.10)]',
+          'dark:from-white/14 dark:via-[#151515]/78 dark:to-white/14 dark:shadow-[0_8px_18px_rgba(0,0,0,0.18)]',
         ].join(' ')}
       >
         <div
@@ -104,6 +104,13 @@ export function Toaster(props: ToasterProps) {
     <Sonner
       theme={isDark ? 'dark' : 'light'}
       position="top-right"
+      offset={{ right: 12, top: 4 }}
+      mobileOffset={{ right: 12, top: 4 }}
+      style={
+        {
+          '--width': '356px',
+        } as React.CSSProperties
+      }
       toastOptions={{
         className: '!w-auto !border-0 !bg-transparent !p-0 !shadow-none !overflow-visible',
         style: {

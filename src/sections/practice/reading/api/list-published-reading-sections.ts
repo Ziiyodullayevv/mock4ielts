@@ -1,5 +1,9 @@
 import { paths } from '@/src/routes/paths';
 import { endpoints, axiosInstance } from '@/src/lib/axios';
+import {
+  getSectionTokenCost,
+  getSectionResultLabel,
+} from '@/src/sections/practice/api/section-list-metadata';
 
 type SectionDifficulty = string;
 
@@ -8,8 +12,10 @@ type PublishedSectionDto = {
   duration_minutes: number;
   id: string;
   question_count: number;
+  result?: unknown;
   section_type: 'listening' | 'reading' | 'speaking' | 'writing';
   title: string;
+  token_cost?: number | null;
 };
 
 type PaginationDto = {
@@ -33,7 +39,9 @@ export type ReadingPracticeListItem = {
   id: number;
   questionCount: number;
   remoteId: string;
+  resultLabel?: string;
   title: string;
+  tokenCost?: number;
 };
 
 export type ReadingPracticeSectionsResult = {
@@ -67,7 +75,9 @@ export async function listPublishedReadingSections(): Promise<ReadingPracticeSec
       id: index + 1,
       questionCount: section.question_count,
       remoteId: section.id,
+      resultLabel: getSectionResultLabel(section),
       title: section.title,
+      tokenCost: getSectionTokenCost(section),
     })),
     pagination: response.data.pagination ?? DEFAULT_PAGINATION,
   };

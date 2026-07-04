@@ -201,6 +201,13 @@ export const endpoints = {
     start: (examId: string) => `mock-exams/${examId}/start`,
     submitSection: (examId: string) => `mock-exams/${examId}/submit-section`,
   },
+  notifications: {
+    device: (deviceId: string) => `me/devices/${deviceId}`,
+    devices: 'me/devices',
+    list: 'me/notifications',
+    markAllRead: 'me/notifications/mark-all-read',
+    markRead: (notificationId: string) => `me/notifications/${notificationId}/read`,
+  },
   profile: {
     avatar: 'users/me/avatar',
     delete: 'users/me',

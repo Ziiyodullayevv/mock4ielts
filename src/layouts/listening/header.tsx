@@ -9,11 +9,8 @@ import { Slider } from '@/src/components/ui/slider';
 import { useRef, useState, useEffect, useCallback } from 'react';
 import { PracticeTextSizeSlider } from '@/src/layouts/practice/practice-text-size-slider';
 import { PRACTICE_HEADER_ACTIVE_BUTTON_CLASS } from '@/src/layouts/practice-footer-theme';
+import { PracticeHeaderNotesButton, LISTENING_OPEN_NOTES_EVENT } from '@/src/layouts/practice';
 import { PracticeHeaderShareButton } from '@/src/layouts/practice/practice-header-share-button';
-import {
-  PracticeHeaderNotesButton,
-  LISTENING_OPEN_NOTES_EVENT,
-} from '@/src/layouts/practice';
 import {
   PRACTICE_HEADER_RING_CLASS,
   PRACTICE_MENU_PANEL_RING_CLASS,
@@ -29,12 +26,16 @@ import {
   PracticeHeaderMenuQuickActionShell,
 } from '@/src/layouts/practice/practice-header-menu-section';
 import {
+  Play,
+  Pause,
+  Rewind,
   Volume1,
   Volume2,
   VolumeX,
   RotateCcw,
   PencilLine,
   Headphones,
+  FastForward,
   ChevronLeft,
   ChevronRight,
   EllipsisVertical,
@@ -55,6 +56,7 @@ type ListeningTestHeaderProps = {
   onLogoClick?: () => void;
   onPrevPart: () => void;
   onPrimaryAction: () => void;
+  onAudioTimeChange?: (currentTime: number) => void;
   onTextSizeChange: (textSize: PracticeTextSize) => void;
   prevActionLabel?: string;
   primaryActionLabel: string;
@@ -86,6 +88,7 @@ export function ListeningTestHeader({
   onLogoClick,
   onPrevPart,
   onPrimaryAction,
+  onAudioTimeChange,
   onTextSizeChange,
   prevActionLabel = 'Prev',
   primaryActionLabel,
@@ -95,7 +98,10 @@ export function ListeningTestHeader({
   const [isScrolled, setIsScrolled] = useState(false);
   const [hoveredHeaderControl, setHoveredHeaderControl] = useState<ListeningHeaderControl>(null);
   const [isAudioMenuExpanded, setIsAudioMenuExpanded] = useState(false);
-  const audioControls = useListeningHeaderAudio(audioUrl);
+  const audioControls = useListeningHeaderAudio(audioUrl, {
+    autoPlay: !isReview,
+    lockPlayback: !isReview,
+  });
   const isExitAction = isPrevDisabled && Boolean(onLogoClick);
   const headerShellShadowClass = isScrolled
     ? 'shadow-[0_12px_26px_rgba(15,23,42,0.12),0_4px_12px_rgba(15,23,42,0.06)] dark:shadow-none'
@@ -108,14 +114,10 @@ export function ListeningTestHeader({
   const isNotesDividerHidden =
     effectiveHoveredHeaderControl === 'notes' || effectiveHoveredHeaderControl === 'theme';
 
-  const createHeaderControlHandlers = (
-    control: Exclude<ListeningHeaderControl, null>
-  ) => ({
+  const createHeaderControlHandlers = (control: Exclude<ListeningHeaderControl, null>) => ({
     onBlurCapture: (event: React.FocusEvent<HTMLDivElement>) => {
       if (!event.currentTarget.contains(event.relatedTarget as Node | null)) {
-        setHoveredHeaderControl((currentValue) =>
-          currentValue === control ? null : currentValue
-        );
+        setHoveredHeaderControl((currentValue) => (currentValue === control ? null : currentValue));
       }
     },
     onFocusCapture: () => {
@@ -125,9 +127,7 @@ export function ListeningTestHeader({
       setHoveredHeaderControl(control);
     },
     onMouseLeave: () => {
-      setHoveredHeaderControl((currentValue) =>
-        currentValue === control ? null : currentValue
-      );
+      setHoveredHeaderControl((currentValue) => (currentValue === control ? null : currentValue));
     },
   });
 
@@ -144,12 +144,16 @@ export function ListeningTestHeader({
     };
   }, []);
 
+  useEffect(() => {
+    onAudioTimeChange?.(audioControls.currentTime);
+  }, [audioControls.currentTime, onAudioTimeChange]);
+
   return (
     <header className="sticky top-0 z-40 isolate border-stone-200 bg-linear-to-b from-white from-20% to-transparent to-80% dark:border-white/10 dark:bg-linear-to-b dark:from-background dark:from-20% dark:to-transparent dark:to-80%">
       {audioUrl ? (
         <audio
           ref={audioControls.audioRef}
-          autoPlay
+          autoPlay={!isReview}
           preload="auto"
           src={audioUrl}
           className="hidden"
@@ -212,8 +216,12 @@ export function ListeningTestHeader({
           ) : null}
         </div>
 
-        <div className="flex h-full items-center justify-center">
-          <TimerDisplay isReview={isReview} totalSeconds={timeLeftSeconds} />
+        <div className="flex h-full min-w-0 items-center justify-center">
+          {isReview && audioControls.canControlPlayback ? (
+            <ListeningHeaderReviewAudioPlayer audioControls={audioControls} compact />
+          ) : (
+            <TimerDisplay isReview={isReview} totalSeconds={timeLeftSeconds} />
+          )}
         </div>
 
         <div className="flex items-center justify-self-end">
@@ -340,8 +348,12 @@ export function ListeningTestHeader({
           ) : null}
         </div>
 
-        <div className="flex h-full items-center self-center justify-center">
-          <TimerDisplay isReview={isReview} totalSeconds={timeLeftSeconds} />
+        <div className="flex h-full min-w-0 items-center self-center justify-center">
+          {isReview && audioControls.canControlPlayback ? (
+            <ListeningHeaderReviewAudioPlayer audioControls={audioControls} />
+          ) : (
+            <TimerDisplay isReview={isReview} totalSeconds={timeLeftSeconds} />
+          )}
         </div>
 
         <div className="relative -translate-y-1 flex h-full items-center justify-self-end gap-2">
@@ -417,14 +429,126 @@ type ListeningHeaderDesktopAudioMenuProps = {
   onExpandedChange?: (isExpanded: boolean) => void;
 };
 
+function getAudioProgressMax(duration: number) {
+  return duration > 0 ? duration : 1;
+}
+
+function formatAudioTime(totalSeconds: number) {
+  const safeSeconds = Math.max(0, Math.floor(totalSeconds));
+  const minutes = Math.floor(safeSeconds / 60);
+  const seconds = safeSeconds % 60;
+
+  return `${minutes}:${String(seconds).padStart(2, '0')}`;
+}
+
+type ListeningHeaderReviewAudioPlayerProps = {
+  audioControls: ReturnType<typeof useListeningHeaderAudio>;
+  compact?: boolean;
+};
+
+function ListeningHeaderReviewAudioPlayer({
+  audioControls,
+  compact = false,
+}: ListeningHeaderReviewAudioPlayerProps) {
+  const progressMax = getAudioProgressMax(audioControls.duration);
+  const progressValue = Math.min(audioControls.currentTime, progressMax);
+  const PlaybackIcon = audioControls.isPlaying ? Pause : Play;
+
+  const handleSeekBy = (seconds: number) => {
+    audioControls.handleSeek(audioControls.currentTime + seconds);
+  };
+
+  return (
+    <div
+      className={cn(
+        'inline-flex [filter:drop-shadow(0_8px_18px_rgba(15,23,42,0.08))_drop-shadow(0_2px_8px_rgba(15,23,42,0.04))] dark:[filter:none]',
+        compact ? 'max-w-[62vw]' : 'max-w-[32rem]'
+      )}
+    >
+      <div
+        className={cn(
+          'inline-flex min-w-0 items-center rounded-full px-2 py-1.5 text-stone-900 dark:text-white',
+          PRACTICE_HEADER_RING_CLASS,
+          compact ? 'gap-1' : 'gap-2'
+        )}
+      >
+        <button
+          type="button"
+          onClick={() => handleSeekBy(-10)}
+          aria-label="Rewind audio 10 seconds"
+          title="Rewind 10 seconds"
+          className={cn(
+            'inline-flex shrink-0 items-center justify-center rounded-full text-stone-600 transition-colors hover:bg-stone-100 hover:text-stone-950 dark:text-white/68 dark:hover:bg-white/8 dark:hover:text-white',
+            compact ? 'size-8' : 'size-9'
+          )}
+        >
+          <Rewind className={compact ? 'size-3.5' : 'size-4'} strokeWidth={2.2} />
+        </button>
+
+        <button
+          type="button"
+          onClick={audioControls.handleTogglePlay}
+          aria-label={audioControls.isPlaying ? 'Pause audio' : 'Play audio'}
+          title={audioControls.isPlaying ? 'Pause audio' : 'Play audio'}
+          className={cn(
+            'inline-flex shrink-0 items-center justify-center rounded-full bg-stone-950 text-white shadow-[0_8px_18px_rgba(15,23,42,0.18)] transition-colors hover:bg-stone-800 dark:bg-white dark:text-stone-950 dark:hover:bg-white/86',
+            compact ? 'size-8' : 'size-10'
+          )}
+        >
+          <PlaybackIcon className={compact ? 'size-3.5' : 'size-4.5'} strokeWidth={2.4} />
+        </button>
+
+        <div
+          className={cn(
+            'flex min-w-0 items-center gap-2',
+            compact ? 'w-[34vw] max-w-[10rem]' : 'w-[20rem]'
+          )}
+        >
+          <div className="relative min-w-0 flex-1">
+            <Slider
+              value={[progressValue]}
+              max={progressMax}
+              step={0.25}
+              onValueChange={(nextValue) => audioControls.handleSeek(nextValue[0] ?? 0)}
+              aria-label="Audio progress"
+              className="min-w-0 flex-1 [&_[data-slot=slider-range]]:bg-[#ff9f2f] [&_[data-slot=slider-thumb]]:size-4 [&_[data-slot=slider-thumb]]:border-white [&_[data-slot=slider-thumb]]:bg-[#ff9f2f] [&_[data-slot=slider-thumb]]:shadow-[0_4px_10px_rgba(255,159,47,0.3)] [&_[data-slot=slider-track]]:h-2 [&_[data-slot=slider-track]]:bg-stone-300 dark:[&_[data-slot=slider-range]]:bg-[#ffb347] dark:[&_[data-slot=slider-track]]:bg-white/18"
+            />
+          </div>
+          {!compact ? (
+            <span className="shrink-0 text-[11px] font-semibold tabular-nums text-stone-500 dark:text-white/58">
+              {formatAudioTime(audioControls.currentTime)} /{' '}
+              {formatAudioTime(audioControls.duration)}
+            </span>
+          ) : null}
+        </div>
+
+        <button
+          type="button"
+          onClick={() => handleSeekBy(10)}
+          aria-label="Forward audio 10 seconds"
+          title="Forward 10 seconds"
+          className={cn(
+            'inline-flex shrink-0 items-center justify-center rounded-full text-stone-600 transition-colors hover:bg-stone-100 hover:text-stone-950 dark:text-white/68 dark:hover:bg-white/8 dark:hover:text-white',
+            compact ? 'size-8' : 'size-9'
+          )}
+        >
+          <FastForward className={compact ? 'size-3.5' : 'size-4'} strokeWidth={2.2} />
+        </button>
+      </div>
+    </div>
+  );
+}
+
 function ListeningHeaderDesktopAudioMenu({
   audioControls,
   onExpandedChange,
 }: ListeningHeaderDesktopAudioMenuProps) {
   const [isExpanded, setIsExpanded] = useState(false);
   const shellRef = useRef<HTMLDivElement | null>(null);
+  const canControlPlayback = audioControls.canControlPlayback;
   const TriggerIcon =
     audioControls.volume === 0 ? VolumeX : audioControls.volume < 50 ? Volume1 : Volume2;
+  const PlaybackIcon = audioControls.isPlaying ? Pause : Play;
 
   const updateExpandedState = useCallback(
     (nextValue: boolean) => {
@@ -463,7 +587,7 @@ function ListeningHeaderDesktopAudioMenu({
   }, [isExpanded, updateExpandedState]);
 
   useEffect(() => {
-    if (!isExpanded) {
+    if (!isExpanded || canControlPlayback) {
       return undefined;
     }
 
@@ -472,14 +596,14 @@ function ListeningHeaderDesktopAudioMenu({
     }, 4000);
 
     return () => window.clearTimeout(closeTimer);
-  }, [audioControls.volume, isExpanded, updateExpandedState]);
+  }, [audioControls.volume, canControlPlayback, isExpanded, updateExpandedState]);
 
   return (
     <div
       ref={shellRef}
       className={cn(
         'relative flex h-9 shrink-0 items-center overflow-hidden rounded-full transition-[width] duration-300 ease-out',
-        isExpanded ? 'w-[138px]' : 'w-10'
+        isExpanded ? (canControlPlayback ? 'w-[286px]' : 'w-[138px]') : 'w-10'
       )}
     >
       <button
@@ -489,7 +613,9 @@ function ListeningHeaderDesktopAudioMenu({
         onClick={() => updateExpandedState(true)}
         className={cn(
           'absolute inset-0 inline-flex h-9 w-10 shrink-0 items-center justify-center rounded-full text-stone-700 transition-all duration-200 hover:bg-stone-100 hover:text-stone-900 dark:text-white/78 dark:hover:bg-white/8 dark:hover:text-white',
-          isExpanded ? 'invisible pointer-events-none translate-x-2 opacity-0' : 'visible opacity-100'
+          isExpanded
+            ? 'invisible pointer-events-none translate-x-2 opacity-0'
+            : 'visible opacity-100'
         )}
       >
         <TriggerIcon className="size-4.5" strokeWidth={2} />
@@ -497,19 +623,49 @@ function ListeningHeaderDesktopAudioMenu({
 
       <div
         className={cn(
-          'flex h-full w-full items-center gap-1 rounded-full bg-stone-100/95 pl-3 pr-1.5 text-stone-900 shadow-[inset_0_1px_0_rgba(255,255,255,0.55)] transition-all duration-200 dark:bg-white/8 dark:text-white dark:shadow-none',
+          'flex h-full w-full items-center gap-1 rounded-full bg-stone-100/95 pl-2 pr-1.5 text-stone-900 shadow-[inset_0_1px_0_rgba(255,255,255,0.55)] transition-all duration-200 dark:bg-white/8 dark:text-white dark:shadow-none',
           isExpanded
             ? 'visible translate-x-0 opacity-100'
             : 'invisible pointer-events-none translate-x-4 opacity-0'
         )}
       >
+        {canControlPlayback ? (
+          <>
+            <button
+              type="button"
+              onClick={audioControls.handleTogglePlay}
+              aria-label={audioControls.isPlaying ? 'Pause audio' : 'Play audio'}
+              title={audioControls.isPlaying ? 'Pause audio' : 'Play audio'}
+              className="inline-flex size-7 shrink-0 items-center justify-center rounded-full text-stone-800 transition-colors hover:bg-white hover:text-stone-950 dark:text-white/86 dark:hover:bg-white/10 dark:hover:text-white"
+            >
+              <PlaybackIcon className="size-4" strokeWidth={2.2} />
+            </button>
+
+            <Slider
+              value={[
+                Math.min(audioControls.currentTime, getAudioProgressMax(audioControls.duration)),
+              ]}
+              max={getAudioProgressMax(audioControls.duration)}
+              step={0.25}
+              onValueChange={(nextValue) => audioControls.handleSeek(nextValue[0] ?? 0)}
+              aria-label="Audio progress"
+              className="w-[116px] shrink-0 [&_[data-slot=slider-range]]:bg-[#ff9f2f] [&_[data-slot=slider-thumb]]:size-3.5 [&_[data-slot=slider-thumb]]:border-white [&_[data-slot=slider-thumb]]:bg-[#ff9f2f] [&_[data-slot=slider-thumb]]:shadow-[0_4px_10px_rgba(255,159,47,0.3)] [&_[data-slot=slider-track]]:h-2 [&_[data-slot=slider-track]]:bg-stone-300 dark:[&_[data-slot=slider-range]]:bg-[#ffb347] dark:[&_[data-slot=slider-track]]:bg-white/18"
+            />
+          </>
+        ) : null}
+
         <Slider
           value={[audioControls.volume]}
           max={100}
           step={1}
           onValueChange={(nextValue) => audioControls.handleVolumeChange(nextValue[0] ?? 0)}
           aria-label="Audio volume"
-          className="w-[88px] shrink-0 [&_[data-slot=slider-range]]:bg-stone-950 [&_[data-slot=slider-thumb]]:size-0 [&_[data-slot=slider-thumb]]:border-0 [&_[data-slot=slider-thumb]]:bg-transparent [&_[data-slot=slider-thumb]]:opacity-0 [&_[data-slot=slider-thumb]]:shadow-none [&_[data-slot=slider-track]]:h-2 [&_[data-slot=slider-track]]:bg-stone-300 dark:[&_[data-slot=slider-range]]:bg-white dark:[&_[data-slot=slider-track]]:bg-white/18"
+          className={cn(
+            'shrink-0 [&_[data-slot=slider-range]]:bg-stone-950 [&_[data-slot=slider-thumb]]:border-0 [&_[data-slot=slider-thumb]]:bg-transparent [&_[data-slot=slider-thumb]]:opacity-0 [&_[data-slot=slider-thumb]]:shadow-none [&_[data-slot=slider-track]]:h-2 [&_[data-slot=slider-track]]:bg-stone-300 dark:[&_[data-slot=slider-range]]:bg-white dark:[&_[data-slot=slider-track]]:bg-white/18',
+            canControlPlayback
+              ? 'w-[58px] [&_[data-slot=slider-thumb]]:size-0'
+              : 'w-[88px] [&_[data-slot=slider-thumb]]:size-0'
+          )}
         />
 
         <button
@@ -665,7 +821,6 @@ function ListeningHeaderUtilityMenu({
               </div>
             </>
           ) : null}
-
         </div>
       </DropdownMenuContent>
     </DropdownMenu>

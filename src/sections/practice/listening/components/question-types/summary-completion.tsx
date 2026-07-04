@@ -3,19 +3,18 @@
 import type { QuestionTypeAnnotationProps } from './annotation-blocks';
 import type { MCOption, BlankField, SummaryParagraph } from '../../types';
 
-import { Check } from 'lucide-react';
+import { Check, XCircle, CheckCircle2 } from 'lucide-react';
+import { Select, SelectItem, SelectContent, SelectTrigger } from '@/src/components/ui/select';
 import {
-  Select,
-  SelectItem,
-  SelectContent,
-  SelectTrigger,
-} from '@/src/components/ui/select';
-import { usePracticeTextSize, getPracticeTextStyle } from '@/src/sections/practice/shared/practice-text-size';
+  usePracticeTextSize,
+  getPracticeTextStyle,
+} from '@/src/sections/practice/shared/practice-text-size';
 
 import { CompletionInput } from './completion-input';
 import { PaperPanel, QuestionNumberBadge } from './paper-shell';
+import { REVIEW_STYLE, getReviewValueLabel } from './review-styles';
 import { renderQuestionText, getQuestionAnnotationBlockId } from './annotation-blocks';
-import { isAnswerCorrect, getPrimaryAnswer, getListeningQuestionAnchorId } from '../../utils';
+import { isAnswerCorrect, formatCorrectAnswer, getListeningQuestionAnchorId } from '../../utils';
 
 interface Props extends QuestionTypeAnnotationProps {
   activeQuestionId?: string | null;
@@ -41,6 +40,7 @@ export function SummaryCompletion({
   showAnswer,
 }: Props) {
   const textSize = usePracticeTextSize();
+  const htmlHeadingStyle = { fontSize: '16px', lineHeight: '24px' };
   const selectOptions = wordBankOptions.length
     ? wordBankOptions.map((option) => ({
         label: `${option.value} ${option.text}`,
@@ -76,9 +76,9 @@ export function SummaryCompletion({
                       paragraphIndex,
                       'heading'
                     ),
-                    className: 'font-semibold uppercase tracking-[0.2em] text-stone-500 dark:text-white/42',
+                    className: 'font-semibold tracking-[-0.02em] text-stone-900 dark:text-white',
                     renderAnnotatedTextBlock,
-                    style: getPracticeTextStyle(textSize, 'eyebrow'),
+                    style: htmlHeadingStyle,
                     text: paragraph.heading,
                   })}
                 </div>
@@ -157,16 +157,17 @@ function SummaryBlank({
   const value = answers[field.id] ?? '';
   const isActive = field.id === activeQuestionId;
   const isCorrect = showAnswer ? isAnswerCorrect(value, field.answer) : undefined;
-  const primaryAnswer = getPrimaryAnswer(field.answer);
+  const correctAnswer = formatCorrectAnswer(field.answer);
   const selectedOption = selectOptions.find((option) => option.value === value);
-  const [selectedDisplayValue = '', ...selectedLabelParts] = selectedOption?.label.split(/\s+/) ?? [];
+  const [selectedDisplayValue = '', ...selectedLabelParts] =
+    selectedOption?.label.split(/\s+/) ?? [];
   const selectedLabel = selectedLabelParts.join(' ');
 
   if (!hasWordBank) {
     return (
       <span
         id={getListeningQuestionAnchorId(field.id)}
-        className="inline-flex scroll-mt-28 items-center gap-2 align-baseline"
+        className="inline-flex max-w-full flex-wrap items-center gap-x-2 gap-y-1 scroll-mt-28 align-baseline"
       >
         <QuestionNumberBadge isActive={isActive} number={field.number} size="xs" />
         <CompletionInput
@@ -186,8 +187,8 @@ function SummaryBlank({
 
   if (showAnswer) {
     blankClassName = isCorrect
-      ? 'inline-flex min-h-10 min-w-[10rem] items-center justify-between rounded-sm border border-green-300 bg-green-50 px-3 py-1.5 text-sm font-medium text-green-700 align-baseline'
-      : 'inline-flex min-h-10 min-w-[10rem] items-center justify-between rounded-sm border border-red-300 bg-red-50 px-3 py-1.5 text-sm font-medium text-red-600 align-baseline';
+      ? `inline-flex min-h-9 max-w-[18rem] items-center gap-2 rounded-full border px-3 py-1.5 text-sm font-semibold align-baseline shadow-sm ${REVIEW_STYLE.correctBadge}`
+      : `inline-flex min-h-9 max-w-[18rem] items-center gap-2 rounded-full border px-3 py-1.5 text-sm font-semibold align-baseline shadow-sm ${REVIEW_STYLE.wrongBadge}`;
   } else if (isActive) {
     blankClassName =
       'inline-flex min-h-10 min-w-[10rem] items-center justify-center gap-1.5 rounded-md border border-dashed border-sky-500 bg-sky-200 px-3 py-1.5 text-[11px] font-semibold tracking-[0.14em] text-sky-900 align-baseline shadow-[0_0_0_1px_rgba(56,189,248,0.16)]';
@@ -204,11 +205,30 @@ function SummaryBlank({
       <QuestionNumberBadge isActive={isActive} number={field.number} size="xs" />
 
       {showAnswer ? (
-        <span className={blankClassName}>{value || 'NO ANSWER'}</span>
+        <span className="inline-flex flex-col items-start gap-1.5">
+          <span className={blankClassName}>
+            {isCorrect ? (
+              <CheckCircle2 className="size-4 shrink-0" strokeWidth={2.5} />
+            ) : (
+              <XCircle className="size-4 shrink-0" strokeWidth={2.5} />
+            )}
+            <span className="truncate">{isCorrect ? value : getReviewValueLabel(value)}</span>
+          </span>
+          {!isCorrect ? (
+            <span
+              className={`inline-flex max-w-[22rem] items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-semibold ${REVIEW_STYLE.correctBadge}`}
+            >
+              <CheckCircle2 className="size-3.5 shrink-0" strokeWidth={2.5} />
+              <span className="truncate">Correct: {correctAnswer}</span>
+            </span>
+          ) : null}
+        </span>
       ) : (
         <Select
           value={value || undefined}
-          onValueChange={(nextValue) => onChange(field.id, nextValue === '__clear__' ? '' : nextValue)}
+          onValueChange={(nextValue) =>
+            onChange(field.id, nextValue === '__clear__' ? '' : nextValue)
+          }
         >
           <SelectTrigger
             data-question-focus="true"
@@ -259,10 +279,6 @@ function SummaryBlank({
           </SelectContent>
         </Select>
       )}
-
-      {showAnswer && !isCorrect ? (
-        <span className="text-sm font-medium text-green-700">✓ {primaryAnswer}</span>
-      ) : null}
     </span>
   );
 }

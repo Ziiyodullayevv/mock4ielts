@@ -17,26 +17,32 @@ export function getPrimaryAnswer(answer: CorrectAnswer): string {
   return Array.isArray(answer) ? answer[0] ?? '' : answer;
 }
 
+export function formatCorrectAnswer(answer: CorrectAnswer): string {
+  return Array.isArray(answer) ? answer.join(' / ') : answer;
+}
+
 export function isAnswerCorrect(userAnswer: string | undefined, correctAnswer: CorrectAnswer, multiSelect?: boolean) {
-  const normalizedUserAnswer = userAnswer?.trim();
+  const normalizedUserAnswer = coerceAnswerText(userAnswer);
 
   if (!normalizedUserAnswer) {
     return false;
   }
 
   if (multiSelect) {
-    const expectedAnswers = Array.isArray(correctAnswer)
-      ? correctAnswer.map((answer) => normalizeMultiSelectAnswer(answer))
-      : [normalizeMultiSelectAnswer(correctAnswer)];
+    const expectedAnswers = getAnswerOptions(correctAnswer).map((answer) =>
+      normalizeMultiSelectAnswer(answer)
+    );
 
     return expectedAnswers.includes(normalizeMultiSelectAnswer(normalizedUserAnswer));
   }
 
-  const expectedAnswers = Array.isArray(correctAnswer)
-    ? correctAnswer.map((answer) => normalizeAnswer(answer))
-    : [normalizeAnswer(correctAnswer)];
+  const userCandidates = getComparableAnswerCandidates(normalizedUserAnswer);
 
-  return expectedAnswers.includes(normalizeAnswer(normalizedUserAnswer));
+  return getAnswerOptions(correctAnswer).some((answer) =>
+    getComparableAnswerCandidates(answer).some((expectedCandidate) =>
+      userCandidates.includes(expectedCandidate)
+    )
+  );
 }
 
 /** Collect all blank fields from a test with their correct answers */
@@ -97,6 +103,79 @@ export function getCorrectAnswers(test: ListeningTest): Record<string, string> {
   return map;
 }
 
+export type QuestionAnswerMeta = {
+  answer: CorrectAnswer;
+  multiSelect?: boolean;
+};
+
+export function getQuestionAnswerMeta(test: ListeningTest): Record<string, QuestionAnswerMeta> {
+  const map: Record<string, QuestionAnswerMeta> = {};
+
+  for (const part of test.parts) {
+    for (const group of part.groups) {
+      if (group.type === 'multiple-choice') {
+        for (const question of group.questions) {
+          map[question.id] = {
+            answer: question.answer,
+            multiSelect: question.multiSelect,
+          };
+        }
+      } else if (group.type === 'matching') {
+        for (const pair of group.data.pairs) map[pair.id] = { answer: pair.answer };
+      } else if (group.type === 'form-completion') {
+        for (const section of group.sections) {
+          for (const field of section.fields) map[field.id] = { answer: field.answer };
+        }
+      } else if (group.type === 'note-completion') {
+        for (const section of group.sections) {
+          for (const bullet of section.bullets) {
+            if (bullet.field) map[bullet.field.id] = { answer: bullet.field.answer };
+          }
+        }
+      } else if (group.type === 'table-completion') {
+        const rows = [
+          ...(group.data.rows ?? []),
+          ...(group.data.sections?.flatMap((section) => section.rows) ?? []),
+        ];
+
+        for (const row of rows) {
+          for (const cell of row) {
+            if (cell.isBlank && cell.id && cell.answer) {
+              map[cell.id] = { answer: cell.answer };
+            }
+
+            for (const segment of cell.segments ?? []) {
+              if (segment.type === 'blank') {
+                map[segment.field.id] = { answer: segment.field.answer };
+              }
+            }
+          }
+        }
+      } else if (group.type === 'flow-chart') {
+        for (const step of group.steps) {
+          if (step.isBlank && step.id && step.answer) map[step.id] = { answer: step.answer };
+        }
+      } else if (group.type === 'sentence-completion' || group.type === 'short-answer') {
+        for (const question of group.questions) map[question.id] = { answer: question.answer };
+      } else if (group.type === 'map-labelling') {
+        for (const pin of group.data.pins) map[pin.id] = { answer: pin.answer };
+      } else if (group.type === 'diagram-completion') {
+        for (const question of group.data.questions) map[question.id] = { answer: question.answer };
+      } else if (group.type === 'summary-completion') {
+        for (const paragraph of group.paragraphs) {
+          for (const segment of paragraph.segments) {
+            if (segment.type === 'blank') {
+              map[segment.field.id] = { answer: segment.field.answer };
+            }
+          }
+        }
+      }
+    }
+  }
+
+  return map;
+}
+
 /** Compute full test result */
 export function computeResult(test: ListeningTest, answers: Answers): TestResult {
   const partScores: Record<number, { score: number; total: number }> = {};
@@ -122,7 +201,7 @@ export function computeResult(test: ListeningTest, answers: Answers): TestResult
 
             pTotal += correctValues.length;
             for (const correct of correctValues) {
-              if (userValues.map((v) => v.toLowerCase()).includes(correct.toLowerCase())) {
+              if (userValues.some((value) => isAnswerCorrect(value, correct))) {
                 pScore++;
               }
             }
@@ -357,8 +436,67 @@ export function countTotal(test: ListeningTest): number {
   return n;
 }
 
+function coerceAnswerText(value: unknown) {
+  if (typeof value === 'number' && Number.isFinite(value)) {
+    return String(value);
+  }
+
+  if (typeof value === 'string') {
+    return value;
+  }
+
+  return '';
+}
+
+function decodeAnswerText(value: string) {
+  return value
+    .replace(/&nbsp;/gi, ' ')
+    .replace(/&amp;/gi, '&')
+    .replace(/&quot;/gi, '"')
+    .replace(/&#39;|&apos;/gi, "'")
+    .replace(/&lt;/gi, '<')
+    .replace(/&gt;/gi, '>');
+}
+
+function splitAnswerAlternatives(value: string) {
+  return decodeAnswerText(value)
+    .split(/\s*(?:\/|\||;|\bor\b)\s*/i)
+    .map((item) => item.trim())
+    .filter(Boolean);
+}
+
+function getAnswerOptions(answer: CorrectAnswer) {
+  const rawOptions = Array.isArray(answer) ? answer : [answer];
+
+  return rawOptions.flatMap((option) => splitAnswerAlternatives(coerceAnswerText(option)));
+}
+
 function normalizeAnswer(value: string) {
-  return value.trim().toLowerCase();
+  return decodeAnswerText(value)
+    .normalize('NFKD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[’‘`´]/g, "'")
+    .replace(/[‐‑‒–—]/g, '-')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .toLowerCase();
+}
+
+function getComparableAnswerCandidates(value: string) {
+  const normalized = normalizeAnswer(value);
+
+  if (!normalized) {
+    return [];
+  }
+
+  return Array.from(
+    new Set([
+      normalized,
+      normalized.replace(/['.]/g, ''),
+      normalized.replace(/[-]/g, ' '),
+      normalized.replace(/[^a-z0-9]/g, ''),
+    ].filter(Boolean))
+  );
 }
 
 function normalizeMultiSelectAnswer(value: string) {

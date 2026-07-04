@@ -34,8 +34,9 @@ export function ReadingView() {
     isStartAvailable: true,
     questionCount: item.questionCount,
     remoteId: item.remoteId,
+    resultLabel: item.resultLabel,
     sectionType: 'reading',
-    tokenCost: undefined,
+    tokenCost: item.tokenCost,
     title: item.title,
   }));
 

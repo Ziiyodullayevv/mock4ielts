@@ -3,18 +3,17 @@
 import type { FlowStep } from '../../types';
 import type { QuestionTypeAnnotationProps } from './annotation-blocks';
 
-import { X } from 'lucide-react';
+import { X, XCircle, CheckCircle2 } from 'lucide-react';
+import { Select, SelectItem, SelectContent, SelectTrigger } from '@/src/components/ui/select';
 import {
-  Select,
-  SelectItem,
-  SelectContent,
-  SelectTrigger,
-} from '@/src/components/ui/select';
-import { usePracticeTextSize, getPracticeTextStyle } from '@/src/sections/practice/shared/practice-text-size';
+  usePracticeTextSize,
+  getPracticeTextStyle,
+} from '@/src/sections/practice/shared/practice-text-size';
 
 import { CompletionInput } from './completion-input';
-import { getListeningQuestionAnchorId } from '../../utils';
+import { REVIEW_STYLE, getReviewValueLabel } from './review-styles';
 import { renderQuestionText, getQuestionAnnotationBlockId } from './annotation-blocks';
+import { isAnswerCorrect, formatCorrectAnswer, getListeningQuestionAnchorId } from '../../utils';
 import {
   PaperPanel,
   QuestionNumberBadge,
@@ -59,7 +58,10 @@ export function FlowChart({
 
           if (!step.isBlank && step.content === '↓') {
             return (
-              <div key={i} className="flex justify-center px-4 py-2 text-xl text-stone-500 dark:text-white/36 sm:px-6">
+              <div
+                key={i}
+                className="flex justify-center px-4 py-2 text-xl text-stone-500 dark:text-white/36 sm:px-6"
+              >
                 <span aria-hidden="true">↓</span>
               </div>
             );
@@ -67,9 +69,7 @@ export function FlowChart({
 
           if (step.isBlank) {
             const val = answers[step.id!] ?? '';
-            const isCorrect = showAnswer
-              ? val.toUpperCase() === String(step.answer).toUpperCase()
-              : undefined;
+            const isCorrect = showAnswer ? isAnswerCorrect(val, step.answer ?? '') : undefined;
             const selectedOption = step.selectOptions?.find((o) => o.value === val);
 
             const selectInput = step.selectOptions ? (
@@ -77,13 +77,16 @@ export function FlowChart({
                 {showAnswer ? (
                   <span
                     className={[
-                      'inline-flex min-h-8 items-center gap-2 rounded-sm border px-2.5 py-1 text-xs font-medium whitespace-nowrap',
-                      isCorrect
-                        ? 'border-green-300 bg-green-50 text-green-700'
-                        : 'border-red-300 bg-red-50 text-red-600',
+                      'inline-flex min-h-8 items-center gap-2 rounded-full border px-2.5 py-1 text-xs font-semibold whitespace-nowrap',
+                      isCorrect ? REVIEW_STYLE.correctBadge : REVIEW_STYLE.wrongBadge,
                     ].join(' ')}
                   >
-                    {val || <span className="opacity-60">NO ANSWER</span>}
+                    {isCorrect ? (
+                      <CheckCircle2 className="size-3.5 shrink-0" strokeWidth={2.5} />
+                    ) : (
+                      <XCircle className="size-3.5 shrink-0" strokeWidth={2.5} />
+                    )}
+                    <span>{isCorrect ? val : getReviewValueLabel(val)}</span>
                   </span>
                 ) : (
                   <>
@@ -113,7 +116,10 @@ export function FlowChart({
                         </div>
                       </SelectTrigger>
                       <SelectContent className="w-[min(34rem,calc(100vw-2rem))] rounded-xl border-stone-300 dark:border-white/10">
-                        <SelectItem value="__clear__" className="rounded-lg text-stone-500 dark:text-white/52">
+                        <SelectItem
+                          value="__clear__"
+                          className="rounded-lg text-stone-500 dark:text-white/52"
+                        >
                           Clear selection
                         </SelectItem>
                         {step.selectOptions.map((opt) => (
@@ -142,8 +148,11 @@ export function FlowChart({
                   </>
                 )}
                 {showAnswer && !isCorrect && (
-                  <span className="text-xs font-medium text-green-700">
-                    ✓ {String(step.answer)}
+                  <span
+                    className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-semibold ${REVIEW_STYLE.correctBadge}`}
+                  >
+                    <CheckCircle2 className="size-3.5 shrink-0" strokeWidth={2.5} />
+                    Correct: {formatCorrectAnswer(step.answer ?? '')}
                   </span>
                 )}
               </span>
@@ -165,61 +174,58 @@ export function FlowChart({
                     size="xs"
                     className="mr-1.5"
                   />
-                  {step.content ? (
-                    step.content.split('_______').map((part, pi, arr) => (
-                      <span key={pi}>
-                        {part
-                          ? renderQuestionText({
-                              as: 'span',
-                              blockId: getQuestionAnnotationBlockId(
-                                annotationBlockIdPrefix,
-                                'step',
-                                i,
-                                'segment',
-                                pi
-                              ),
-                              renderAnnotatedTextBlock,
-                              text: part,
-                            })
-                          : null}
-                        {pi < arr.length - 1 && (
-                          selectInput ?? (
-                            <CompletionInput
-                              annotationBlockIdPrefix={annotationBlockIdPrefix}
-                              field={{
-                                id: step.id!,
-                                number: step.number!,
-                                label: '',
-                                answerLength: step.answerLength!,
-                                answer: step.answer!,
-                              }}
-                              value={val}
-                              onChange={onChange}
-                              renderAnnotatedTextBlock={renderAnnotatedTextBlock}
-                              showAnswer={showAnswer}
-                            />
-                          )
-                        )}
-                      </span>
-                    ))
-                  ) : (
-                    selectInput ?? (
-                      <CompletionInput
-                        annotationBlockIdPrefix={annotationBlockIdPrefix}
-                        field={{
-                          id: step.id!,
-                          number: step.number!,
-                          label: '',
-                          answerLength: step.answerLength!,
-                          answer: step.answer!,
-                        }}
-                        value={val}
-                        onChange={onChange}
-                        renderAnnotatedTextBlock={renderAnnotatedTextBlock}
-                        showAnswer={showAnswer}
-                      />
-                    )
-                  )}
+                  {step.content
+                    ? step.content.split('_______').map((part, pi, arr) => (
+                        <span key={pi}>
+                          {part
+                            ? renderQuestionText({
+                                as: 'span',
+                                blockId: getQuestionAnnotationBlockId(
+                                  annotationBlockIdPrefix,
+                                  'step',
+                                  i,
+                                  'segment',
+                                  pi
+                                ),
+                                renderAnnotatedTextBlock,
+                                text: part,
+                              })
+                            : null}
+                          {pi < arr.length - 1 &&
+                            (selectInput ?? (
+                              <CompletionInput
+                                annotationBlockIdPrefix={annotationBlockIdPrefix}
+                                field={{
+                                  id: step.id!,
+                                  number: step.number!,
+                                  label: '',
+                                  answerLength: step.answerLength!,
+                                  answer: step.answer!,
+                                }}
+                                value={val}
+                                onChange={onChange}
+                                renderAnnotatedTextBlock={renderAnnotatedTextBlock}
+                                showAnswer={showAnswer}
+                              />
+                            ))}
+                        </span>
+                      ))
+                    : (selectInput ?? (
+                        <CompletionInput
+                          annotationBlockIdPrefix={annotationBlockIdPrefix}
+                          field={{
+                            id: step.id!,
+                            number: step.number!,
+                            label: '',
+                            answerLength: step.answerLength!,
+                            answer: step.answer!,
+                          }}
+                          value={val}
+                          onChange={onChange}
+                          renderAnnotatedTextBlock={renderAnnotatedTextBlock}
+                          showAnswer={showAnswer}
+                        />
+                      ))}
                 </div>
               </div>
             );

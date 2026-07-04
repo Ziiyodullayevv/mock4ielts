@@ -66,6 +66,10 @@ const pickString = (...values: unknown[]) => {
 };
 
 const toCorrectAnswer = (value: unknown): CorrectAnswer | undefined => {
+  if (typeof value === 'number' && Number.isFinite(value)) {
+    return String(value);
+  }
+
   const singleValue = pickString(value);
 
   if (singleValue) {
@@ -73,7 +77,9 @@ const toCorrectAnswer = (value: unknown): CorrectAnswer | undefined => {
   }
 
   const values = asArray(value)
-    .map((item) => pickString(item))
+    .map((item) =>
+      typeof item === 'number' && Number.isFinite(item) ? String(item) : pickString(item)
+    )
     .filter((item): item is string => Boolean(item));
 
   if (values.length) {

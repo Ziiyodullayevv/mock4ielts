@@ -18,6 +18,7 @@ import {
 } from '@/src/sections/practice/components';
 
 import { PartPanel } from './part-panel';
+import { LISTENING_DURATION_MINUTES } from '../constants';
 import { computeResult, getPartQuestions, getListeningQuestionAnchorId } from '../utils';
 
 type Stage = 'test' | 'submitted' | 'review';
@@ -40,10 +41,10 @@ interface Props {
 
 const QUESTION_SCROLL_OFFSET = 156;
 const QUESTION_SCROLL_SETTLE_DELAY_MS = 260;
-const DEFAULT_DURATION_MINUTES = 30;
+const DEFAULT_DURATION_MINUTES = LISTENING_DURATION_MINUTES;
 
 function getTestDurationSeconds(test: ListeningTest) {
-  return (test.durationMinutes ?? DEFAULT_DURATION_MINUTES) * 60;
+  return (test.durationMinutes || DEFAULT_DURATION_MINUTES) * 60;
 }
 
 function getFirstQuestionId(test: ListeningTest, partNumber: number) {
@@ -111,6 +112,7 @@ export function ListeningTestView({
     getFirstQuestionId(test, 1)
   );
   const [displayTest, setDisplayTest] = useState<ListeningTest>(initialReviewTest ?? test);
+  const [audioCurrentTime, setAudioCurrentTime] = useState(0);
   const [exitIntent, setExitIntent] = useState<ExitIntent>('button');
   const [isExitDialogOpen, setIsExitDialogOpen] = useState(false);
   const [isSubmitDialogOpen, setIsSubmitDialogOpen] = useState(false);
@@ -534,6 +536,7 @@ export function ListeningTestView({
         }}
         onPrevPart={handlePrevAction}
         onPrimaryAction={handlePrimaryAction}
+        onAudioTimeChange={setAudioCurrentTime}
         onQuestionSelect={(partNumber, questionId) => {
           setActivePart(partNumber);
           setActiveQuestionId(questionId);
@@ -550,6 +553,7 @@ export function ListeningTestView({
           <div className="mx-auto w-full max-w-[1000px]">
             <PartPanel
               activeQuestionId={activeQuestionId}
+              audioCurrentTime={isReview ? audioCurrentTime : null}
               part={currentPart}
               answers={answers}
               onChange={handleChange}

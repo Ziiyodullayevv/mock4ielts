@@ -16,6 +16,8 @@ import { useAuthMutations } from '@/src/auth/hooks/use-auth-mutations';
 import { useMyProfileQuery } from '@/src/auth/hooks/use-my-profile-query';
 import { useRef, useMemo, useState, useEffect, useCallback } from 'react';
 import { buildLoginHref, getCurrentReturnTo } from '@/src/auth/utils/return-to';
+import { formatIeltsBand } from '@/src/sections/practice/utils/ielts-band-score';
+import { LISTENING_DURATION_MINUTES } from '@/src/sections/practice/listening/constants';
 import { computeResult as computeReadingResult } from '@/src/sections/practice/reading/utils';
 import { ReadingTestView } from '@/src/sections/practice/reading/components/reading-test-view';
 import { WritingTestView } from '@/src/sections/practice/writing/components/writing-test-view';
@@ -97,7 +99,7 @@ const MOCK_SECTION_INFO = {
     ],
     coverageTitle: 'This mock listening section covers:',
     description: 'Preview the listening section before you start this part of the mock exam.',
-    durationLabel: '30 minutes',
+    durationLabel: `${LISTENING_DURATION_MINUTES} minutes`,
     improvementCopy:
       'This section trains attention to speaker changes, detail extraction, spelling accuracy, and answer selection under real exam pressure.',
     improvementPoints: [
@@ -318,7 +320,7 @@ function MockExamSummary({
               Overall Band
             </p>
             <p className="mt-2 text-3xl font-semibold text-stone-950 dark:text-white">
-              {result.overallBand ?? '—'}
+              {formatIeltsBand(result.overallBand)}
             </p>
           </div>
 

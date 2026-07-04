@@ -35,6 +35,7 @@ export function NoteCompletion({
   showAnswer,
 }: Props) {
   const textSize = usePracticeTextSize();
+  const htmlHeadingStyle = { fontSize: '16px', lineHeight: '24px' };
 
   return (
     <PaperPanel
@@ -59,9 +60,9 @@ export function NoteCompletion({
                     sectionIndex,
                     'heading'
                   ),
-                  className: 'font-semibold uppercase tracking-[0.2em] text-stone-500 dark:text-white/42',
+                  className: 'font-semibold tracking-[-0.02em] text-stone-900 dark:text-white',
                   renderAnnotatedTextBlock,
-                  style: getPracticeTextStyle(textSize, 'eyebrow'),
+                  style: htmlHeadingStyle,
                   text: section.heading,
                 })}
               </div>
@@ -100,7 +101,7 @@ export function NoteCompletion({
                         />
                         <CompletionInput
                           annotationBlockIdPrefix={annotationBlockIdPrefix}
-                          field={bullet.field}
+                          field={{ ...bullet.field, label: '' }}
                           value={answers[bullet.field.id] ?? ''}
                           onChange={onChange}
                           renderAnnotatedTextBlock={renderAnnotatedTextBlock}

@@ -1,6 +1,7 @@
 'use client';
 
 import { cn } from '@/src/lib/utils';
+import { formatIeltsBand } from '@/src/sections/practice/utils/ielts-band-score';
 import {
   subscriptionCardClassName,
   subscriptionMutedTextClassName,
@@ -48,8 +49,7 @@ const SECTION_META = {
 
 const SECTION_ORDER = ['listening', 'reading', 'writing', 'speaking'] as const;
 
-const formatBand = (value?: number | null) =>
-  typeof value === 'number' && Number.isFinite(value) ? value.toFixed(1) : '—';
+const formatBand = (value?: number | null) => formatIeltsBand(value);
 
 const formatCount = (value?: number | null) =>
   new Intl.NumberFormat('en').format(Math.max(0, Math.round(value ?? 0)));
