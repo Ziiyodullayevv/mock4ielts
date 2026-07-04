@@ -1,13 +1,23 @@
 name: CI
 
 on:
+  workflow_dispatch:
   push:
     branches: [main, develop]
   pull_request:
     branches: [main]
+    types: [opened, synchronize, reopened, ready_for_review]
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
 
 jobs:
   web:
+    name: web
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
@@ -29,6 +39,7 @@ jobs:
           NEXT_PUBLIC_SPEAKING_USE_LOCAL_TOKEN_ROUTE: ${{ secrets.NEXT_PUBLIC_SPEAKING_USE_LOCAL_TOKEN_ROUTE }}
 
   admin:
+    name: admin
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
@@ -48,6 +59,7 @@ jobs:
           NEXT_PUBLIC_ASSETS_DIR: ${{ secrets.NEXT_PUBLIC_ASSETS_DIR }}
 
   docker-web:
+    name: docker-web
     needs: [web, admin]
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     runs-on: ubuntu-latest
@@ -78,6 +90,7 @@ jobs:
             ghcr.io/ziiyodullayevv/mock4ielts:${{ github.sha }}
 
   docker-admin:
+    name: docker-admin
     needs: [web, admin]
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     runs-on: ubuntu-latest

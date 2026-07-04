@@ -1,15 +1,25 @@
 name: CD
 
 on:
+  workflow_dispatch:
   workflow_run:
     workflows: [CI]
     types: [completed]
     branches: [main]
 
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
 jobs:
   deploy:
-    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    name: deploy-production
+    if: ${{ github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
+    environment: production
     env:
       LIVEKIT_URL: ${{ secrets.LIVEKIT_URL }}
       LIVEKIT_API_KEY: ${{ secrets.LIVEKIT_API_KEY }}
@@ -54,6 +64,7 @@ jobs:
               echo "Waiting for app... (attempt $i)"
             done
             echo "Health check FAILED after 30s"
+            docker compose ps
             docker compose logs --tail=20
             exit 1
 
@@ -78,5 +89,6 @@ jobs:
               echo "Waiting for admin app... (attempt $i)"
             done
             echo "Admin health check FAILED after 30s"
+            docker compose ps
             docker compose logs --tail=20
             exit 1
