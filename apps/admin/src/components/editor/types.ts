@@ -1,0 +1,40 @@
+import type { BoxProps } from '@mui/material/Box';
+import type { Theme, SxProps } from '@mui/material/styles';
+import type { Editor, UseEditorOptions } from '@tiptap/react';
+import type { ButtonBaseProps } from '@mui/material/ButtonBase';
+
+// ----------------------------------------------------------------------
+
+export type EditorProps = UseEditorOptions & {
+  value?: string;
+  error?: boolean;
+  fullItem?: boolean;
+  minimal?: boolean;
+  showBlanksAsChips?: boolean;
+  blankOutputFormat?: 'token' | 'html';
+  className?: string;
+  sx?: SxProps<Theme>;
+  resetValue?: boolean;
+  placeholder?: string;
+  helperText?: React.ReactNode;
+  onChange?: (value: string) => void;
+  slotProps?: {
+    wrapper?: BoxProps;
+  };
+  ref?: React.RefObject<HTMLDivElement | null> | React.RefCallback<HTMLDivElement | null>;
+};
+
+export type EditorToolbarProps = {
+  editor: Editor;
+  fullscreen: boolean;
+  onToggleFullscreen: () => void;
+  fullItem?: EditorProps['fullItem'];
+  minimal?: boolean;
+  onInsertBlank?: () => void;
+};
+
+export type EditorToolbarItemProps = ButtonBaseProps & {
+  label?: string;
+  active?: boolean;
+  icon?: React.ReactNode;
+};
