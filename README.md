@@ -50,8 +50,8 @@ npm run admin:build
 
 ## Deployment
 
-The web app builds the `ghcr.io/ziiyodullayevv/mock4ielts` image.
-The admin app builds the `ghcr.io/ziiyodullayevv/mock4ielts-admin-panel` image.
+The web app builds the `ghcr.io/ziiyodullayevv/mock4ielts-web` image.
+The admin app builds the `ghcr.io/ziiyodullayevv/mock4ielts-admin` image.
 
 The GitHub Actions workflow validates both apps and publishes both images on
 successful pushes to `main`.

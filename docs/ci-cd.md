@@ -15,8 +15,8 @@ Required PR checks:
 
 On pushes to `main`, the workflow also builds and pushes:
 
-- `ghcr.io/ziiyodullayevv/mock4ielts`
-- `ghcr.io/ziiyodullayevv/mock4ielts-admin-panel`
+- `ghcr.io/ziiyodullayevv/mock4ielts-web`
+- `ghcr.io/ziiyodullayevv/mock4ielts-admin`
 
 Build contexts:
 
