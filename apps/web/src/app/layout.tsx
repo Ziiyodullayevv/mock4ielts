@@ -5,31 +5,44 @@ import type { Metadata } from 'next';
 import { Geist, Geist_Mono } from 'next/font/google';
 import { CONFIG, getAssetUrl } from '@/src/global-config';
 import { ThemeProvider } from '@/src/components/providers/theme-provider';
-import { metadataBase, metadataDomain, defaultMetadataImage } from '@/src/lib/metadata';
-
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://mock4ielts.uz';
+import {
+  siteUrl,
+  brandLogo,
+  metadataBase,
+  metadataDomain,
+  defaultMetadataImage,
+  defaultMetadataTitle,
+  defaultMetadataImageWidth,
+  defaultMetadataImageHeight,
+  defaultMetadataDescription,
+} from '@/src/lib/metadata';
 
 const websiteJsonLd = {
   '@context': 'https://schema.org',
   '@graph': [
     {
       '@type': 'WebSite',
-      '@id': `${SITE_URL}/#website`,
-      url: SITE_URL,
+      '@id': `${siteUrl}/#website`,
+      url: siteUrl,
       name: 'Mock4IELTS',
-      description:
-        'All-in-one IELTS preparation platform with realistic mock exams, section practice, and progress tracking.',
+      description: defaultMetadataDescription,
       inLanguage: 'en',
+      publisher: {
+        '@id': `${siteUrl}/#organization`,
+      },
     },
     {
       '@type': 'Organization',
-      '@id': `${SITE_URL}/#organization`,
+      '@id': `${siteUrl}/#organization`,
       name: 'Mock4IELTS',
-      url: SITE_URL,
+      url: siteUrl,
       logo: {
         '@type': 'ImageObject',
-        url: `${SITE_URL}/logo/logo_red.png`,
+        url: new URL(brandLogo, metadataBase).toString(),
+        width: 142,
+        height: 130,
       },
+      image: new URL(defaultMetadataImage, metadataBase).toString(),
     },
   ],
 };
@@ -45,13 +58,16 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
+  applicationName: CONFIG.appName,
+  authors: [{ name: CONFIG.appName, url: metadataBase.toString() }],
+  category: 'education',
+  creator: CONFIG.appName,
   metadataBase,
   title: {
-    default: `${CONFIG.appName} - Real IELTS Practice, Mock Exams, Progress Tracking`,
+    default: defaultMetadataTitle,
     template: `%s - ${CONFIG.appName}`,
   },
-  description:
-    'Prepare for IELTS with realistic mock exams, targeted section practice, and clear progress tracking. All four IELTS skills — Listening, Reading, Writing, Speaking — in one platform.',
+  description: defaultMetadataDescription,
   keywords: [
     'IELTS mock exam',
     'IELTS practice',
@@ -65,33 +81,52 @@ export const metadata: Metadata = {
     'IELTS band score',
     'IELTS test simulation',
   ],
+  manifest: '/manifest.webmanifest',
   other: {
     'twitter:domain': metadataDomain,
     'twitter:url': metadataBase.toString(),
   },
   openGraph: {
-    description:
-      'Prepare for IELTS with realistic mock exams, targeted section practice, and clear progress tracking.',
+    description: defaultMetadataDescription,
     images: [
       {
+        alt: `${CONFIG.appName} homepage preview`,
+        height: defaultMetadataImageHeight,
         url: defaultMetadataImage,
+        width: defaultMetadataImageWidth,
       },
     ],
     siteName: CONFIG.appName,
-    title: `${CONFIG.appName} - Real IELTS Practice, Mock Exams, Progress Tracking`,
+    title: defaultMetadataTitle,
     type: 'website',
-    url: '/',
+    url: metadataBase.toString(),
+  },
+  publisher: CONFIG.appName,
+  robots: {
+    follow: true,
+    googleBot: {
+      follow: true,
+      index: true,
+      'max-image-preview': 'large',
+      'max-snippet': -1,
+      'max-video-preview': -1,
+    },
+    index: true,
   },
   twitter: {
     card: 'summary_large_image',
-    description:
-      'Prepare for IELTS with realistic mock exams, targeted section practice, and clear progress tracking.',
+    description: defaultMetadataDescription,
     images: [defaultMetadataImage],
-    title: `${CONFIG.appName} - Real IELTS Practice, Mock Exams, Progress Tracking`,
+    title: defaultMetadataTitle,
   },
   icons: [
     {
       rel: 'icon',
+      url: brandLogo,
+      type: 'image/svg+xml',
+    },
+    {
+      rel: 'shortcut icon',
       url: getAssetUrl('/favicon.ico'),
     },
   ],

@@ -4,6 +4,14 @@ import packageJson from '../package.json';
 
 // ----------------------------------------------------------------------
 
+const DEFAULT_SERVER_URL = 'https://mockapi.mock4ielts.uz/api/v1';
+
+const normalizeServerUrl = (value: string | undefined) => {
+  const serverUrl = value?.trim() || DEFAULT_SERVER_URL;
+
+  return serverUrl.replace(/\/+$/, '');
+};
+
 export type ConfigValue = {
   appName: string;
   appVersion: string;
@@ -33,7 +41,7 @@ export type ConfigValue = {
 export const CONFIG: ConfigValue = {
   appName: 'Mock4IELTS',
   appVersion: packageJson.version,
-  serverUrl: process.env.NEXT_PUBLIC_SERVER_URL ?? '',
+  serverUrl: normalizeServerUrl(process.env.NEXT_PUBLIC_SERVER_URL),
   assetsDir: process.env.NEXT_PUBLIC_ASSETS_DIR ?? '',
   isStaticExport: JSON.parse(process.env.BUILD_STATIC_EXPORT ?? 'false'),
   /**

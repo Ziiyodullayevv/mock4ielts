@@ -5,6 +5,7 @@ import { MyStatisticsView } from '@/src/sections/statistics/view';
 
 export const metadata: Metadata = buildPageMetadata({
   description: 'Review your Mock4IELTS practice progress, section averages, and exam statistics.',
+  index: false,
   path: '/my-statistics',
   title: 'My Statistics',
 });
