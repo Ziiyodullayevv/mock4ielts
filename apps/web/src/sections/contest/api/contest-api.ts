@@ -263,7 +263,7 @@ function mapRankingUser(entry: ApiLeaderboardEntry, index: number): RankingUser 
 
   return {
     attended: entry.attended ?? (entry.time_spent_seconds ? Math.round(entry.time_spent_seconds / 60) : 0),
-    avatarUrl: entry.avatar_url || entry.avatar || '/logo/logo_dark.png',
+    avatarUrl: entry.avatar_url || entry.avatar || '/logo/logo.svg',
     countryFlag: entry.country ?? undefined,
     displayName,
     medal: getMedal(rank),

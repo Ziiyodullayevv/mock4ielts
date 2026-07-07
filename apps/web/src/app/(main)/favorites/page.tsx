@@ -5,6 +5,7 @@ import { FavoritesView } from '@/src/sections/favorites/view';
 
 export const metadata: Metadata = buildPageMetadata({
   description: 'Your saved practice sections in one place.',
+  index: false,
   path: '/favorites',
   title: 'Favorites',
 });

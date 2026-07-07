@@ -6,6 +6,7 @@ import { MySubscriptionView } from '@/src/sections/subscription/view';
 export const metadata: Metadata = buildPageMetadata({
   description:
     'Compare Mock4IELTS plans, switch billing period, and review your token-focused study benefits.',
+  index: false,
   path: '/my-subscription',
   title: 'My Subscription',
 });

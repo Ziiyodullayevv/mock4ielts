@@ -2,16 +2,25 @@ import type { Metadata } from 'next';
 
 import { CONFIG, getAssetUrl } from '@/src/global-config';
 
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://mock4ielts.uz';
+export const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://mock4ielts.uz';
+export const brandName = CONFIG.appName;
+export const defaultMetadataTitle = `${brandName} - IELTS Practice Tests, Mock Exams & Band Score Progress`;
+export const defaultMetadataDescription =
+  'Prepare for IELTS online with full mock exams, Listening, Reading, Writing, and Speaking practice, timed test simulations, contests, and clear band score progress tracking.';
+export const brandLogo = getAssetUrl('/logo/logo.svg');
+export const defaultMetadataImage = getAssetUrl('/og/home.png');
+export const defaultMetadataImageWidth = 1200;
+export const defaultMetadataImageHeight = 630;
 
-export const metadataBase = new URL(SITE_URL);
+export const metadataBase = new URL(siteUrl);
 export const metadataDomain = metadataBase.hostname;
-export const defaultMetadataImage = getAssetUrl('/logo/logo_red.png');
 
 type BuildPageMetadataOptions = {
   absoluteTitle?: boolean;
   description: string;
   image?: string;
+  index?: boolean;
+  keywords?: string[];
   path?: string;
   title: string;
 };
@@ -28,11 +37,13 @@ export function buildPageMetadata({
   absoluteTitle = false,
   description,
   image = defaultMetadataImage,
+  index = true,
+  keywords,
   path = '/',
   title,
 }: BuildPageMetadataOptions): Metadata {
   const normalizedPath = normalizePath(path);
-  const fullTitle = absoluteTitle ? title : `${title} - ${CONFIG.appName}`;
+  const fullTitle = absoluteTitle ? title : `${title} - ${brandName}`;
   const resolvedUrl =
     normalizedPath === '/' ? metadataBase.toString() : new URL(normalizedPath, metadataBase).toString();
 
@@ -41,6 +52,7 @@ export function buildPageMetadata({
       canonical: normalizedPath,
     },
     description,
+    keywords,
     other: {
       'twitter:domain': metadataDomain,
       'twitter:url': resolvedUrl,
@@ -49,13 +61,27 @@ export function buildPageMetadata({
       description,
       images: [
         {
+          alt: `${brandName} homepage preview`,
+          height: defaultMetadataImageHeight,
           url: image,
+          width: defaultMetadataImageWidth,
         },
       ],
-      siteName: CONFIG.appName,
+      siteName: brandName,
       title: fullTitle,
       type: 'website',
-      url: normalizedPath,
+      url: resolvedUrl,
+    },
+    robots: {
+      follow: index,
+      googleBot: {
+        follow: index,
+        index,
+        'max-image-preview': 'large',
+        'max-snippet': -1,
+        'max-video-preview': -1,
+      },
+      index,
     },
     title: absoluteTitle ? { absolute: fullTitle } : title,
     twitter: {

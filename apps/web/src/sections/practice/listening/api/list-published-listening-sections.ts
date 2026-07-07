@@ -58,6 +58,11 @@ const DEFAULT_PAGINATION: PaginationDto = {
   total: 0,
 };
 
+const normalizeDurationMinutes = (value: unknown) =>
+  typeof value === 'number' && Number.isFinite(value) && value > 0
+    ? value
+    : LISTENING_DURATION_MINUTES;
+
 export async function listPublishedListeningSections(): Promise<ListeningPracticeSectionsResult> {
   const response = await axiosInstance.get<PublishedSectionsResponse>(endpoints.sections.list, {
     params: {
@@ -72,7 +77,7 @@ export async function listPublishedListeningSections(): Promise<ListeningPractic
   return {
     items: sections.map((section, index) => ({
       difficulty: section.difficulty,
-      durationMinutes: LISTENING_DURATION_MINUTES,
+      durationMinutes: normalizeDurationMinutes(section.duration_minutes),
       href: paths.practice.listening.details(section.id),
       id: index + 1,
       questionCount: section.question_count,

@@ -88,15 +88,19 @@ const pickId = (value: unknown): string | undefined => {
   return undefined;
 };
 
-const pickNumber = (value: unknown) => {
-  if (typeof value === 'number' && Number.isFinite(value)) {
-    return value;
-  }
+const pickNumber = (...values: unknown[]) => {
+  for (const value of values) {
+    if (typeof value === 'number' && Number.isFinite(value)) {
+      return value;
+    }
 
-  if (typeof value === 'string') {
-    const parsedValue = Number.parseInt(value.trim(), 10);
+    if (typeof value === 'string') {
+      const parsedValue = Number.parseInt(value.trim(), 10);
 
-    return Number.isFinite(parsedValue) ? parsedValue : undefined;
+      if (Number.isFinite(parsedValue)) {
+        return parsedValue;
+      }
+    }
   }
 
   return undefined;
@@ -723,7 +727,7 @@ const normalizeSectionDetail = (payload: unknown): ApiSectionDetail => {
   return {
     audioUrl: pickString(data.audio_url),
     difficulty: pickString(data.difficulty),
-    durationMinutes: LISTENING_DURATION_MINUTES,
+    durationMinutes: pickNumber(data.duration_minutes, data.durationMinutes) ?? LISTENING_DURATION_MINUTES,
     id: pickString(data.id) ?? '',
     instructions: pickString(data.instructions),
     parts: asArray(data.parts)

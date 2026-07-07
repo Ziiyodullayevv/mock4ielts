@@ -39,7 +39,13 @@ const processQueue = (error: unknown, token: string | null = null) => {
 
 function formatApiError(data: any, fallback: string) {
   if (!data) return fallback;
-  if (typeof data === 'string') return data;
+  if (typeof data === 'string') {
+    if (data.trim().toLowerCase().startsWith('<!doctype html')) {
+      return 'API returned an HTML page. Check NEXT_PUBLIC_SERVER_URL configuration.';
+    }
+
+    return data;
+  }
   if (data.message) return data.message;
   if (data.error) return data.error;
 
