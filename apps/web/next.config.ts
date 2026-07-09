@@ -6,6 +6,20 @@ const nextConfig: NextConfig = {
   reactStrictMode: false,
   trailingSlash: true,
   output: isStaticExport ? 'export' : 'standalone',
+  async redirects() {
+    return [
+      {
+        source: '/contest',
+        destination: '/mock-exams',
+        permanent: false,
+      },
+      {
+        source: '/contest/:path*',
+        destination: '/mock-exams',
+        permanent: false,
+      },
+    ];
+  },
   env: {
     BUILD_STATIC_EXPORT: JSON.stringify(isStaticExport),
   },
