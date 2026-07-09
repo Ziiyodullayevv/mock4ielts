@@ -1,4 +1,5 @@
 import { paths } from '@/src/routes/paths';
+import { FEATURES } from '@/src/lib/features';
 
 type HeaderPanelItem = {
   href: string;
@@ -43,4 +44,4 @@ export const HEADER_ITEMS: HeaderItem[] = [
     label: 'Contest',
     matchPaths: [paths.contest.root],
   },
-];
+].filter((item) => FEATURES.contests || item.id !== 'contest');
