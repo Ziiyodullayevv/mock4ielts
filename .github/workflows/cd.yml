@@ -51,6 +51,7 @@ jobs:
               echo "NEXT_PUBLIC_GOOGLE_CLIENT_ID=$NEXT_PUBLIC_GOOGLE_CLIENT_ID"
               echo "NEXT_PUBLIC_SPEAKING_USE_LOCAL_TOKEN_ROUTE=$NEXT_PUBLIC_SPEAKING_USE_LOCAL_TOKEN_ROUTE"
             } > .env
+            sed -i 's#ghcr.io/ziiyodullayevv/mock4ielts:latest#ghcr.io/ziiyodullayevv/mock4ielts-web:latest#g' docker-compose.yml compose.yml 2>/dev/null || true
             docker compose pull
             docker compose up -d --force-recreate
             docker image prune -f
@@ -76,6 +77,7 @@ jobs:
           key: ${{ secrets.VPS_SSH_KEY || secrets.SSH_PRIVATE_KEY }}
           script: |
             cd /opt/mock4ielts-admin
+            sed -i 's#ghcr.io/ziiyodullayevv/mock4ielts-admin-panel:latest#ghcr.io/ziiyodullayevv/mock4ielts-admin:latest#g' docker-compose.yml compose.yml 2>/dev/null || true
             docker compose pull
             docker compose up -d --force-recreate
             docker image prune -f
